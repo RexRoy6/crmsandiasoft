@@ -4,6 +4,15 @@ import { checkPermission } from "@/lib/auth/checkPermission"
 
 export async function middleware(req: NextRequest) {
 
+  const pathname = req.nextUrl.pathname
+
+  // ⭐ bootstrap bypass
+  if (pathname === "/api/admin/create-admin") {
+    return NextResponse.next()
+  }
+
+  //solo para crer el admin 1
+
   /* auth routes libres */
   if (req.nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next()
