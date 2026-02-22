@@ -33,11 +33,11 @@ export async function POST(req:Request){
     .$returningId()
 
   /* crear token */
-  const token = signToken({
-    userId:user.id,
-    companyId:company.id,
-    role:"owner"
-  })
+const token = await signToken({
+  userId: user.id,
+  companyId: company.id,
+  role: "owner"
+})
 
   return NextResponse.json({token})
 }

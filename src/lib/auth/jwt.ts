@@ -1,11 +1,10 @@
-import jwt from "jsonwebtoken"
-import { JwtPayload } from "jsonwebtoken"
+import { SignJWT, jwtVerify, JWTPayload } from "jose"
 
-const JWT_SECRET = process.env.JWT_SECRET!
+const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
 
 /* ---------- TOKEN TYPE ---------- */
 
-export interface AuthTokenPayload extends JwtPayload {
+export interface AuthTokenPayload extends JWTPayload {
   userId: number
   companyId: number
   role: string
@@ -13,14 +12,16 @@ export interface AuthTokenPayload extends JwtPayload {
 
 /* ---------- SIGN ---------- */
 
-export function signToken(payload: AuthTokenPayload) {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: "7d"
-  })
+export async function signToken(payload: AuthTokenPayload) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(secret)
 }
 
 /* ---------- VERIFY ---------- */
 
-export function verifyToken(token: string): AuthTokenPayload {
-  return jwt.verify(token, JWT_SECRET) as AuthTokenPayload
+export async function verifyToken(token: string): Promise<AuthTokenPayload> {
+  const { payload } = await jwtVerify(token, secret)
+  return payload as AuthTokenPayload
 }
