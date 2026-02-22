@@ -1,3 +1,4 @@
+import { match } from "path-to-regexp"
 import { RBAC_CONFIG } from "./rbacConfig"
 import { UserRole } from "@/db/schema"
 
@@ -6,13 +7,17 @@ export function checkPermission(
   method: string,
   role: UserRole
 ) {
-  const routeConfig = RBAC_CONFIG[pathname]
+  for (const route of RBAC_CONFIG) {
+    const isMatch = match(route.pattern)(pathname)
 
-  if (!routeConfig) return true // sin config = permitido
+    if (!isMatch) continue
 
-  const allowedRoles = routeConfig[method]
+    const allowedRoles = route.methods[method]
 
-  if (!allowedRoles) return true
+    if (!allowedRoles) return true
 
-  return allowedRoles.includes(role)
+    return allowedRoles.includes(role)
+  }
+
+  return true
 }
