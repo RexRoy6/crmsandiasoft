@@ -6,7 +6,8 @@ import {
   decimal,
   date,
   timestamp,
-  index
+  index,
+   mysqlEnum
 } from "drizzle-orm/mysql-core"
 
 /* ---------- BASE COLUMNS (audit + soft delete) ---------- */
@@ -16,6 +17,15 @@ const baseColumns = {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
   deletedAt: timestamp("deleted_at")
 }
+
+/* ---------- USER ROLES ENUM ---------- */
+
+export const userRoleEnum = mysqlEnum("user_role", [
+  "admin",
+  "owner",
+  "user"
+])
+
 
 /* ---------- COMPANIES ---------- */
 
@@ -31,10 +41,9 @@ export const users = mysqlTable("users", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
   companyId: bigint("company_id",{mode:"number"})
-    .notNull()
     .references(()=>companies.id,{ onDelete:"cascade" }),
 
-  role: varchar("role",{length:50}).notNull(),
+  role: mysqlEnum("role", ["admin", "owner", "user"]).notNull(),
 
   email: varchar("email",{length:255}).notNull(),
 

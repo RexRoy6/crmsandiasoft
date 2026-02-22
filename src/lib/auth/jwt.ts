@@ -6,7 +6,7 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
 
 export interface AuthTokenPayload extends JWTPayload {
   userId: number
-  companyId: number
+  companyId: number | null
   role: string
 }
 
