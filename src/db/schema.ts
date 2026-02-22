@@ -9,9 +9,7 @@ import {
   index
 } from "drizzle-orm/mysql-core"
 
-/* =======================================================
-   BASE COLUMNS (soft delete + auditoría base)
-======================================================= */
+/* ---------- BASE COLUMNS (audit + soft delete) ---------- */
 
 const baseColumns = {
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -19,26 +17,22 @@ const baseColumns = {
   deletedAt: timestamp("deleted_at")
 }
 
-/* =======================================================
-   COMPANIES (tenant root)
-======================================================= */
+/* ---------- COMPANIES ---------- */
 
 export const companies = mysqlTable("companies", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
-
   name: varchar("name",{length:255}).notNull(),
-
   ...baseColumns
 })
 
-/* =======================================================
-   USERS (multi-tenant security layer)
-======================================================= */
+/* ---------- USERS ---------- */
 
-export const users = mysqlTable("users",{
+export const users = mysqlTable("users", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"}).notNull(),
+  companyId: bigint("company_id",{mode:"number"})
+    .notNull()
+    .references(()=>companies.id,{ onDelete:"cascade" }),
 
   role: varchar("role",{length:50}).notNull(),
 
@@ -47,141 +41,128 @@ export const users = mysqlTable("users",{
   passwordHash: varchar("password_hash",{length:255}).notNull(),
 
   ...baseColumns
-},
-(table)=>({
+}, (table)=>({
   companyIdx: index("users_company_idx").on(table.companyId),
   emailIdx: index("users_email_idx").on(table.email)
 }))
 
-/* =======================================================
-   CLIENTS
-======================================================= */
+/* ---------- CLIENTS ---------- */
 
-export const clients = mysqlTable("clients",{
+export const clients = mysqlTable("clients", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"}).notNull(),
+  companyId: bigint("company_id",{mode:"number"})
+    .notNull()
+    .references(()=>companies.id,{ onDelete:"cascade" }),
 
-  userId: bigint("user_id",{mode:"number"}),
+  userId: bigint("user_id",{mode:"number"})
+    .references(()=>users.id),
 
   ...baseColumns
-},
-(table)=>({
-  companyIdx: index("clients_company_idx").on(table.companyId)
+}, (table)=>({
+  companyIdx: index("clients_company_idx").on(table.companyId),
+  userIdx: index("clients_user_idx").on(table.userId)
 }))
 
-/* =======================================================
-   SERVICES (inventario por empresa)
-======================================================= */
+/* ---------- SERVICES ---------- */
 
-export const services = mysqlTable("services",{
+export const services = mysqlTable("services", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"}).notNull(),
+  companyId: bigint("company_id",{mode:"number"})
+    .notNull()
+    .references(()=>companies.id,{ onDelete:"cascade" }),
 
   stockTotal: int("stock_total").notNull(),
-
   priceBase: decimal("price_base",{precision:10,scale:2}).notNull(),
 
   ...baseColumns
-},
-(table)=>({
+}, (table)=>({
   companyIdx: index("services_company_idx").on(table.companyId)
 }))
 
-/* =======================================================
-   CONTRACTS (core del negocio)
-======================================================= */
+/* ---------- CONTRACTS ---------- */
 
-export const contracts = mysqlTable("contracts",{
+export const contracts = mysqlTable("contracts", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"}).notNull(),
+  companyId: bigint("company_id",{mode:"number"})
+    .notNull()
+    .references(()=>companies.id,{ onDelete:"cascade" }),
 
-  clientId: bigint("client_id",{mode:"number"}).notNull(),
+  clientId: bigint("client_id",{mode:"number"})
+    .notNull()
+    .references(()=>clients.id),
 
   eventDate: date("event_date").notNull(),
-
   status: varchar("status",{length:50}).notNull(),
 
   totalAmount: decimal("total_amount",{precision:12,scale:2}).notNull(),
 
   ...baseColumns
-},
-(table)=>({
+}, (table)=>({
   companyIdx: index("contracts_company_idx").on(table.companyId),
-  eventIdx: index("contracts_event_idx").on(table.eventDate)
+  clientIdx: index("contracts_client_idx").on(table.clientId)
 }))
 
-/* =======================================================
-   CONTRACT ITEMS (snapshot de servicios)
-======================================================= */
+/* ---------- CONTRACT ITEMS ---------- */
 
-export const contractItems = mysqlTable("contract_items",{
+export const contractItems = mysqlTable("contract_items", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  contractId: bigint("contract_id",{mode:"number"}).notNull(),
+  contractId: bigint("contract_id",{mode:"number"})
+    .notNull()
+    .references(()=>contracts.id,{ onDelete:"cascade" }),
 
-  serviceId: bigint("service_id",{mode:"number"}).notNull(),
+  serviceId: bigint("service_id",{mode:"number"})
+    .notNull()
+    .references(()=>services.id),
 
   quantity: int("quantity").notNull(),
 
   ...baseColumns
-},
-(table)=>({
-  contractIdx: index("contract_items_contract_idx").on(table.contractId),
-  serviceIdx: index("contract_items_service_idx").on(table.serviceId)
-}))
+})
 
-/* =======================================================
-   PAYMENTS
-======================================================= */
+/* ---------- PAYMENTS ---------- */
 
-export const payments = mysqlTable("payments",{
+export const payments = mysqlTable("payments", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  contractId: bigint("contract_id",{mode:"number"}).notNull(),
+  contractId: bigint("contract_id",{mode:"number"})
+    .notNull()
+    .references(()=>contracts.id,{ onDelete:"cascade" }),
 
   amount: decimal("amount",{precision:12,scale:2}).notNull(),
 
   ...baseColumns
-},
-(table)=>({
-  contractIdx: index("payments_contract_idx").on(table.contractId)
-}))
+})
 
-/* =======================================================
-   REFUNDS
-======================================================= */
+/* ---------- REFUNDS ---------- */
 
-export const refunds = mysqlTable("refunds",{
+export const refunds = mysqlTable("refunds", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  paymentId: bigint("payment_id",{mode:"number"}).notNull(),
+  paymentId: bigint("payment_id",{mode:"number"})
+    .notNull()
+    .references(()=>payments.id,{ onDelete:"cascade" }),
 
   ...baseColumns
-},
-(table)=>({
-  paymentIdx: index("refunds_payment_idx").on(table.paymentId)
-}))
+})
 
-/* =======================================================
-   CONTRACT HISTORY (auditoría)
-======================================================= */
+/* ---------- CONTRACT HISTORY ---------- */
 
-export const contractHistory = mysqlTable("contract_history",{
+export const contractHistory = mysqlTable("contract_history", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
 
-  contractId: bigint("contract_id",{mode:"number"}).notNull(),
+  contractId: bigint("contract_id",{mode:"number"})
+    .notNull()
+    .references(()=>contracts.id,{ onDelete:"cascade" }),
 
-  changedBy: bigint("changed_by",{mode:"number"}).notNull(),
+  changedBy: bigint("changed_by",{mode:"number"})
+    .references(()=>users.id),
 
   oldValue: varchar("old_value",{length:255}),
-
   newValue: varchar("new_value",{length:255}),
 
   ...baseColumns
-},
-(table)=>({
-  contractIdx: index("history_contract_idx").on(table.contractId)
-}))
+})
