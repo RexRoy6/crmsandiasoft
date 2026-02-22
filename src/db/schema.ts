@@ -18,13 +18,18 @@ const baseColumns = {
   deletedAt: timestamp("deleted_at")
 }
 
-/* ---------- USER ROLES ENUM ---------- */
 
-export const userRoleEnum = mysqlEnum("user_role", [
-  "admin",
-  "owner",
-  "user"
-])
+/* ---------- USER ROLES (single source of truth) ---------- */
+
+export const USER_ROLES = ["admin", "owner", "user"] as const
+
+export type UserRole = typeof USER_ROLES[number]
+
+
+
+/* ---------- USER ROLES ENUM DB ---------- */
+
+export const userRoleEnum = mysqlEnum("user_role", USER_ROLES)
 
 
 /* ---------- COMPANIES ---------- */
@@ -35,6 +40,7 @@ export const companies = mysqlTable("companies", {
   ...baseColumns
 })
 
+
 /* ---------- USERS ---------- */
 
 export const users = mysqlTable("users", {
@@ -43,7 +49,8 @@ export const users = mysqlTable("users", {
   companyId: bigint("company_id",{mode:"number"})
     .references(()=>companies.id,{ onDelete:"cascade" }),
 
-  role: mysqlEnum("role", ["admin", "owner", "user"]).notNull(),
+  // ✅ usar USER_ROLES directamente
+  role: mysqlEnum("role", USER_ROLES).notNull(),
 
   email: varchar("email",{length:255}).notNull(),
 

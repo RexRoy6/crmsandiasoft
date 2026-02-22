@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify, JWTPayload } from "jose"
+import { UserRole } from "@/db/schema"
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
 
@@ -7,7 +8,8 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
 export interface AuthTokenPayload extends JWTPayload {
   userId: number
   companyId: number | null
-  role: string
+  //role: string
+  role: UserRole
 }
 
 /* ---------- SIGN ---------- */
