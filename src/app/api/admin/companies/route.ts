@@ -1,17 +1,15 @@
 import { db } from "@/db"
 import { companies } from "@/db/schema"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 export async function GET() {
-  const data = await db.select().from(companies)
-  return Response.json(data)
-}
+  try {
+    await requireAuth({ roles: ["admin"] })
 
-export async function POST(req: Request) {
-  const { name } = await req.json()
+    const data = await db.select().from(companies)
 
-  const result = await db.insert(companies)
-    .values({ name })
-    .$returningId()
-
-  return Response.json(result)
+    return Response.json(data)
+  } catch {
+    return Response.json({ error: "forbidden" }, { status: 403 })
+  }
 }
