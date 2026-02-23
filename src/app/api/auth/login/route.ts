@@ -39,5 +39,16 @@ const token = await signToken({
   role: user.role
 })
 
-  return NextResponse.json({token})
+const res = NextResponse.json({ success: true })
+
+
+res.cookies.set("auth_token", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+  maxAge: 60 * 60 * 24
+})
+
+return res
 }

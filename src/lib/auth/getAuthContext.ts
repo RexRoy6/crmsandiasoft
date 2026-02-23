@@ -1,4 +1,5 @@
-import { headers } from "next/headers"
+import { cookies } from "next/headers"
+import { verifyToken } from "@/lib/auth/jwt"
 import { isValidRole } from "@/lib/auth/roleUtils"
 import { UserRole } from "@/db/schema"
 
@@ -9,31 +10,39 @@ export type AuthContext = {
 }
 
 export async function getAuthContext(): Promise<AuthContext> {
-  const h = await headers()
+  /* ---------- leer token desde cookie ---------- */
+  const cookieStore = await cookies()
+  const token = cookieStore.get("auth_token")?.value
 
-  const userId = h.get("x-user-id")
-  const companyId = h.get("x-company-id")
-  const role = h.get("x-role")
-
-  if (!userId || !role) {
-    throw new Error("Unauthorized: missing auth context")
+  if (!token) {
+    throw new Error("Unauthorized: no token")
   }
 
-  const parsedUserId = Number(userId)
-  const parsedCompanyId = companyId ? Number(companyId) : null
+  try {
+    /* ---------- verificar JWT ---------- */
+    const payload = await verifyToken(token)
 
-  if (isNaN(parsedUserId)) {
-    throw new Error("Invalid auth context")
-  }
+    const parsedUserId = Number(payload.userId)
+    const parsedCompanyId = payload.companyId
+      ? Number(payload.companyId)
+      : null
 
-  //VALIDACIÓN DEL ROLE
-  if (!isValidRole(role)) {
-    throw new Error("Invalid role")
-  }
+    if (isNaN(parsedUserId)) {
+      throw new Error("Invalid auth context")
+    }
 
-  return {
-    userId: parsedUserId,
-    companyId: parsedCompanyId,
-    role
+    /* ---------- validar role ---------- */
+    if (!payload.role || !isValidRole(payload.role)) {
+      throw new Error("Invalid role")
+    }
+
+    return {
+      userId: parsedUserId,
+      companyId: parsedCompanyId,
+      role: payload.role
+    }
+
+  } catch {
+    throw new Error("Unauthorized: invalid token")
   }
 }
