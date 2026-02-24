@@ -1,0 +1,86 @@
+name: Deploy Next.js Client to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Prepare SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to VPS
+      run: |
+        set -e
+        COMMIT_SHORT_SHA=${GITHUB_SHA:0:8}
+        RELEASE_DIR="/opt/web-next-client/releases/${COMMIT_SHORT_SHA}"
+
+        # Create release folder
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          mkdir -p ${RELEASE_DIR}
+          chown www-data:www-data ${RELEASE_DIR}
+          chmod 775 ${RELEASE_DIR}
+        "
+
+        # Upload source files
+        rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+          --exclude node_modules \
+          --exclude .git \
+          --exclude .github \
+          ./ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
+
+        # Set permissions
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          find ${RELEASE_DIR} -type d -exec chmod 775 {} \;
+          find ${RELEASE_DIR} -type f -exec chmod 664 {} \;
+        "
+
+        # Link environment file
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          ln -nfs /opt/web-next-client/.env.production ${RELEASE_DIR}/.env
+        "
+
+        # Install + build on VPS
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          cd ${RELEASE_DIR}
+          npm ci
+          npm run build
+        "
+
+        # Activate release
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          cd /opt/web-next-client
+          ln -nfs releases/${COMMIT_SHORT_SHA} current
+        "
+
+        # Restart Next.js server using PM2
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          cd /opt/web-next-client/current
+          pm2 delete next-client || true
+          pm2 start npm --name next-client -- start
+          pm2 save
+        "
+
+        # Clean old releases (keep last 5)
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          cd /opt/web-next-client
+          ls -1dt releases/* 2>/dev/null | tail -n +6 | xargs rm -rf || true
+        "
+
+    - name: Deployment complete
+      run: echo "✅ Next.js deployed successfully! Release ${GITHUB_SHA:0:8}"
