@@ -1,4 +1,4 @@
-name: Deploy crmsandiasoft Next.js Client to VPS
+name: Deploy crmsandiasoft Next.js (Standalone)
 
 on:
   push:
@@ -9,13 +9,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
-        node-version: '20'
+        node-version: 20
+
+    # Install & build on GitHub (NOT VPS)
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build standalone app
+      run: npm run build
 
     - name: Prepare SSH
       run: |
@@ -31,55 +36,33 @@ jobs:
         RELEASE_DIR="/opt/crmsandiasoft/releases/${COMMIT_SHORT_SHA}"
 
         # Create release folder
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           mkdir -p ${RELEASE_DIR}
           chown www-data:www-data ${RELEASE_DIR}
-          chmod 775 ${RELEASE_DIR}
         "
 
-        # Upload source files
-        rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-          --exclude node_modules \
-          --exclude .git \
-          --exclude .github \
-          ./ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
+        # Upload ONLY production files
+        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+          .next/standalone \
+          .next/static \
+          public \
+          package.json \
+          ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
 
-        # Set permissions
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          find ${RELEASE_DIR} -type d -exec chmod 775 {} \;
-          find ${RELEASE_DIR} -type f -exec chmod 664 {} \;
-        "
-
-        # Link environment file
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+        # Link env file
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           ln -nfs /opt/crmsandiasoft/.env.production ${RELEASE_DIR}/.env
         "
 
-        # Install + build on VPS
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          cd ${RELEASE_DIR}
-          npm ci
-          npm run build
-        "
-
         # Activate release
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft
           ln -nfs releases/${COMMIT_SHORT_SHA} current
         "
 
-        # Restart Next.js server using PM2
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+        # Restart app
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft/current
-          pm2 reload crmsandiasoft || pm2 start npm --name crmsandiasoft -- start
+          pm2 reload crmsandiasoft || pm2 start server.js --name crmsandiasoft
           pm2 save
         "
-
-        # Clean old releases (keep last 5)
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          cd /opt/crmsandiasoft
-          ls -1dt releases/* 2>/dev/null | tail -n +6 | xargs rm -rf || true
-        "
-
-    - name: Deployment complete
-      run: echo "✅ crmsandiasoft Next.js deployed successfully! Release ${GITHUB_SHA:0:8}"
