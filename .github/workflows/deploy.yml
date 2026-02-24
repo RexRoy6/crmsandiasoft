@@ -28,7 +28,7 @@ jobs:
       run: |
         set -e
         COMMIT_SHORT_SHA=${GITHUB_SHA:0:8}
-        RELEASE_DIR="/opt/web-next-client/releases/${COMMIT_SHORT_SHA}"
+        RELEASE_DIR="/opt/crmsandiasoft/releases/${COMMIT_SHORT_SHA}"
 
         # Create release folder
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
@@ -52,7 +52,7 @@ jobs:
 
         # Link environment file
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          ln -nfs /opt/web-next-client/.env.production ${RELEASE_DIR}/.env
+          ln -nfs /opt/crmsandiasoft/.env.production ${RELEASE_DIR}/.env
         "
 
         # Install + build on VPS
@@ -64,13 +64,13 @@ jobs:
 
         # Activate release
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          cd /opt/web-next-client
+          cd /opt/crmsandiasoft
           ln -nfs releases/${COMMIT_SHORT_SHA} current
         "
 
         # Restart Next.js server using PM2
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          cd /opt/web-next-client/current
+          cd /opt/crmsandiasoft/current
           pm2 delete next-client || true
           pm2 start npm --name next-client -- start
           pm2 save
@@ -78,9 +78,9 @@ jobs:
 
         # Clean old releases (keep last 5)
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
-          cd /opt/web-next-client
+          cd /opt/crmsandiasoft
           ls -1dt releases/* 2>/dev/null | tail -n +6 | xargs rm -rf || true
         "
 
     - name: Deployment complete
-      run: echo "✅ Next.js deployed successfully! Release ${GITHUB_SHA:0:8}"
+      run: echo "✅ crmsandiasoft Next.js deployed successfully! Release ${GITHUB_SHA:0:8}"
