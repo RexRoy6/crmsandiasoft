@@ -58,10 +58,7 @@ jobs:
         # Install + build on VPS
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd ${RELEASE_DIR}
-          mkdir -p /opt/crmsandiasoft/.npm
-          npm config set cache /opt/crmsandiasoft/.npm --global
-          npm ci --unsafe-perm
-          npm run build
+          npm ci
           npm run build
         "
 
