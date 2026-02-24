@@ -58,7 +58,10 @@ jobs:
         # Install + build on VPS
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd ${RELEASE_DIR}
-          npm ci
+          mkdir -p /opt/crmsandiasoft/.npm
+          npm config set cache /opt/crmsandiasoft/.npm --global
+          npm ci --unsafe-perm
+          npm run build
           npm run build
         "
 
@@ -71,8 +74,7 @@ jobs:
         # Restart Next.js server using PM2
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft/current
-          pm2 delete crmsandiasoft || true
-          pm2 start npm --name crmsandiasoft -- start
+          pm2 reload crmsandiasoft || pm2 start npm --name crmsandiasoft -- start
           pm2 save
         "
 
