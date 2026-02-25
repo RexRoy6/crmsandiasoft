@@ -2,10 +2,12 @@ module.exports = {
   apps: [
     {
       name: "crmsandiasoft",
-      script: "standalone/server.js",
+      script: "npm",
+      args: "start",
+      cwd: "/opt/crmsandiasoft/current",
       env: {
-        PORT: 3001,
-        NODE_ENV: "production"
+        NODE_ENV: "production",
+        PORT: 3001
       }
     }
   ]
