@@ -1,4 +1,4 @@
-name: Deploy crmsandiasoft Next.js (Standalone)
+name: Deploy crmsandiasoft Next.js (Full Install)
 
 on:
   push:
@@ -10,17 +10,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 20
-
-    # Install & build on GitHub (NOT VPS)
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build standalone app
-      run: npm run build
 
     - name: Prepare SSH
       run: |
@@ -35,42 +24,47 @@ jobs:
         COMMIT_SHORT_SHA=${GITHUB_SHA:0:8}
         RELEASE_DIR="/opt/crmsandiasoft/releases/${COMMIT_SHORT_SHA}"
 
-        # Create release folder
+        # Create release directory
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           mkdir -p ${RELEASE_DIR}
           chown www-data:www-data ${RELEASE_DIR}
         "
-        # Upload ecosystem file to release root
-        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-          ecosystem.config.js \
-          ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
 
-        # Upload ONLY production files
+        # Upload full source
         rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-          .next/standalone/ \
-          ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/standalone/
-
-        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-          .next/static \
-          public \
-          package.json \
-          ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
+          --exclude node_modules \
+          --exclude .git \
+          --exclude .github \
+          ./ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
 
         # Link env file
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           ln -nfs /opt/crmsandiasoft/.env.production ${RELEASE_DIR}/.env
         "
 
-        # Activate release
+        # Install + build on VPS
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          cd ${RELEASE_DIR}
+          npm ci --production=false
+          npm run build
+        "
+
+        # Switch release
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft
           ln -nfs releases/${COMMIT_SHORT_SHA} current
         "
 
-        # Restart app using ecosystem config
+        # Restart app
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft/current
           pm2 delete crmsandiasoft || true
           pm2 start ecosystem.config.js
           pm2 save
+        "
+
+        # Keep only last 5 releases
+        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+          cd /opt/crmsandiasoft
+          ls -1dt releases/* | tail -n +6 | xargs rm -rf || true
         "
