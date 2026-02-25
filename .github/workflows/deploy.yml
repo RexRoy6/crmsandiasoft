@@ -60,9 +60,9 @@ jobs:
           ln -nfs releases/${COMMIT_SHORT_SHA} current
         "
 
-        # Restart app
-        ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
+        # Restart app using ecosystem config
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft/current
-          pm2 reload crmsandiasoft || pm2 start server.js --name crmsandiasoft
+          pm2 restart crmsandiasoft || pm2 start ecosystem.config.js
           pm2 save
         "
