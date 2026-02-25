@@ -2,13 +2,14 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const AdminLogin: React.FC = () => {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -19,103 +20,122 @@ const AdminLogin: React.FC = () => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }), // remember puede enviarse si el API lo soporta
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.message || "Credenciales inválidas");
+        setError(data.message || "Invalid credentials");
         return;
       }
 
-      // La cookie de sesión se establece en el servidor
       router.push("/admin");
-    } catch (err) {
-      setError("Error de conexión. Intente nuevamente.");
+    } catch {
+      setError("Connection error. Please try again.");
     }
   };
 
   return (
     <div style={styles.page}>
-      {/* Barra superior */}
-      <header style={styles.header}>
-        <div style={styles.logoContainer}>
-          <div style={styles.logoBox}>C</div>
-          <span style={styles.logoText}>CRM Admin Portal</span>
-        </div>
-        <div style={styles.headerActions}>
-          <button style={styles.linkButton}>Public Site</button>
-          <button style={styles.helpButton}>Help</button>
-        </div>
-      </header>
-
-      {/* Tarjeta de login */}
-      <div style={styles.card}>
-        <div style={styles.lockIcon}>🔒</div>
-        <h2 style={styles.title}>Admin Access</h2>
-        <p style={styles.subtitle}>
-          Sign in to manage your customer relationships
-        </p>
-
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {/* Email */}
-          <label style={styles.label}>Admin Email</label>
-          <input
-            type="email"
-            placeholder="name@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-            required
-          />
-
-          {/* Password + olvido */}
-          <div style={styles.passwordRow}>
-            <label style={styles.label}>Password</label>
-            <button
-              type="button"
-              style={styles.forgotPassword}
-              onClick={() => alert("Funcionalidad no implementada")}
-            >
-              Forgot password?
-            </button>
-          </div>
-
-          <input
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            required
-          />
-
-          {/* Checkbox "Remember me" */}
-          <div style={styles.rememberRow}>
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
+      <div style={styles.container}>
+        {/* LEFT SIDE */}
+        <div style={styles.left}>
+          <div style={styles.brandBox}>
+            <Image
+              src="/sandiasoft.png"
+              alt="CRM Logo"
+              style={{ borderRadius: 13 }}
+              width={150}
+              height={150}
             />
-            <span style={{ marginLeft: 8 }}>Remember this device</span>
           </div>
+          <h1 style={styles.brandTitle}>CRM Corporate System</h1>
+          <p style={styles.brandSubtitle}>
+            Manage customer relationships, contracts, services and operations
+            from a centralized enterprise platform.
+          </p>
+        </div>
 
-          {/* Mensaje de error */}
-          {error && <div style={styles.error}>{error}</div>}
+        {/* RIGHT SIDE */}
+        <div style={styles.right}>
+          <div style={styles.card}>
+            <form onSubmit={handleSubmit} style={styles.form}>
+              <input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={styles.input}
+                required
+              />
 
-          <button type="submit" style={styles.signInButton}>
-            Sign In →
-          </button>
-        </form>
+              <div style={styles.passwordWrapper}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={styles.input}
+                  required
+                />
+                <button
+                  type="button"
+                  style={styles.showButton}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    // Ícono "ojo tachado" (SVG)
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    // Ícono "ojo abierto"
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
 
-        <div style={styles.secureLogin}>SECURE LOGIN</div>
+              {error && <div style={styles.error}>{error}</div>}
 
-        <button style={styles.backButton} onClick={() => router.push("/")}>
-          ← Back to main landing page
-        </button>
+              <button type="submit" style={styles.loginButton}>
+                Log In
+              </button>
+
+              <div style={styles.divider} />
+
+              <button
+                type="button"
+                style={styles.registerButton}
+                onClick={() => alert("Generic registration flow")}
+              >
+                Create New Account
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
 
-      {/* Pie de página */}
+      {/* FOOTER */}
       <footer style={styles.footer}>
         <p>© 2024 CRM Corporate System. All rights reserved.</p>
         <div>
@@ -133,144 +153,115 @@ export default AdminLogin;
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    backgroundColor: "#f4f6f9",
+    backgroundColor: "#f0f2f5",
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
-  },
-  header: {
-    width: "100%",
-    padding: "16px 40px",
-    display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderBottom: "1px solid #e5e7eb",
   },
-  logoContainer: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
-  logoBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 6,
-    backgroundColor: "#2563eb",
-    color: "#fff",
+  container: {
+    flex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
+    gap: "120px",
+    padding: "40px",
   },
-  logoText: {
-    fontWeight: 600,
-    fontSize: 16,
+  left: {
+    maxWidth: 500,
   },
-  headerActions: {
-    display: "flex",
-    gap: "10px",
-  },
-  linkButton: {
-    background: "none",
-    border: "none",
-    color: "#374151",
-    cursor: "pointer",
-  },
-  helpButton: {
-    backgroundColor: "#2563eb",
+  brandBox: {
+    width: 160,
+    height: 160,
+    borderRadius: 14,
+    backgroundColor: "#1877f2",
     color: "#fff",
-    border: "none",
-    padding: "6px 12px",
-    borderRadius: 6,
-    cursor: "pointer",
+    fontSize: 36,
+    fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    marginLeft: "auto",
+    marginRight: "auto",
+  },
+  brandTitle: {
+    fontSize: 42,
+    fontWeight: 700,
+    margin: 0,
+    color: "#1c1e21",
+  },
+  brandSubtitle: {
+    fontSize: 20,
+    color: "#606770",
+    marginTop: 16,
+  },
+  right: {
+    width: 400,
   },
   card: {
-    marginTop: 60,
     backgroundColor: "#ffffff",
-    padding: 40,
-    borderRadius: 12,
-    width: 400,
-    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-    textAlign: "center",
-  },
-  lockIcon: {
-    fontSize: 30,
-    marginBottom: 10,
-  },
-  title: {
-    margin: 0,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginBottom: 20,
+    padding: 24,
+    borderRadius: 10,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: 12,
-    textAlign: "left",
+    gap: 14,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: 500,
+  passwordWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
   },
   input: {
-    padding: "10px",
+    padding: "14px",
+    paddingRight: "44px", // espacio para el botón
     borderRadius: 6,
-    border: "1px solid #d1d5db",
-    fontSize: 14,
+    border: "1px solid #dddfe2",
+    fontSize: 16,
+    width: "100%",
+    boxSizing: "border-box",
   },
-  passwordRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  forgotPassword: {
+  showButton: {
+    position: "absolute",
+    right: 10,
     background: "none",
     border: "none",
-    color: "#2563eb",
-    fontSize: 12,
+    color: "#606770",
     cursor: "pointer",
-  },
-  rememberRow: {
     display: "flex",
     alignItems: "center",
-    fontSize: 13,
+    justifyContent: "center",
+    width: 32,
+    height: 32,
+    borderRadius: 4,
+    transition: "background 0.2s",
   },
-  signInButton: {
-    marginTop: 10,
-    padding: "12px",
-    backgroundColor: "#2563eb",
+  loginButton: {
+    marginTop: 4,
+    padding: "14px",
+    backgroundColor: "#1877f2",
     color: "#fff",
     border: "none",
-    borderRadius: 8,
+    borderRadius: 6,
+    fontSize: 16,
     fontWeight: 600,
     cursor: "pointer",
   },
-  secureLogin: {
-    marginTop: 20,
-    fontSize: 11,
-    color: "#9ca3af",
+  divider: {
+    height: 1,
+    backgroundColor: "#dadde1",
+    margin: "10px 0",
   },
-  backButton: {
-    marginTop: 10,
-    background: "none",
+  registerButton: {
+    padding: "14px",
+    backgroundColor: "#42b72a",
+    color: "#fff",
     border: "none",
-    color: "#6b7280",
-    fontSize: 13,
-    cursor: "pointer",
-  },
-  footer: {
-    marginTop: "auto",
-    padding: 20,
-    textAlign: "center",
-    fontSize: 12,
-    color: "#9ca3af",
-  },
-  footerLink: {
-    margin: "0 8px",
+    borderRadius: 6,
+    fontSize: 16,
+    fontWeight: 600,
     cursor: "pointer",
   },
   error: {
@@ -281,5 +272,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     textAlign: "center",
     border: "1px solid #fecaca",
+  },
+  footer: {
+    padding: 20,
+    textAlign: "center",
+    fontSize: 12,
+    color: "#8a8d91",
+  },
+  footerLink: {
+    margin: "0 8px",
+    cursor: "pointer",
   },
 };
