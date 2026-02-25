@@ -40,10 +40,13 @@ jobs:
           mkdir -p ${RELEASE_DIR}
           chown www-data:www-data ${RELEASE_DIR}
         "
+        # Upload ecosystem file to release root
+        rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
+          ecosystem.config.js \
+          ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/
 
         # Upload ONLY production files
         rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-          ecosystem.config.js \
           .next/standalone/ \
           ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:${RELEASE_DIR}/standalone/
 
