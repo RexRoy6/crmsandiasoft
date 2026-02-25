@@ -70,6 +70,7 @@ jobs:
         # Restart app using ecosystem config
         ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "
           cd /opt/crmsandiasoft/current
-          pm2 start ecosystem.config.js --update-env
+          pm2 delete crmsandiasoft || true
+          pm2 start ecosystem.config.js
           pm2 save
-          "
+        "
