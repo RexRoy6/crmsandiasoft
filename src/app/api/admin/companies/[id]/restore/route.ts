@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 
 
 /* ---------- reactivar compañia desactivada ---------- */
-export async function DELETE(
+export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
