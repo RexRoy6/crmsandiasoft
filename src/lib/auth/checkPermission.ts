@@ -1,23 +1,29 @@
-import { match } from "path-to-regexp";
-import { RBAC_CONFIG } from "./rbacConfig";
-import { UserRole } from "@/db/schema";
+import { match } from "path-to-regexp"
+import { RBAC_CONFIG } from "./rbacConfig"
+import { UserRole } from "@/db/schema"
 
 export function checkPermission(
   pathname: string,
   method: string,
-  role: UserRole,
+  role: UserRole
 ) {
   for (const route of RBAC_CONFIG) {
-    const isMatch = match(route.pattern)(pathname);
+    const matcher = match(route.pattern, {
+      decode: decodeURIComponent
+    })
 
-    if (!isMatch) continue;
+    const result = matcher(pathname)
 
-    const allowedRoles = route.methods[method];
+    if (!result) continue
 
-    if (!allowedRoles) return true;
+    const allowedRoles = route.methods[method]
 
-    return allowedRoles.includes(role);
+    // si la ruta existe pero el método no está definido → DENEGAR
+    if (!allowedRoles) return false
+
+    return allowedRoles.includes(role)
   }
 
-  return true;
+  // si no hay regla → DENEGAR (secure by default)
+  return false
 }

@@ -15,8 +15,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  /* ---------- leer token desde cookie ---------- */
-  const token = req.cookies.get("auth_token")?.value
+  /* ---------- cookie OR Authorization header ---------- */
+  const cookieToken = req.cookies.get("auth_token")?.value
+
+  const authHeader = req.headers.get("authorization")
+  const headerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : null
+
+  const token = cookieToken || headerToken
 
   if (!token) {
     return NextResponse.json(
@@ -42,15 +49,16 @@ export async function middleware(req: NextRequest) {
       )
     }
 
-    /* ---------- inyectar headers para backend ---------- */
+    /* ---------- inyectar headers ---------- */
     const requestHeaders = new Headers(req.headers)
 
     requestHeaders.set("x-user-id", String(payload.userId))
-    requestHeaders.set(
-      "x-company-id",
-      payload.companyId ? String(payload.companyId) : ""
-    )
     requestHeaders.set("x-role", String(payload.role))
+
+    // ✅ SOLO enviar companyId si existe (admin puede ser null)
+    if (payload.companyId !== null) {
+      requestHeaders.set("x-company-id", String(payload.companyId))
+    }
 
     return NextResponse.next({
       request: { headers: requestHeaders }
@@ -64,7 +72,8 @@ export async function middleware(req: NextRequest) {
   }
 }
 
+console.log("EDGE JWT_SECRET:", process.env.JWT_SECRET)
+
 export const config = {
-  matcher: [
-    "/api/:path*"]
+  matcher: ["/api/:path*"]
 }
