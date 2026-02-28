@@ -6,7 +6,7 @@ import { isNull } from "drizzle-orm"
 /* ---------- GET: solo activas ---------- */
 export async function GET() {
   try {
-    await requireAuth({ roles: ["admin"] })
+   // await requireAuth({ roles: ["admin"] })
 
     const data = await db
       .select()
@@ -23,7 +23,7 @@ export async function GET() {
 /* ---------- POST: crear ---------- */
 export async function POST(req: Request) {
   try {
-    await requireAuth({ roles: ["admin"] })
+    //await requireAuth({ roles: ["admin"] })
 
     const { name } = await req.json()
 

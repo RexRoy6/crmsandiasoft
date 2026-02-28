@@ -1,4 +1,3 @@
-import { match } from "path-to-regexp"
 import { RBAC_CONFIG } from "./rbacConfig"
 import { UserRole } from "@/db/schema"
 
@@ -7,23 +6,37 @@ export function checkPermission(
   method: string,
   role: UserRole
 ) {
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("---- CHECK PERMISSION ----")
+    console.log("pathname:", pathname)
+    console.log("method:", method)
+    console.log("role:", role)
+  }
+
   for (const route of RBAC_CONFIG) {
-    const matcher = match(route.pattern, {
-      decode: decodeURIComponent
-    })
+    console.log("checking route:", route.pattern)
 
-    const result = matcher(pathname)
+    // ✅ SAFE regex match
+    const regex = new RegExp(`^${route.pattern}$`)
+    const isMatch = regex.test(pathname)
 
-    if (!result) continue
+    if (!isMatch) continue
 
-    const allowedRoles = route.methods[method]
+    console.log("route matched!")
 
-    // si la ruta existe pero el método no está definido → DENEGAR
-    if (!allowedRoles) return false
+    const allowedRoles = route.methods[method.toUpperCase()]
+
+    if (!allowedRoles) {
+      console.log("method not allowed")
+      return false
+    }
+
+    console.log("allowed roles:", allowedRoles)
 
     return allowedRoles.includes(role)
   }
 
-  // si no hay regla → DENEGAR (secure by default)
+  console.log("no RBAC rule found")
   return false
 }

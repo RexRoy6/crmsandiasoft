@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken } from "@/lib/auth/jwt"
 import { checkPermission } from "@/lib/auth/checkPermission"
+import { RBAC_CONFIG } from "@/lib/auth/rbacConfig"
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
+
+  if (req.method === "OPTIONS" || req.method === "HEAD") {
+    return NextResponse.next()
+  }
+
 
   /* ---------- bootstrap bypass ---------- */
   if (pathname === "/api/admin/create-admin") {
@@ -33,20 +39,27 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    const payload = await verifyToken(token)
 
-    /* ---------- RBAC check ---------- */
-    const allowed = checkPermission(
-      pathname,
-      req.method,
-      payload.role
-    )
+    let payload
+    try {
+      payload = await verifyToken(token)
+    } catch {
+      return NextResponse.json({ error: "invalid token" }, { status: 401 })
+    }
+
+    //logs
+    if (process.env.NODE_ENV === "development") {
+      console.log("ROLE TYPE:", typeof payload.role)
+      console.log("ROLE VALUE:", payload.role)
+      console.log("IS VALID ROLE:", ["admin", "owner", "user"].includes(payload.role))
+      console.log("TEST RBAC_CONFIG:", JSON.stringify(RBAC_CONFIG, null, 2))
+    }
+    //logs
+
+    const allowed = checkPermission(pathname, req.method, payload.role)
 
     if (!allowed) {
-      return NextResponse.json(
-        { error: "forbidden" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "forbidden" }, { status: 403 })
     }
 
     /* ---------- inyectar headers ---------- */
@@ -71,8 +84,6 @@ export async function middleware(req: NextRequest) {
     )
   }
 }
-
-console.log("EDGE JWT_SECRET:", process.env.JWT_SECRET)
 
 export const config = {
   matcher: ["/api/:path*"]

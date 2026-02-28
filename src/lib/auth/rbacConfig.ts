@@ -7,12 +7,14 @@ export type RbacRoute = {
 
 export const RBAC_CONFIG: RbacRoute[] = [
     {
- pattern: "/api/admin/:path(.*)",
+ pattern: "/api/admin.*",
   methods: {
     GET: ["admin"],
     POST: ["admin"],
     PATCH: ["admin"],
-    DELETE: ["admin"]
+    DELETE: ["admin"],
+    HEAD: ["admin"],      // ⭐ add
+    OPTIONS: ["admin"]    // ⭐ add
   }
 },
   {

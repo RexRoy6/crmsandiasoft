@@ -40,7 +40,6 @@ const token = await signToken({
 })
 
 const test = await verifyToken(token)
-console.log("TOKEN TEST:", test)
 
 const res = NextResponse.json({ success: true, token})
 
