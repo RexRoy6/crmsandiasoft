@@ -1,14 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AdminDashboard() {
   const [companies, setCompanies] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [newCompanyName, setNewCompanyName] = useState("");
   const [creating, setCreating] = useState(false);
+
+  /* ---------- GET CURRENT USER (runs on page load) ---------- */
+  const fetchMe = async () => {
+    try {
+      const res = await fetch("/api/admin/me", {
+        credentials: "include",
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      // if (!res.ok) {
+      //   console.error("Failed to load user:", data.error);
+      //   return;
+      // }
+      if (res.status === 401) {
+        window.location.href = "/login"
+      }
+
+      setUser(data);
+    } catch (err) {
+      console.error("User fetch error", err);
+    }
+  };
 
   /* ---------- GET companies ---------- */
   const fetchCompanies = async () => {
@@ -53,9 +78,7 @@ export default function AdminDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: newCompanyName,
-        }),
+        body: JSON.stringify({ name: newCompanyName }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -66,7 +89,7 @@ export default function AdminDashboard() {
       }
 
       setNewCompanyName("");
-      await fetchCompanies(); // refresh list
+      await fetchCompanies();
     } catch {
       setError("Connection error");
     } finally {
@@ -74,11 +97,26 @@ export default function AdminDashboard() {
     }
   };
 
+  /* ---------- RUN ON PAGE LOAD ---------- */
+  useEffect(() => {
+    fetchMe(); // load user automatically
+  }, []);
+
   return (
     <div style={{ padding: 20 }}>
       <h1>Admin Dashboard</h1>
 
       {error && <div style={{ color: "red" }}>{error}</div>}
+
+      {/* ---------- USER INFO ---------- */}
+      <div style={{ marginBottom: 20 }}>
+        <h2>Current User</h2>
+        {user ? (
+          <pre>{JSON.stringify(user, null, 2)}</pre>
+        ) : (
+          <div>Loading user...</div>
+        )}
+      </div>
 
       {/* ---------- CREATE COMPANY ---------- */}
       <div style={{ marginBottom: 20 }}>
