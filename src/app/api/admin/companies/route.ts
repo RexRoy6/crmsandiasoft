@@ -1,10 +1,23 @@
 import { db } from "@/db"
 import { companies } from "@/db/schema"
 import { isNull } from "drizzle-orm"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 /* ---------- GET: solo activas ---------- */
 export async function GET() {
   try {
+
+    /* ---------- AUTH ---------- */
+    let auth
+    try {
+      auth = await requireAuth({ roles: ["admin"] })
+    } catch {
+      return Response.json(
+        { error: "unauthorized" },
+        { status: 401 }
+      )
+    }
+
 
     const data = await db
       .select()
@@ -25,15 +38,26 @@ export async function POST(req: Request) {
   // Check if valid JSON body exists
   try {
 
+    /* ---------- AUTH ---------- */
+    let auth
+    try {
+      auth = await requireAuth({ roles: ["admin"] })
+    } catch {
+      return Response.json(
+        { error: "unauthorized" },
+        { status: 401 }
+      )
+    }
+
 
     const contentType = req.headers.get("content-type")
 
-if (!contentType?.includes("application/json")) {
-  return Response.json(
-    { error: "Content-Type must be application/json" },
-    { status: 400 }
-  )
-}
+    if (!contentType?.includes("application/json")) {
+      return Response.json(
+        { error: "Content-Type must be application/json" },
+        { status: 400 }
+      )
+    }
 
     body = await req.json()
   } catch {
