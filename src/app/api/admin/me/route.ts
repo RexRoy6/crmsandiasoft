@@ -8,7 +8,8 @@ export async function GET() {
     /* ---------- AUTH ---------- */
     let auth
     try {
-      auth = await requireAuth()
+      //auth = await requireAuth()
+      auth = await requireAuth({ roles: ["admin"] })
     } catch {
       return Response.json(
         { error: "unauthorized" },
