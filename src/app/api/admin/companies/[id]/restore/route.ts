@@ -3,26 +3,76 @@ import { companies } from "@/db/schema"
 import { requireAuth } from "@/lib/auth/requireAuth"
 import { eq } from "drizzle-orm"
 
-
-
-/* ---------- reactivar compañia desactivada ---------- */
+/* ---------- restore soft deleted company ---------- */
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth({ roles: ["admin"] })
+    /* ---------- AUTH ---------- */
+    let auth
+    try {
+      auth = await requireAuth({ roles: ["admin"] })
+    } catch {
+      return Response.json(
+        { error: "unauthorized" },
+        { status: 401 }
+      )
+    }
 
-    await db.update(companies)
-      .set({ deletedAt: null })
-      .where(eq(companies.id, Number(params.id)))
+    /* ---------- unwrap params ---------- */
+    const { id } = await params
+    const companyId = Number(id)
 
-    return Response.json({
-      success: true,
-      message: "company re-activated"
+    /* ---------- validate id ---------- */
+    if (Number.isNaN(companyId)) {
+      return Response.json(
+        { error: "invalid id" },
+        { status: 400 }
+      )
+    }
+
+    /* ---------- check if company exists ---------- */
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, companyId)
     })
 
-  } catch {
-    return Response.json({ error: "forbidden" }, { status: 403 })
+    if (!company) {
+      return Response.json(
+        { error: "company not found" },
+        { status: 404 }
+      )
+    }
+
+    /* ---------- check if already active ---------- */
+    if (company.deletedAt === null) {
+      return Response.json(
+        { error: "company already active" },
+        { status: 409 } // conflict
+      )
+    }
+
+    /* ---------- restore company ---------- */
+    await db
+      .update(companies)
+      .set({ deletedAt: null })
+      .where(eq(companies.id, companyId))
+
+    /* ---------- success ---------- */
+    return Response.json(
+      {
+        success: true,
+        message: "company re-activated"
+      },
+      { status: 200 }
+    )
+
+  } catch (error) {
+    console.error(error)
+
+    return Response.json(
+      { error: "internal server error" },
+      { status: 500 }
+    )
   }
 }
