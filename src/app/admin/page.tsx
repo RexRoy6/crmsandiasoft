@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
   const [companies, setCompanies] = useState<any[]>([]);
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
 
   const [newCompanyName, setNewCompanyName] = useState("");
   const [creating, setCreating] = useState(false);
+  const router = useRouter();
 
   /* ---------- GET CURRENT USER (runs on page load) ---------- */
   const fetchMe = async () => {
@@ -19,17 +21,14 @@ export default function AdminDashboard() {
         credentials: "include",
       });
 
-      const data = await res.json().catch(() => ({}));
-
-      // if (!res.ok) {
-      //   console.error("Failed to load user:", data.error);
-      //   return;
-      // }
       if (res.status === 401) {
-        window.location.href = "/login"
+        router.replace("/")
+        return
       }
 
+      const data = await res.json().catch(() => ({}));
       setUser(data);
+
     } catch (err) {
       console.error("User fetch error", err);
     }
@@ -97,6 +96,26 @@ export default function AdminDashboard() {
     }
   };
 
+  /* ---------- LOGOUT ---------- */
+  const logout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setError("Failed to logout");
+        return;
+      }
+
+      // redirect to home after logout
+      router.replace("/");
+    } catch {
+      setError("Connection error");
+    }
+  };
+
   /* ---------- RUN ON PAGE LOAD ---------- */
   useEffect(() => {
     fetchMe(); // load user automatically
@@ -105,6 +124,11 @@ export default function AdminDashboard() {
   return (
     <div style={{ padding: 20 }}>
       <h1>Admin Dashboard</h1>
+      <div style={{ marginBottom: 20 }}>
+        <button onClick={logout}>
+          Logout
+        </button>
+      </div>
 
       {error && <div style={{ color: "red" }}>{error}</div>}
 

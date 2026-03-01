@@ -24,6 +24,7 @@ export async function GET() {
       .select({
         id: users.id,
         email: users.email,
+        role: users.role,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       })
