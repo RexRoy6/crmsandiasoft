@@ -109,6 +109,8 @@ export default function AdminDashboard() {
         return;
       }
 
+      setUser(null)
+      setCompanies([])
       // redirect to home after logout
       router.replace("/");
     } catch {
