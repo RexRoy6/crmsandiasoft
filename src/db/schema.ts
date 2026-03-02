@@ -19,13 +19,22 @@ const baseColumns = {
 }
 
 
+// contracts.status
+export const CONTRACT_STATUS = [
+  "draft",
+  "active",
+  "cancelled",
+  "completed"
+] as const
+
+export type ContractStatus = typeof CONTRACT_STATUS[number]
+export const contractStatusEnum = mysqlEnum("status", CONTRACT_STATUS)
+
 /* ---------- USER ROLES (single source of truth) ---------- */
 
 export const USER_ROLES = ["admin", "owner", "user"] as const
 
 export type UserRole = typeof USER_ROLES[number]
-
-
 
 /* ---------- USER ROLES ENUM DB ---------- */
 
@@ -52,7 +61,7 @@ export const users = mysqlTable("users", {
   // ✅ usar USER_ROLES directamente
   role: mysqlEnum("role", USER_ROLES).notNull(),
 
-  email: varchar("email",{length:255}).notNull(),
+  email: varchar("email",{length:255}).notNull().unique(),
 
   passwordHash: varchar("password_hash",{length:255}).notNull(),
 
@@ -74,6 +83,10 @@ export const clients = mysqlTable("clients", {
   userId: bigint("user_id",{mode:"number"})
     .references(()=>users.id),
 
+  name: varchar("name",{length:255}).notNull(),
+phone: varchar("phone",{length:50}).notNull(),
+email: varchar("email",{length:255}).notNull().unique(),
+
   ...baseColumns
 }, (table)=>({
   companyIdx: index("clients_company_idx").on(table.companyId),
@@ -89,18 +102,23 @@ export const services = mysqlTable("services", {
     .notNull()
     .references(()=>companies.id,{ onDelete:"cascade" }),
 
+  name: varchar("name",{length:255}).notNull(),
+  description: varchar("description",{length:500}),
+
   stockTotal: int("stock_total").notNull(),
   priceBase: decimal("price_base",{precision:10,scale:2}).notNull(),
 
   ...baseColumns
 }, (table)=>({
-  companyIdx: index("services_company_idx").on(table.companyId)
+  companyIdx: index("services_company_idx").on(table.companyId),
+  nameIdx: index("services_name_idx").on(table.name)
 }))
 
 /* ---------- CONTRACTS ---------- */
 
 export const contracts = mysqlTable("contracts", {
   id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  eventName: varchar("event_name",{length:255}).notNull(),
 
   companyId: bigint("company_id",{mode:"number"})
     .notNull()
@@ -111,14 +129,17 @@ export const contracts = mysqlTable("contracts", {
     .references(()=>clients.id),
 
   eventDate: date("event_date").notNull(),
-  status: varchar("status",{length:50}).notNull(),
+    status: contractStatusEnum.notNull(),
 
   totalAmount: decimal("total_amount",{precision:12,scale:2}).notNull(),
 
   ...baseColumns
 }, (table)=>({
   companyIdx: index("contracts_company_idx").on(table.companyId),
-  clientIdx: index("contracts_client_idx").on(table.clientId)
+  clientIdx: index("contracts_client_idx").on(table.clientId),
+  companyEventDateIdx: index("contracts_company_event_date_idx")
+    .on(table.companyId, table.eventDate),
+  statusIdx: index("contracts_status_idx").on(table.status)
 }))
 
 /* ---------- CONTRACT ITEMS ---------- */
@@ -135,6 +156,7 @@ export const contractItems = mysqlTable("contract_items", {
     .references(()=>services.id),
 
   quantity: int("quantity").notNull(),
+  unitPrice: decimal("unit_price",{precision:10,scale:2}).notNull(),
 
   ...baseColumns
 })
@@ -149,6 +171,8 @@ export const payments = mysqlTable("payments", {
     .references(()=>contracts.id,{ onDelete:"cascade" }),
 
   amount: decimal("amount",{precision:12,scale:2}).notNull(),
+  currency: mysqlEnum("currency", ["MXN","USD"]).notNull(),
+  paymentMethod: varchar("payment_method",{length:50}),
 
   ...baseColumns
 })
