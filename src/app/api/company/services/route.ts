@@ -18,7 +18,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
 
-    /* ---------- validate ---------- */
     const parsed = createServiceSchema.safeParse(body)
 
     if (!parsed.success) {
@@ -28,13 +27,24 @@ export async function POST(req: Request) {
       )
     }
 
-    /* ---------- create ---------- */
     const result = await createService(parsed.data)
 
     return Response.json(result, { status: 201 })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
+
+    /* ---------- DUPLICATE SERVICE ---------- */
+    if (
+      error?.cause?.code === "ER_DUP_ENTRY" ||
+      error?.code === "ER_DUP_ENTRY"
+    ) {
+      return Response.json(
+        { error: "Service with this name already exists" },
+        { status: 409 }
+      )
+    }
+
     return Response.json(
       { error: "internal server error" },
       { status: 500 }
