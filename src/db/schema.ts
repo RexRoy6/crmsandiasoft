@@ -7,7 +7,8 @@ import {
   date,
   timestamp,
   index,
-   mysqlEnum
+  mysqlEnum,
+  uniqueIndex
 } from "drizzle-orm/mysql-core"
 
 /* ---------- BASE COLUMNS (audit + soft delete) ---------- */
@@ -111,7 +112,9 @@ export const services = mysqlTable("services", {
   ...baseColumns
 }, (table)=>({
   companyIdx: index("services_company_idx").on(table.companyId),
-  nameIdx: index("services_name_idx").on(table.name)
+  nameIdx: index("services_name_idx").on(table.name),
+  uniqueServicePerCompany: uniqueIndex("services_company_name_unique")
+    .on(table.companyId, table.name)
 }))
 
 /* ---------- CONTRACTS ---------- */
