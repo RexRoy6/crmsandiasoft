@@ -22,6 +22,20 @@
       "when": 1771782409757,
       "tag": "0002_sharp_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1772418669284,
+      "tag": "0003_typical_night_nurse",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1772427140915,
+      "tag": "0004_optimal_the_call",
+      "breakpoints": true
     }
   ]
 }
