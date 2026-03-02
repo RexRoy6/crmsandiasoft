@@ -37,6 +37,11 @@ export async function middleware(req: NextRequest) {
       { status: 401 }
     )
   }
+//implementar esto despues
+//   if (!token && pathname.startsWith("/admin")) {
+//   return NextResponse.redirect(new URL("/", req.url))
+// }
+
 
   try {
 

@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm"
+import { and, eq, isNull } from "drizzle-orm"
 import { db } from "@/db"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
 
@@ -26,15 +26,32 @@ export async function tenantDb() {
   return {
     /* ---------- SELECT ---------- */
     findMany(table: any, extraWhere?: any) {
-      return db.select().from(table).where(buildWhere(table, extraWhere))
+      const baseWhere = isNull(table.deletedAt)
+
+      return db
+        .select()
+        .from(table)
+        .where(
+          extraWhere
+            ? and(baseWhere, buildWhere(table, extraWhere))
+            : baseWhere
+        )
     },
 
     /* ---------- FIND ONE ---------- */
     findFirst(table: any, extraWhere?: any) {
-      return db.select()
+      const baseWhere = isNull(table.deletedAt)
+
+      return db
+        .select()
         .from(table)
-        .where(buildWhere(table, extraWhere))
+        .where(
+          extraWhere
+            ? and(baseWhere, buildWhere(table, extraWhere))
+            : baseWhere
+        )
         .limit(1)
+        .then((rows) => rows[0] ?? null)
     },
 
     /* ---------- INSERT ---------- */
