@@ -37,6 +37,17 @@ export async function tenantDb() {
             : baseWhere
         )
     },
+    /* ---------- SELECT (including soft deleted) ---------- */
+findManyRaw(table: any, extraWhere?: any) {
+  return db
+    .select()
+    .from(table)
+    .where(
+      extraWhere
+        ? buildWhere(table, extraWhere)
+        : undefined
+    )
+},
 
     /* ---------- FIND ONE ---------- */
     findFirst(table: any, extraWhere?: any) {
@@ -53,6 +64,19 @@ export async function tenantDb() {
         .limit(1)
         .then((rows) => rows[0] ?? null)
     },
+    /* ---------- FIND ONE (including soft deleted) ---------- */
+findFirstRaw(table: any, extraWhere?: any) {
+  return db
+    .select()
+    .from(table)
+    .where(
+      extraWhere
+        ? buildWhere(table, extraWhere)
+        : undefined
+    )
+    .limit(1)
+    .then((rows) => rows[0] ?? null)
+},
 
     /* ---------- INSERT ---------- */
     insert(table: any, values: any) {

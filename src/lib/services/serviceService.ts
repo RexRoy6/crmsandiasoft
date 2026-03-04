@@ -22,7 +22,7 @@ export async function createService(data: {
   const tdb = await tenantDb()
 
   /* ---------- insert ---------- */
-  const [result] = await tdb.insert(services,data)
+  const [result] = await tdb.insert(services, data)
 
   const insertId = result.insertId
 
@@ -37,22 +37,40 @@ export async function createService(data: {
 
 export async function getCompanyServices() {
   const tdb = await tenantDb()
-  return tdb.findMany(services)
+  return tdb.findManyRaw(services)
 }
 
-export async function getCompanyService(id: number){
+export async function getCompanyService(id: number) {
   const tdb = await tenantDb()
-    return tdb.findFirst(services,
+  return tdb.findFirst(services,
     eq(services.id, id))
-  
+
 }
 
-export async function updateService(id: number, data: UpdateServiceInput) {
+export async function updateService(
+  id: number,
+  data: UpdateServiceInput
+) {
   const tdb = await tenantDb()
 
-  return tdb.update(
+  /* check exists */
+  const existing = await tdb.findFirst(
+    services,
+    eq(services.id, id)
+  )
+
+  if (!existing) return null
+
+  /* update */
+  await tdb.update(
     services,
     data,
+    eq(services.id, id)
+  )
+
+  /* return updated */
+  return tdb.findFirst(
+    services,
     eq(services.id, id)
   )
 }
@@ -60,9 +78,36 @@ export async function updateService(id: number, data: UpdateServiceInput) {
 export async function deleteService(id: number) {
   const tdb = await tenantDb()
 
-  return tdb.update(
+  const existing = await tdb.findFirst(
+    services,
+    eq(services.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
     services,
     { deletedAt: new Date() },
     eq(services.id, id)
   )
+
+  return true
+}
+export async function reactivateService(id: number) {
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    services,
+    eq(services.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    services,
+    { deletedAt: null },
+    eq(services.id, id)
+  )
+
+  return true
 }
