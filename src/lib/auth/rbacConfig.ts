@@ -48,11 +48,11 @@ export const RBAC_CONFIG: RbacRoute[] = [
       PATCH: ["admin", "owner"]
     }
   },
-  //rutas para owner
+  //rutas para negocios, solo puede modificar owner y ver admin
    {
     pattern: "/api/company.*",
     methods: {
-      GET: ["owner"],
+      GET: ["admin","owner"],
       POST: ["owner"]
     }
   }
