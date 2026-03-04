@@ -53,7 +53,9 @@ export const RBAC_CONFIG: RbacRoute[] = [
     pattern: "/api/company.*",
     methods: {
       GET: ["admin","owner"],
-      POST: ["owner"]
+      POST: ["owner"],
+      PATCH: ["owner"],
+      DELETE: ["owner"]
     }
   }
 ]
