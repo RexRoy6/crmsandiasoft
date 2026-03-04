@@ -40,6 +40,13 @@ export async function getCompanyServices() {
   return tdb.findMany(services)
 }
 
+export async function getCompanyService(id: number){
+  const tdb = await tenantDb()
+    return tdb.findFirst(services,
+    eq(services.id, id))
+  
+}
+
 export async function updateService(id: number, data: UpdateServiceInput) {
   const tdb = await tenantDb()
 
