@@ -45,8 +45,8 @@ export const userRoleEnum = mysqlEnum("user_role", USER_ROLES)
 /* ---------- COMPANIES ---------- */
 
 export const companies = mysqlTable("companies", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
-  name: varchar("name",{length:255}).notNull(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull(),
   ...baseColumns
 })
 
@@ -54,20 +54,20 @@ export const companies = mysqlTable("companies", {
 /* ---------- USERS ---------- */
 
 export const users = mysqlTable("users", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"})
-    .references(()=>companies.id,{ onDelete:"cascade" }),
+  companyId: bigint("company_id", { mode: "number" })
+    .references(() => companies.id, { onDelete: "cascade" }),
 
   // ✅ usar USER_ROLES directamente
   role: mysqlEnum("role", USER_ROLES).notNull(),
 
-  email: varchar("email",{length:255}).notNull().unique(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
 
-  passwordHash: varchar("password_hash",{length:255}).notNull(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
 
   ...baseColumns
-}, (table)=>({
+}, (table) => ({
   companyIdx: index("users_company_idx").on(table.companyId),
   emailIdx: index("users_email_idx").on(table.email)
 }))
@@ -75,21 +75,21 @@ export const users = mysqlTable("users", {
 /* ---------- CLIENTS ---------- */
 
 export const clients = mysqlTable("clients", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"})
+  companyId: bigint("company_id", { mode: "number" })
     .notNull()
-    .references(()=>companies.id,{ onDelete:"cascade" }),
+    .references(() => companies.id, { onDelete: "cascade" }),
 
-  userId: bigint("user_id",{mode:"number"})
-    .references(()=>users.id),
+  userId: bigint("user_id", { mode: "number" })
+    .references(() => users.id),
 
-  name: varchar("name",{length:255}).notNull(),
-phone: varchar("phone",{length:50}).notNull(),
-email: varchar("email",{length:255}).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
 
   ...baseColumns
-}, (table)=>({
+}, (table) => ({
   companyIdx: index("clients_company_idx").on(table.companyId),
   userIdx: index("clients_user_idx").on(table.userId)
 }))
@@ -97,69 +97,120 @@ email: varchar("email",{length:255}).notNull().unique(),
 /* ---------- SERVICES ---------- */
 
 export const services = mysqlTable("services", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"})
+  companyId: bigint("company_id", { mode: "number" })
     .notNull()
-    .references(()=>companies.id,{ onDelete:"cascade" }),
+    .references(() => companies.id, { onDelete: "cascade" }),
 
-  name: varchar("name",{length:255}).notNull(),
-  description: varchar("description",{length:500}),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: varchar("description", { length: 500 }),
 
   stockTotal: int("stock_total").notNull(),
-  priceBase: decimal("price_base",{precision:10,scale:2}).notNull(),
+  priceBase: decimal("price_base", { precision: 10, scale: 2 }).notNull(),
 
   ...baseColumns
-}, (table)=>({
+}, (table) => ({
   companyIdx: index("services_company_idx").on(table.companyId),
   nameIdx: index("services_name_idx").on(table.name),
   uniqueServicePerCompany: uniqueIndex("services_company_name_unique")
     .on(table.companyId, table.name)
 }))
 
+
+// events
+export const events = mysqlTable("events", {
+
+  id: bigint("id", { mode: "number" })
+    .primaryKey()
+    .autoincrement(),
+
+  companyId: bigint("company_id", { mode: "number" })
+    .notNull()
+    .references(() => companies.id, { onDelete: "cascade" }),
+
+  clientId: bigint("client_id", { mode: "number" })
+    .notNull()
+    .references(() => clients.id, { onDelete: "cascade" }),
+
+  name: varchar("name", { length: 255 }).notNull(),
+
+  eventDate: date("event_date").notNull(),
+
+  location: varchar("location", { length: 255 }),
+
+  notes: varchar("notes", { length: 500 }),
+
+  ...baseColumns
+
+}, (table) => ({
+
+  companyIdx: index("events_company_client_idx")
+    .on(table.companyId, table.clientId),
+
+  clientIdx: index("events_client_idx")
+    .on(table.clientId),
+
+  companyEventDateIdx:
+    index("events_company_event_date_idx")
+      .on(table.companyId, table.eventDate),
+
+
+}))
+
 /* ---------- CONTRACTS ---------- */
 
 export const contracts = mysqlTable("contracts", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
-  eventName: varchar("event_name",{length:255}).notNull(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  companyId: bigint("company_id",{mode:"number"})
+  companyId: bigint("company_id", { mode: "number" })
     .notNull()
-    .references(()=>companies.id,{ onDelete:"cascade" }),
+    .references(() => companies.id, { onDelete: "cascade" }),
 
-  clientId: bigint("client_id",{mode:"number"})
+  clientId: bigint("client_id", { mode: "number" })
     .notNull()
-    .references(()=>clients.id),
+    .references(() => clients.id),
 
-  eventDate: date("event_date").notNull(),
-    status: contractStatusEnum.notNull(),
+  eventId: bigint("event_id", { mode: "number" })
+    .notNull()
+    .references(() => events.id),
 
-  totalAmount: decimal("total_amount",{precision:12,scale:2}).notNull(),
+  status: contractStatusEnum.notNull(),
+
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
 
   ...baseColumns
-}, (table)=>({
-  companyIdx: index("contracts_company_idx").on(table.companyId),
-  clientIdx: index("contracts_client_idx").on(table.clientId),
-  companyEventDateIdx: index("contracts_company_event_date_idx")
-    .on(table.companyId, table.eventDate),
-  statusIdx: index("contracts_status_idx").on(table.status)
+}, (table) => ({
+
+  companyIdx: index("contracts_company_idx")
+    .on(table.companyId),
+
+  clientIdx: index("contracts_client_idx")
+    .on(table.clientId),
+
+  eventIdx: index("contracts_event_idx")
+    .on(table.eventId),
+
+  statusIdx: index("contracts_status_idx")
+    .on(table.status)
+
 }))
 
 /* ---------- CONTRACT ITEMS ---------- */
 
 export const contractItems = mysqlTable("contract_items", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  contractId: bigint("contract_id",{mode:"number"})
+  contractId: bigint("contract_id", { mode: "number" })
     .notNull()
-    .references(()=>contracts.id,{ onDelete:"cascade" }),
+    .references(() => contracts.id, { onDelete: "cascade" }),
 
-  serviceId: bigint("service_id",{mode:"number"})
+  serviceId: bigint("service_id", { mode: "number" })
     .notNull()
-    .references(()=>services.id),
+    .references(() => services.id),
 
   quantity: int("quantity").notNull(),
-  unitPrice: decimal("unit_price",{precision:10,scale:2}).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
 
   ...baseColumns
 })
@@ -167,15 +218,15 @@ export const contractItems = mysqlTable("contract_items", {
 /* ---------- PAYMENTS ---------- */
 
 export const payments = mysqlTable("payments", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  contractId: bigint("contract_id",{mode:"number"})
+  contractId: bigint("contract_id", { mode: "number" })
     .notNull()
-    .references(()=>contracts.id,{ onDelete:"cascade" }),
+    .references(() => contracts.id, { onDelete: "cascade" }),
 
-  amount: decimal("amount",{precision:12,scale:2}).notNull(),
-  currency: mysqlEnum("currency", ["MXN","USD"]).notNull(),
-  paymentMethod: varchar("payment_method",{length:50}),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: mysqlEnum("currency", ["MXN", "USD"]).notNull(),
+  paymentMethod: varchar("payment_method", { length: 50 }),
 
   ...baseColumns
 })
@@ -183,11 +234,11 @@ export const payments = mysqlTable("payments", {
 /* ---------- REFUNDS ---------- */
 
 export const refunds = mysqlTable("refunds", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  paymentId: bigint("payment_id",{mode:"number"})
+  paymentId: bigint("payment_id", { mode: "number" })
     .notNull()
-    .references(()=>payments.id,{ onDelete:"cascade" }),
+    .references(() => payments.id, { onDelete: "cascade" }),
 
   ...baseColumns
 })
@@ -195,17 +246,17 @@ export const refunds = mysqlTable("refunds", {
 /* ---------- CONTRACT HISTORY ---------- */
 
 export const contractHistory = mysqlTable("contract_history", {
-  id: bigint("id",{mode:"number"}).primaryKey().autoincrement(),
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
-  contractId: bigint("contract_id",{mode:"number"})
+  contractId: bigint("contract_id", { mode: "number" })
     .notNull()
-    .references(()=>contracts.id,{ onDelete:"cascade" }),
+    .references(() => contracts.id, { onDelete: "cascade" }),
 
-  changedBy: bigint("changed_by",{mode:"number"})
-    .references(()=>users.id),
+  changedBy: bigint("changed_by", { mode: "number" })
+    .references(() => users.id),
 
-  oldValue: varchar("old_value",{length:255}),
-  newValue: varchar("new_value",{length:255}),
+  oldValue: varchar("old_value", { length: 255 }),
+  newValue: varchar("new_value", { length: 255 }),
 
   ...baseColumns
 })
