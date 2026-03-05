@@ -2,16 +2,7 @@ import { tenantDb } from "@/lib/db/tenantDb"
 import { services } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import type { UpdateServiceInput } from "@/lib/validations/serviceValidation"
-// export async function createService(data: {
-//   name: string
-//   description?: string
-//   stockTotal: number
-//   priceBase: string
-// }) {
-//   const tdb = await tenantDb()
 
-//   return tdb.insert(services, data)
-// }
 
 export async function createService(data: {
   name: string
