@@ -1,7 +1,7 @@
 import { tenantDb } from "@/lib/db/tenantDb"
 import { clients } from "@/db/schema"
 import { eq } from "drizzle-orm"
-
+import type { UpdateClientInput } from "@/lib/validations/clientValidation"
 
 //createClient
 export async function createClient(data: {
@@ -37,7 +37,7 @@ export async function getClient(id: number) {
 //updateClient
 export async function updateClient(
   id: number,
-  data: any
+  data: UpdateClientInput
 ) {
   const tdb = await tenantDb()
 
@@ -73,6 +73,28 @@ export async function deleteClient(id: number) {
   await tdb.update(
     clients,
     { deletedAt: new Date() },
+    eq(clients.id, id)
+  )
+
+  return true
+}
+
+//reactivar usuario
+//reactivateClient
+export async function reactivateClient(id: number) {
+  const tdb = await tenantDb()
+
+  /* buscar incluso si esta soft deleted */
+  const existing = await tdb.findFirstRaw(
+    clients,
+    eq(clients.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    clients,
+    { deletedAt: null },
     eq(clients.id, id)
   )
 
