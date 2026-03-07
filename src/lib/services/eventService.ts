@@ -1,6 +1,6 @@
 import { tenantDb } from "@/lib/db/tenantDb"
 import { events , clients} from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { and, eq, isNotNull } from "drizzle-orm"
 import { CreateEventInput,UpdateEventInput } from "@/lib/validations/eventValidation"
 /* ---------- CREATE ---------- */
 
@@ -98,7 +98,10 @@ export async function reactivateEvent(id: number) {
 
   const existing = await tdb.findFirstRaw(
     events,
-    eq(events.id, id)
+    and(
+      eq(events.id, id),
+      isNotNull(events.deletedAt)
+    )
   )
 
   if (!existing) return null

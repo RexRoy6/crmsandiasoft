@@ -7,21 +7,27 @@ export async function tenantDb() {
 
   const isGlobalAdmin = role === "admin" && companyId === null
 
-  function buildWhere(table: any, extraWhere?: any) {
-    // admin global → no filtro tenant
-    if (isGlobalAdmin) {
-      return extraWhere ?? undefined
-    }
+function buildWhere(table: any, extraWhere?: any) {
 
-    //  no permitir sin companyId
-    if (!companyId) {
-      throw new Error("Tenant required")
-    }
-
-    return extraWhere
-      ? and(eq(table.companyId, companyId), extraWhere)
-      : eq(table.companyId, companyId)
+  /* admin global → sin filtro tenant */
+  if (isGlobalAdmin) {
+    return extraWhere ?? undefined
   }
+
+  if (!companyId) {
+    throw new Error("Tenant required")
+  }
+
+  /* tabla sin companyId → no aplicar filtro tenant */
+  if (!("companyId" in table)) {
+    return extraWhere ?? undefined
+  }
+
+  /* tabla con companyId */
+  return extraWhere
+    ? and(eq(table.companyId, companyId), extraWhere)
+    : eq(table.companyId, companyId)
+}
 
   return {
     /* ---------- SELECT ---------- */
