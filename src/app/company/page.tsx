@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import Sidebar from "@/app/components/Sidebar";
 import DashboardCard from "@/app/components/DashboardCard";
 import ErrorBox from "@/app/components/ErrorBox";
 
@@ -22,8 +20,6 @@ export default function CompanyDashboard() {
     try {
       setLoading(true);
 
-      /* -------- USER -------- */
-
       const meRes = await fetch("/api/company/me", {
         credentials: "include",
       });
@@ -41,8 +37,6 @@ export default function CompanyDashboard() {
 
       const meData = await meRes.json();
       setUser(meData);
-
-      /* -------- DASHBOARD -------- */
 
       const dashRes = await fetch("/api/company/dashboard", {
         credentials: "include",
@@ -63,99 +57,84 @@ export default function CompanyDashboard() {
     }
   };
 
-  const logout = async () => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    router.replace("/");
-  };
-
   useEffect(() => {
     fetchDashboard();
   }, []);
 
   return (
-    <div style={{ display: "flex", background: "#f5f7fb", minHeight: "100vh" }}>
-      <Sidebar />
+    <div>
+      <h1 style={{ marginBottom: 20 }}>Company Dashboard</h1>
 
-      <div style={{ flex: 1, padding: 40 }}>
-        <h1 style={{ marginBottom: 20 }}>Company Dashboard</h1>
+      
 
-        <button onClick={logout} style={{ marginBottom: 20 }}>
-          Logout
-        </button>
+      {error && <ErrorBox message={error} code={errorCode} />}
 
-        {error && <ErrorBox message={error} code={errorCode} />}
+      {loading && <p>Loading...</p>}
 
-        {loading && <p>Loading...</p>}
+      {!loading && stats && (
+        <>
+          {/* ---------- METRICS ---------- */}
 
-        {!loading && stats && (
-          <>
-            {/* ---------- METRICS ---------- */}
+          <div
+            style={{
+              display: "flex",
+              gap: 20,
+              flexWrap: "wrap",
+              marginBottom: 40,
+            }}
+          >
+            <DashboardCard title="Clients" value={stats.clients} />
 
+            <DashboardCard title="Events" value={stats.events} />
+
+            <DashboardCard
+              title="Active Contracts"
+              value={stats.contractsActive}
+            />
+
+            <DashboardCard
+              title="Revenue This Month"
+              value={`$${stats.revenueThisMonth}`}
+            />
+
+            <DashboardCard
+              title="Pending Payments"
+              value={`$${stats.pendingPayments}`}
+            />
+          </div>
+
+          {/* ---------- USER INFO ---------- */}
+
+          {user && (
             <div
               style={{
-                display: "flex",
-                gap: 20,
-                flexWrap: "wrap",
-                marginBottom: 40,
+                background: "white",
+                padding: 20,
+                borderRadius: 10,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
               }}
             >
-              <DashboardCard title="Clients" value={stats.clients} />
+              <h2>Company Info</h2>
 
-              <DashboardCard title="Events" value={stats.events} />
+              <p>
+                <strong>Email:</strong> {user.email}
+              </p>
 
-              <DashboardCard
-                title="Active Contracts"
-                value={stats.contractsActive}
-              />
+              <p>
+                <strong>Role:</strong> {user.role}
+              </p>
 
-              <DashboardCard
-                title="Revenue This Month"
-                value={`$${stats.revenueThisMonth}`}
-              />
+              <p>
+                <strong>Company:</strong> {user.companyName}
+              </p>
 
-              <DashboardCard
-                title="Pending Payments"
-                value={`$${stats.pendingPayments}`}
-              />
+              <p>
+                <strong>Company ID:</strong> {user.companyId}
+              </p>
             </div>
-
-            {/* ---------- USER INFO ---------- */}
-
-            {user && (
-              <div
-                style={{
-                  background: "white",
-                  padding: 20,
-                  borderRadius: 10,
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-                }}
-              >
-                <h2>Company Info</h2>
-
-                <p>
-                  <strong>Email:</strong> {user.email}
-                </p>
-
-                <p>
-                  <strong>Role:</strong> {user.role}
-                </p>
-
-                <p>
-                  <strong>Company:</strong> {user.companyName}
-                </p>
-
-                <p>
-                  <strong>Company ID:</strong> {user.companyId}
-                </p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
