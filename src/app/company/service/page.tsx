@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ErrorBox from "@/app/components/ErrorBox";
+import Link from "next/link";
 
 export default function ServicesPage() {
     const [services, setServices] = useState<any[]>([]);
@@ -84,70 +85,68 @@ export default function ServicesPage() {
             <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <h1>Services</h1>
                 {showForm && (
-  <div
-    style={{
-      background: "white",
-      padding: 20,
-      borderRadius: 10,
-      marginBottom: 30,
-      boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-    }}
-  >
-    <h3>Create Service</h3>
+                    <div
+                        style={{
+                            background: "white",
+                            padding: 20,
+                            borderRadius: 10,
+                            marginBottom: 30,
+                            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                        }}
+                    >
+                        <h3>Create Service</h3>
 
-    <input
-      placeholder="Name"
-      value={form.name}
-      onChange={(e) =>
-        setForm({ ...form, name: e.target.value })
-      }
-    />
+                        <input
+                            placeholder="Name"
+                            value={form.name}
+                            onChange={(e) =>
+                                setForm({ ...form, name: e.target.value })
+                            }
+                        />
 
-    <br />
+                        <br />
 
-    <textarea
-      placeholder="Description"
-      value={form.description}
-      onChange={(e) =>
-        setForm({ ...form, description: e.target.value })
-      }
-    />
+                        <textarea
+                            placeholder="Description"
+                            value={form.description}
+                            onChange={(e) =>
+                                setForm({ ...form, description: e.target.value })
+                            }
+                        />
 
-    <br />
+                        <br />
 
-    <input
-      type="number"
-      placeholder="Stock"
-      value={form.stockTotal}
-      onChange={(e) =>
-        setForm({ ...form, stockTotal: Number(e.target.value) })
-      }
-    />
+                        <input
+                            type="number"
+                            placeholder="Stock"
+                            value={form.stockTotal}
+                            onChange={(e) =>
+                                setForm({ ...form, stockTotal: Number(e.target.value) })
+                            }
+                        />
 
-    <br />
+                        <br />
 
-    <input
-      placeholder="Base Price"
-      value={form.priceBase}
-      onChange={(e) =>
-        setForm({ ...form, priceBase: e.target.value })
-      }
-    />
+                        <input
+                            placeholder="Base Price"
+                            value={form.priceBase}
+                            onChange={(e) =>
+                                setForm({ ...form, priceBase: e.target.value })
+                            }
+                        />
 
-    <br />
+                        <br />
 
-    <button onClick={createService}>Create</button>
+                        <button onClick={createService}>Create</button>
 
-    <button onClick={() => setShowForm(false)}>Cancel</button>
-  </div>
-)}
+                        <button onClick={() => setShowForm(false)}>Cancel</button>
+                    </div>
+                )}
 
 
                 <button onClick={() => setShowForm(true)}>+ New Service</button>
             </div>
 
-
-            <h1 style={{ marginBottom: 20 }}>Services</h1>
             {error && <ErrorBox message={error} code={errorCode} />}
 
             {loading && <p>Loading services...</p>}
@@ -179,6 +178,10 @@ export default function ServicesPage() {
                             <p>Stock: {service.stockTotal}</p>
 
                             <p>Price: ${service.priceBase}</p>
+
+                            <Link href={`/company/service/${service.id}`}>
+                                <button>Manage</button>
+                            </Link>
 
 
 
