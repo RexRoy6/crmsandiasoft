@@ -33,7 +33,7 @@ export async function getCompanyServices() {
 
 export async function getCompanyService(id: number) {
   const tdb = await tenantDb()
-  return tdb.findFirst(services,
+  return tdb.findFirstRaw(services,
     eq(services.id, id))
 
 }
