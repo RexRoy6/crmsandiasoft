@@ -17,6 +17,7 @@ export default function Sidebar() {
 
       <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <Link href="/company">Home</Link>
+        <Link href="/company/service">Services</Link>
 
         {/* future */}
         {/* <Link href="/company/clients">Clients</Link>
