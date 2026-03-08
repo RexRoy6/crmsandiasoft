@@ -1,40 +1,61 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import Sidebar from "@/app/components/Sidebar";
+import DashboardCard from "@/app/components/DashboardCard";
+import ErrorBox from "@/app/components/ErrorBox";
+
 export default function CompanyDashboard() {
-  const [user, setUser] = useState<any>(null);
-
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
   const router = useRouter();
 
-  /* ---------- GET CURRENT USER ---------- */
+  const [user, setUser] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
 
-  const fetchMe = async () => {
-    setLoading(true);
-    setError("");
+  const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<number | undefined>();
 
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboard = async () => {
     try {
-      const res = await fetch("/api/company/me", {
+      setLoading(true);
+
+      /* -------- USER -------- */
+
+      const meRes = await fetch("/api/company/me", {
         credentials: "include",
       });
 
-      if (res.status === 401) {
+      if (meRes.status === 401) {
         router.replace("/");
         return;
       }
 
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setError(data.error || "Failed to load user");
+      if (!meRes.ok) {
+        setError("Failed to fetch user");
+        setErrorCode(meRes.status);
         return;
       }
 
-      setUser(data);
+      const meData = await meRes.json();
+      setUser(meData);
+
+      /* -------- DASHBOARD -------- */
+
+      const dashRes = await fetch("/api/company/dashboard", {
+        credentials: "include",
+      });
+
+      if (!dashRes.ok) {
+        setError("Failed to fetch dashboard");
+        setErrorCode(dashRes.status);
+        return;
+      }
+
+      const dashData = await dashRes.json();
+      setStats(dashData);
     } catch {
       setError("Connection error");
     } finally {
@@ -42,77 +63,98 @@ export default function CompanyDashboard() {
     }
   };
 
-  /* ---------- LOGOUT ---------- */
-
   const logout = async () => {
-    try {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
 
-      if (!res.ok) {
-        setError("Failed to logout");
-        return;
-      }
-
-      setUser(null);
-
-      router.replace("/");
-    } catch {
-      setError("Connection error");
-    }
+    router.replace("/");
   };
 
-  /* ---------- RUN ON PAGE LOAD ---------- */
-
   useEffect(() => {
-    fetchMe();
+    fetchDashboard();
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Company Dashboard</h1>
+    <div style={{ display: "flex", background: "#f5f7fb", minHeight: "100vh" }}>
+      <Sidebar />
 
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={logout}>Logout</button>
-      </div>
+      <div style={{ flex: 1, padding: 40 }}>
+        <h1 style={{ marginBottom: 20 }}>Company Dashboard</h1>
 
-      {error && <div style={{ color: "red" }}>{error}</div>}
+        <button onClick={logout} style={{ marginBottom: 20 }}>
+          Logout
+        </button>
 
-      {/* ---------- USER INFO ---------- */}
+        {error && <ErrorBox message={error} code={errorCode} />}
 
-      <div style={{ marginBottom: 20 }}>
-        <h2>Current User</h2>
+        {loading && <p>Loading...</p>}
 
-        {loading && <div>Loading...</div>}
+        {!loading && stats && (
+          <>
+            {/* ---------- METRICS ---------- */}
 
-        {!loading && user && (
-          <div>
-            <p>
-              <strong>Email:</strong> {user.email}
-            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: 20,
+                flexWrap: "wrap",
+                marginBottom: 40,
+              }}
+            >
+              <DashboardCard title="Clients" value={stats.clients} />
 
-            <p>
-              <strong>Role:</strong> {user.role}
-            </p>
+              <DashboardCard title="Events" value={stats.events} />
 
-            <p>
-              <strong>Company ID:</strong> {user.companyId}
-            </p>
+              <DashboardCard
+                title="Active Contracts"
+                value={stats.contractsActive}
+              />
 
-            <p>
-              <strong>Company Name:</strong> {user.companyName}
-            </p>
-          </div>
+              <DashboardCard
+                title="Revenue This Month"
+                value={`$${stats.revenueThisMonth}`}
+              />
+
+              <DashboardCard
+                title="Pending Payments"
+                value={`$${stats.pendingPayments}`}
+              />
+            </div>
+
+            {/* ---------- USER INFO ---------- */}
+
+            {user && (
+              <div
+                style={{
+                  background: "white",
+                  padding: 20,
+                  borderRadius: 10,
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                }}
+              >
+                <h2>Company Info</h2>
+
+                <p>
+                  <strong>Email:</strong> {user.email}
+                </p>
+
+                <p>
+                  <strong>Role:</strong> {user.role}
+                </p>
+
+                <p>
+                  <strong>Company:</strong> {user.companyName}
+                </p>
+
+                <p>
+                  <strong>Company ID:</strong> {user.companyId}
+                </p>
+              </div>
+            )}
+          </>
         )}
-      </div>
-
-      {/* ---------- RAW JSON (debug) ---------- */}
-
-      <div>
-        <h2>User JSON</h2>
-        <pre>{JSON.stringify(user, null, 2)}</pre>
       </div>
     </div>
   );
