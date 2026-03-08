@@ -110,3 +110,5 @@ export async function DELETE(
   }
 
 }
+
+//{{URL}}api/company/contract-items/2 <- es el service id

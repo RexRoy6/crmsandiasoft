@@ -13,27 +13,57 @@ const AdminLogin: React.FC = () => {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    /* ---------- LOGIN ---------- */
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message || "Invalid credentials");
-        return;
-      }
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
-      router.push("/admin");
-    } catch {
-      setError("Connection error. Please try again.");
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.message || "Invalid credentials");
+      return;
     }
-  };
+
+    /* ---------- GET USER ROLE ---------- */
+
+    const meRes = await fetch("/api/company/me", {
+      credentials: "include",
+    });
+
+    if (!meRes.ok) {
+      router.replace("/");
+      return;
+    }
+
+    const user = await meRes.json();
+
+    /* ---------- REDIRECT BASED ON ROLE ---------- */
+
+    if (user.role === "admin") {
+      router.replace("/admin");
+      return;
+    }
+
+    if (user.role === "owner") {
+      router.replace("/company");
+      return;
+    }
+
+    /* ---------- FALLBACK ---------- */
+
+    router.replace("/");
+  } catch {
+    setError("Connection error. Please try again.");
+  }
+};
 
   return (
     <div style={styles.page}>
