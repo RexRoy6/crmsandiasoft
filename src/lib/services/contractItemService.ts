@@ -46,10 +46,45 @@ export async function addServiceToContract(
     throw new Error("service not found")
   }
 
-  /* inventory validation */
+  /* existing item */
 
-  if (data.quantity > service.stockTotal) {
+  const existingItem = await tdb.findFirstRaw(
+    contractItems,
+    and(
+      eq(contractItems.contractId, contractId),
+      eq(contractItems.serviceId, data.serviceId)
+    )
+  )
+
+  const used = existingItem ? existingItem.quantity : 0
+
+  if (
+    service.stockTotal !== null &&
+    used + data.quantity > service.stockTotal
+  ) {
     throw new Error("not enough stock")
+  }
+
+  /* update existing */
+
+  if (existingItem) {
+
+    const newQuantity =
+      (existingItem.quantity ?? 0) + data.quantity
+
+    await tdb.update(
+      contractItems,
+      { quantity: newQuantity },
+      eq(contractItems.id, existingItem.id)
+    )
+
+    await recalculateContractTotal(contractId)
+
+    return tdb.findFirst(
+      contractItems,
+      eq(contractItems.id, existingItem.id)
+    )
+
   }
 
   /* insert item */
@@ -58,18 +93,19 @@ export async function addServiceToContract(
     contractId,
     serviceId: data.serviceId,
     quantity: data.quantity,
-    unitPrice: service.priceBase
+    unitPrice: data.unitPrice ?? service.priceBase
   })
 
   const insertId = result.insertId
+
+  await recalculateContractTotal(contractId)
 
   return tdb.findFirst(
     contractItems,
     eq(contractItems.id, insertId)
   )
+
 }
-
-
 
 /* ---------- GET CONTRACT SERVICES ---------- */
 
@@ -108,6 +144,8 @@ export async function updateContractItem(
     eq(contractItems.id, id)
   )
 
+  await recalculateContractTotal(existing.contractId)
+
   return tdb.findFirst(
     contractItems,
     eq(contractItems.id, id)
@@ -135,5 +173,31 @@ export async function deleteContractItem(id: number) {
     eq(contractItems.id, id)
   )
 
+  await recalculateContractTotal(existing.contractId)
+
   return true
+}
+
+
+/* ---------- RECALCULATE CONTRACT TOTAL ---------- */
+
+async function recalculateContractTotal(contractId: number) {
+
+  const tdb = await tenantDb()
+
+  const items = await tdb.findManyRaw(
+    contractItems,
+    eq(contractItems.contractId, contractId)
+  )
+
+  const total = items.reduce((sum, item) => {
+    return sum + (item.quantity * Number(item.unitPrice))
+  }, 0)
+
+  await tdb.update(
+    contracts,
+    { totalAmount: total },
+    eq(contracts.id, contractId)
+  )
+
 }

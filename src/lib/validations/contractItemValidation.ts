@@ -12,7 +12,12 @@ export const createContractItemSchema = z.object({
   quantity: z
     .number()
     .int()
-    .positive()
+    .positive(),
+    
+  unitPrice: z
+    .number().
+    positive().
+    optional()
 
 })
 
