@@ -3,198 +3,147 @@
 import { useEffect, useState } from "react";
 import ErrorBox from "@/app/components/ErrorBox";
 import Link from "next/link";
+import PageHeader from "@/app/components/crm/PageHeader";
+import CreateForm from "@/app/components/crm/CreateForm";
+import ListCard from "@/app/components/crm/ListCard";
 
 export default function ClientsPage() {
 
-  const [clients, setClients] = useState<any[]>([]);
-  const [error, setError] = useState("");
-  const [errorCode, setErrorCode] = useState<number | undefined>();
-  const [loading, setLoading] = useState(true);
+    const [clients, setClients] = useState<any[]>([]);
+    const [error, setError] = useState("");
+    const [errorCode, setErrorCode] = useState<number | undefined>();
+    const [loading, setLoading] = useState(true);
 
-  /* create client */
-  const [showForm, setShowForm] = useState(false);
+    /* create client */
+    const [showForm, setShowForm] = useState(false);
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-  });
-
-  const fetchClients = async () => {
-    try {
-      setLoading(true);
-
-      const res = await fetch("/api/company/clients", {
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        setError("Failed to fetch clients");
-        setErrorCode(res.status);
-        return;
-      }
-
-      const data = await res.json();
-
-      setClients(data);
-
-    } catch {
-      setError("Connection error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createClient = async () => {
-    try {
-
-      const res = await fetch("/api/company/clients", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        setError("Failed to create client");
-        setErrorCode(res.status);
-        return;
-      }
-
-      setShowForm(false);
-
-      setForm({
+    const [form, setForm] = useState({
         name: "",
         phone: "",
         email: "",
-      });
+    });
 
-      fetchClients();
+    //campos para formulario de clientes
+    const clientFields = [
+        { name: "name", label: "Name" },
+        { name: "phone", label: "Phone" },
+        { name: "email", label: "Email" }
+    ];
 
-    } catch {
-      setError("Connection error");
-    }
-  };
+    const fetchClients = async () => {
+        try {
+            setLoading(true);
 
-  useEffect(() => {
-    fetchClients();
-  }, []);
+            const res = await fetch("/api/company/clients", {
+                credentials: "include",
+            });
 
-  return (
-    <div>
-
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1>Clients</h1>
-
-        <button onClick={() => setShowForm(true)}>
-          + New Client
-        </button>
-      </div>
-
-      {/* CREATE FORM */}
-
-      {showForm && (
-        <div
-          style={{
-            background: "white",
-            padding: 20,
-            borderRadius: 10,
-            marginBottom: 30,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-          }}
-        >
-
-          <h3>Create Client</h3>
-
-          <input
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
+            if (!res.ok) {
+                setError("Failed to fetch clients");
+                setErrorCode(res.status);
+                return;
             }
-          />
 
-          <br />
+            const data = await res.json();
 
-          <input
-            placeholder="Phone"
-            value={form.phone}
-            onChange={(e) =>
-              setForm({ ...form, phone: e.target.value })
+            setClients(data);
+
+        } catch {
+            setError("Connection error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const createClient = async () => {
+        try {
+
+            const res = await fetch("/api/company/clients", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
+
+            if (!res.ok) {
+                setError("Failed to create client");
+                setErrorCode(res.status);
+                return;
             }
-          />
 
-          <br />
+            setShowForm(false);
 
-          <input
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
-          />
+            setForm({
+                name: "",
+                phone: "",
+                email: "",
+            });
 
-          <br />
+            fetchClients();
 
-          <button onClick={createClient}>
-            Create
-          </button>
+        } catch {
+            setError("Connection error");
+        }
+    };
 
-          <button onClick={() => setShowForm(false)}>
-            Cancel
-          </button>
+    useEffect(() => {
+        fetchClients();
+    }, []);
+
+    return (
+        <div>
+
+            <PageHeader
+                title="Clients"
+                buttonLabel="+ New Client"
+                onClick={() => setShowForm(true)}
+            />
+
+            {showForm && (
+                <CreateForm
+                    title="Create Service"
+                    fields={clientFields}
+                    form={form}
+                    setForm={setForm}
+                    onSubmit={createClient}
+                    onCancel={() => setShowForm(false)}
+                />
+            )}
+
+            {error && <ErrorBox message={error} code={errorCode} />}
+
+            {loading && <p>Loading clients...</p>}
+
+            {!loading && clients.length === 0 && (
+                <p>No clients found.</p>
+            )}
+
+            {!loading && clients.length > 0 && (
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                    }}
+                >
+                    {clients.map((client) => (
+                        <ListCard
+                            key={client.id}
+                            title={client.name}
+                            //description={service.description}
+                            extra={[
+                                `Phone: ${client.phone}`,
+                                `Email: $${client.email}`,
+                            ]}
+                            link={`/company/clients/${client.id}`}
+                        />
+                    ))}
+
+                </div>
+            )}
 
         </div>
-      )}
-
-      {error && <ErrorBox message={error} code={errorCode} />}
-
-      {loading && <p>Loading clients...</p>}
-
-      {!loading && clients.length === 0 && (
-        <p>No clients found.</p>
-      )}
-
-      {!loading && clients.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-
-          {clients.map((client) => (
-
-            <div
-              key={client.id}
-              style={{
-                background: "white",
-                padding: 20,
-                borderRadius: 10,
-                boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-              }}
-            >
-
-              <strong>{client.name}</strong>
-
-              <p>Phone: {client.phone}</p>
-
-              <p>Email: {client.email}</p>
-
-              <Link href={`/company/clients/${client.id}`}>
-                <button>Manage</button>
-              </Link>
-
-            </div>
-
-          ))}
-
-        </div>
-      )}
-
-    </div>
-  );
+    );
 }
