@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBox from "@/app/components/ErrorBox";
 import DetailCard from "@/app/components/crm/DetailCard";
+import Link from "next/link";
 
 export default function ClientDetailPage() {
   const params = useParams();
@@ -95,6 +96,7 @@ export default function ClientDetailPage() {
       {loading && <p>Loading...</p>}
 
       {client && (
+
         <DetailCard
           title={client.name}
           fields={clientFields}
@@ -106,6 +108,12 @@ export default function ClientDetailPage() {
           saving={saving}
           onSave={updateClient}
           onDelete={deleteClient}
+          actions={[
+            {
+              label: "View Events",
+              href: `/company/clients/${clientId}/events`,
+            },
+          ]}
         />
       )}
     </div>

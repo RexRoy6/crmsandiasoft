@@ -103,7 +103,7 @@ export default function ClientsPage() {
 
             {showForm && (
                 <CreateForm
-                    title="Create Service"
+                    title="Create Client"
                     fields={clientFields}
                     form={form}
                     setForm={setForm}
