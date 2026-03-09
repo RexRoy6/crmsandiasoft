@@ -1,8 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import ErrorBox from "@/app/components/ErrorBox";
-import Link from "next/link";
+import PageHeader from "@/app/components/crm/PageHeader";
+import CreateForm from "@/app/components/crm/CreateForm";
+import ListCard from "@/app/components/crm/ListCard";
 
 export default function ServicesPage() {
     const [services, setServices] = useState<any[]>([]);
@@ -17,6 +18,14 @@ export default function ServicesPage() {
         stockTotal: 1,
         priceBase: "",
     });
+    //campos para formulario de servicios
+    const serviceFields = [
+        { name: "name", label: "Name" },
+        { name: "description", label: "Description" },
+        { name: "stockTotal", label: "Stock", type: "number" },
+        { name: "priceBase", label: "Base Price" },
+    ];
+
 
 
     const fetchServices = async () => {
@@ -45,6 +54,9 @@ export default function ServicesPage() {
 
     const createService = async () => {
         try {
+            setError("");
+            setErrorCode(undefined);
+
             const res = await fetch("/api/company/services", {
                 method: "POST",
                 credentials: "include",
@@ -82,70 +94,24 @@ export default function ServicesPage() {
 
     return (
         <div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <h1>Services</h1>
-                {showForm && (
-                    <div
-                        style={{
-                            background: "white",
-                            padding: 20,
-                            borderRadius: 10,
-                            marginBottom: 30,
-                            boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-                        }}
-                    >
-                        <h3>Create Service</h3>
-
-                        <input
-                            placeholder="Name"
-                            value={form.name}
-                            onChange={(e) =>
-                                setForm({ ...form, name: e.target.value })
-                            }
-                        />
-
-                        <br />
-
-                        <textarea
-                            placeholder="Description"
-                            value={form.description}
-                            onChange={(e) =>
-                                setForm({ ...form, description: e.target.value })
-                            }
-                        />
-
-                        <br />
-
-                        <input
-                            type="number"
-                            placeholder="Stock"
-                            value={form.stockTotal}
-                            onChange={(e) =>
-                                setForm({ ...form, stockTotal: Number(e.target.value) })
-                            }
-                        />
-
-                        <br />
-
-                        <input
-                            placeholder="Base Price"
-                            value={form.priceBase}
-                            onChange={(e) =>
-                                setForm({ ...form, priceBase: e.target.value })
-                            }
-                        />
-
-                        <br />
-
-                        <button onClick={createService}>Create</button>
-
-                        <button onClick={() => setShowForm(false)}>Cancel</button>
-                    </div>
-                )}
 
 
-                <button onClick={() => setShowForm(true)}>+ New Service</button>
-            </div>
+            <PageHeader
+                title="Services"
+                buttonLabel="+ New Service"
+                onClick={() => setShowForm(true)}
+            />
+            {showForm && (
+                <CreateForm
+                    title="Create Service"
+                    fields={serviceFields}
+                    form={form}
+                    setForm={setForm}
+                    onSubmit={createService}
+                    onCancel={() => setShowForm(false)}
+                />
+            )}
+
 
             {error && <ErrorBox message={error} code={errorCode} />}
 
@@ -162,30 +128,16 @@ export default function ServicesPage() {
                     }}
                 >
                     {services.map((service) => (
-                        <div
+                        <ListCard
                             key={service.id}
-                            style={{
-                                background: "white",
-                                padding: 20,
-                                borderRadius: 10,
-                                boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-                            }}
-                        >
-                            <strong>{service.name}</strong>
-
-                            <p>{service.description}</p>
-
-                            <p>Stock: {service.stockTotal}</p>
-
-                            <p>Price: ${service.priceBase}</p>
-
-                            <Link href={`/company/service/${service.id}`}>
-                                <button>Manage</button>
-                            </Link>
-
-
-
-                        </div>
+                            title={service.name}
+                            description={service.description}
+                            extra={[
+                                `Stock: ${service.stockTotal}`,
+                                `Price: $${service.priceBase}`,
+                            ]}
+                            link={`/company/service/${service.id}`}
+                        />
                     ))}
                 </div>
             )}
