@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBox from "@/app/components/ErrorBox";
+import DetailCard from "@/app/components/crm/DetailCard";
 
 export default function ServiceDetailPage() {
     const params = useParams();
@@ -16,6 +17,13 @@ export default function ServiceDetailPage() {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
 
+    //compos 
+    const serviceFields = [
+        { name: "name", label: "Name" },
+        { name: "description", label: "Description" },
+        { name: "stockTotal", label: "Stock", type: "number" },
+        { name: "priceBase", label: "Price" },
+    ];
 
     //form de edicion:
     const [form, setForm] = useState({
@@ -162,107 +170,19 @@ export default function ServiceDetailPage() {
             {loading && <p>Loading...</p>}
 
             {service && (
-                <div
-                    style={{
-                        background: "white",
-                        padding: 20,
-                        borderRadius: 10,
-                        marginTop: 20,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                        maxWidth: 400,
-                    }}
-                >
-
-                    {/* VIEW MODE */}
-                    {!editing && (
-                        <>
-                            <h2>{service.name}</h2>
-
-                            <p>{service.description}</p>
-
-                            <p>Stock: {service.stockTotal}</p>
-
-                            <p>Price: ${service.priceBase}</p>
-
-                            <div style={{ display: "flex", gap: 10 }}>
-
-                                <button onClick={() => setEditing(true)}>
-                                    Edit
-                                </button>
-
-                                <button
-                                    onClick={deleteService}
-                                    style={{ background: "red", color: "white" }}
-                                >
-                                    Delete
-                                </button>
-
-                                {service.deletedAt && (
-                                    <button onClick={reactivateService}>
-                                        Reactivate
-                                    </button>
-                                )}
-
-                            </div>
-                        </>
-                    )}
-
-                    {/* EDIT MODE */}
-                    {editing && (
-                        <>
-                            <h2>Edit Service</h2>
-
-                            <input
-                                value={form.name}
-                                onChange={(e) =>
-                                    setForm({ ...form, name: e.target.value })
-                                }
-                                placeholder="Name"
-                            />
-
-                            <textarea
-                                value={form.description}
-                                onChange={(e) =>
-                                    setForm({ ...form, description: e.target.value })
-                                }
-                                placeholder="Description"
-                            />
-
-                            <input
-                                type="number"
-                                value={form.stockTotal}
-                                onChange={(e) =>
-                                    setForm({
-                                        ...form,
-                                        stockTotal: Number(e.target.value),
-                                    })
-                                }
-                            />
-
-                            <input
-                                value={form.priceBase}
-                                onChange={(e) =>
-                                    setForm({ ...form, priceBase: e.target.value })
-                                }
-                            />
-
-                            <div style={{ display: "flex", gap: 10 }}>
-
-                                <button onClick={updateService} disabled={saving}>
-                                    {saving ? "Saving..." : "Save"}
-                                </button>
-
-                                <button onClick={() => setEditing(false)}>
-                                    Cancel
-                                </button>
-
-                            </div>
-                        </>
-                    )}
-
-                </div>
+                <DetailCard
+                    title={service.name}
+                    fields={serviceFields}
+                    data={service}
+                    form={form}
+                    setForm={setForm}
+                    editing={editing}
+                    setEditing={setEditing}
+                    saving={saving}
+                    onSave={updateService}
+                    onDelete={deleteService}
+                    onReactivate={reactivateService}
+                />
             )}
         </div>
     );

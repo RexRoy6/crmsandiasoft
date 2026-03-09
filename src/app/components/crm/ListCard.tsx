@@ -16,7 +16,7 @@ export default function ListCard({
   return (
     <div
       style={{
-        background: "white",
+        background: "green",
         padding: 20,
         borderRadius: 10,
         boxShadow: "0 4px 10px rgba(0,0,0,0.05)",

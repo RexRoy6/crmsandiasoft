@@ -12,6 +12,7 @@ export default function PageHeader({
   return (
     <div
       style={{
+        background: "green",
         display: "flex",
         justifyContent: "space-between",
         marginBottom: 20,
