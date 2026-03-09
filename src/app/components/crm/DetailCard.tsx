@@ -69,11 +69,23 @@ export default function DetailCard({
               Delete
             </button>
 
-            {actions.map((action: any, index: number) => (
-              <Link key={index} href={action.href}>
-                <button>{action.label}</button>
-              </Link>
-            ))}
+            {actions.map((action: any, index: number) => {
+              if (action.href) {
+                return (
+                  <Link key={index} href={action.href}>
+                    <button>{action.label}</button>
+                  </Link>
+                )
+              }
+
+              return (
+                <button key={index} onClick={action.onClick}>
+                  {action.label}
+                </button>
+              )
+            })}
+
+
           </div>
         </>
       )}
