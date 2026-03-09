@@ -25,18 +25,24 @@ export async function createEvent(data: CreateEventInput) {
 
 /* ---------- GET ALL ---------- */
 
-export async function getEvents() {
+export async function getEvents(clientId?: string | null) {
   const tdb = await tenantDb()
 
-  return await tdb.findMany(events)
-}
+  if (clientId) {
+    return await tdb.findManyRaw(
+      events,
+      eq(events.clientId, Number(clientId))
+    )
+  }
 
+  return await tdb.findManyRaw(events)
+}
 /* ---------- GET BY ID ---------- */
 
 export async function getEventById(id: number) {
   const tdb = await tenantDb()
 
-  return await tdb.findFirst(events, eq(events.id, id))
+  return await tdb.findFirstRaw(events, eq(events.id, id))
 }
 
 /* ---------- UPDATE ---------- */

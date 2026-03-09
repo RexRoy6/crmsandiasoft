@@ -19,6 +19,7 @@ export default function Sidebar() {
         <Link href="/company">Home</Link>
         <Link href="/company/service">Services</Link>
         <Link href="/company/clients">Clients</Link>
+        <Link href="/company/events">Events</Link>
 
         {/* future */}
         {/* <Link href="/company/clients">Clients</Link>

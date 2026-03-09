@@ -40,10 +40,14 @@ export async function POST(req: Request) {
 
 
 /* ---------- GET (company events) ---------- */
-export async function GET() {
+export async function GET(req: Request) {
   try {
 
-    const events = await getEvents()
+    const { searchParams } = new URL(req.url)
+
+    const clientId = searchParams.get("clientId")
+
+    const events = await getEvents(clientId)
 
     return Response.json(events)
 
