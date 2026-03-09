@@ -24,7 +24,7 @@ export default function CreateForm({
   return (
     <div
       style={{
-        background: "white",
+        background: "green",
         padding: 20,
         borderRadius: 10,
         marginBottom: 30,
