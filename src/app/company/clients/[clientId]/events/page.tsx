@@ -38,7 +38,8 @@ export default function ClientEventsPage() {
 
       setLoading(true);
 
-      const res = await fetch(`/api/company/events?clientId=${clientId}`, {
+      const res = await fetch(`/api/company/events/?clientId=${clientId}`, {
+        method: "GET",
         credentials: "include",
       });
 

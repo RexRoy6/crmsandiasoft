@@ -25,12 +25,18 @@ export async function createEvent(data: CreateEventInput) {
 
 /* ---------- GET ALL ---------- */
 
-export async function getEvents() {
+export async function getEvents(clientId?: string | null) {
   const tdb = await tenantDb()
+
+  if (clientId) {
+    return await tdb.findMany(
+      events,
+      eq(events.clientId, Number(clientId))
+    )
+  }
 
   return await tdb.findMany(events)
 }
-
 /* ---------- GET BY ID ---------- */
 
 export async function getEventById(id: number) {
