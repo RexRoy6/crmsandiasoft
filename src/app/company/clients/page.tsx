@@ -1,50 +1,53 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import ErrorBox from "@/app/components/ErrorBox";
+import Link from "next/link";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 
-export default function ServicesPage() {
-    const [services, setServices] = useState<any[]>([]);
+export default function ClientsPage() {
+
+    const [clients, setClients] = useState<any[]>([]);
     const [error, setError] = useState("");
     const [errorCode, setErrorCode] = useState<number | undefined>();
     const [loading, setLoading] = useState(true);
-    //para crear servicios
+
+    /* create client */
     const [showForm, setShowForm] = useState(false);
+
     const [form, setForm] = useState({
         name: "",
-        description: "",
-        stockTotal: 1,
-        priceBase: "",
+        phone: "",
+        email: "",
     });
-    //campos para formulario de servicios
-    const serviceFields = [
+
+    //campos para formulario de clientes
+    const clientFields = [
         { name: "name", label: "Name" },
-        { name: "description", label: "Description" },
-        { name: "stockTotal", label: "Stock", type: "number" },
-        { name: "priceBase", label: "Base Price" },
+        { name: "phone", label: "Phone" },
+        { name: "email", label: "Email" }
     ];
 
-
-
-    const fetchServices = async () => {
+    const fetchClients = async () => {
         try {
             setLoading(true);
 
-            const res = await fetch("/api/company/services", {
+            const res = await fetch("/api/company/clients", {
                 credentials: "include",
             });
 
             if (!res.ok) {
-                setError("Failed to fetch services");
+                setError("Failed to fetch clients");
                 setErrorCode(res.status);
                 return;
             }
 
             const data = await res.json();
 
-            setServices(data);
+            setClients(data);
+
         } catch {
             setError("Connection error");
         } finally {
@@ -52,12 +55,10 @@ export default function ServicesPage() {
         }
     };
 
-    const createService = async () => {
+    const createClient = async () => {
         try {
-            setError("");
-            setErrorCode(undefined);
 
-            const res = await fetch("/api/company/services", {
+            const res = await fetch("/api/company/clients", {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -67,7 +68,7 @@ export default function ServicesPage() {
             });
 
             if (!res.ok) {
-                setError("Failed to create service");
+                setError("Failed to create client");
                 setErrorCode(res.status);
                 return;
             }
@@ -76,50 +77,50 @@ export default function ServicesPage() {
 
             setForm({
                 name: "",
-                description: "",
-                stockTotal: 1,
-                priceBase: "",
+                phone: "",
+                email: "",
             });
 
-            fetchServices(); // refresh list
+            fetchClients();
+
         } catch {
             setError("Connection error");
         }
     };
 
-
     useEffect(() => {
-        fetchServices();
+        fetchClients();
     }, []);
 
     return (
         <div>
 
-
             <PageHeader
-                title="Services"
-                buttonLabel="+ New Service"
+                title="Clients"
+                buttonLabel="+ New Client"
                 onClick={() => setShowForm(true)}
             />
+
             {showForm && (
                 <CreateForm
-                    title="Create Service"
-                    fields={serviceFields}
+                    title="Create Client"
+                    fields={clientFields}
                     form={form}
                     setForm={setForm}
-                    onSubmit={createService}
+                    onSubmit={createClient}
                     onCancel={() => setShowForm(false)}
                 />
             )}
 
-
             {error && <ErrorBox message={error} code={errorCode} />}
 
-            {loading && <p>Loading services...</p>}
+            {loading && <p>Loading clients...</p>}
 
-            {!loading && services.length === 0 && <p>No services found.</p>}
+            {!loading && clients.length === 0 && (
+                <p>No clients found.</p>
+            )}
 
-            {!loading && services.length > 0 && (
+            {!loading && clients.length > 0 && (
                 <div
                     style={{
                         display: "flex",
@@ -127,20 +128,22 @@ export default function ServicesPage() {
                         gap: 10,
                     }}
                 >
-                    {services.map((service) => (
+                    {clients.map((client) => (
                         <ListCard
-                            key={service.id}
-                            title={service.name}
-                            description={service.description}
+                            key={client.id}
+                            title={client.name}
+                            //description={service.description}
                             extra={[
-                                `Stock: ${service.stockTotal}`,
-                                `Price: $${service.priceBase}`,
+                                `Phone: ${client.phone}`,
+                                `Email: $${client.email}`,
                             ]}
-                            link={`/company/service/${service.id}`}
+                            link={`/company/clients/${client.id}`}
                         />
                     ))}
+
                 </div>
             )}
+
         </div>
     );
 }
