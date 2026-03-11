@@ -83,6 +83,30 @@ export default function ClientDetailPage() {
     router.push("/company/clients");
   };
 
+  //reactivar cx
+  const reactivateClient = async () => {
+    try {
+
+      const res = await fetch(
+        `/api/company/clients/${clientId}?reactivate=true`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      )
+
+      if (!res.ok) {
+        setError("Reactivate failed")
+        return
+      }
+
+      await fetchClient()
+
+    } catch {
+      setError("Connection error")
+    }
+  }
+
   useEffect(() => {
     fetchClient();
   }, []);
@@ -109,11 +133,17 @@ export default function ClientDetailPage() {
           onSave={updateClient}
           onDelete={deleteClient}
           actions={[
+            ...(client.deletedAt
+              ? [{ label: "Reactivate", onClick: reactivateClient }]
+              : []),
+
             {
               label: "View Events",
               href: `/company/clients/${clientId}/events`,
             },
           ]}
+
+
         />
       )}
     </div>

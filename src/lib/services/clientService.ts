@@ -29,7 +29,7 @@ export async function getClients() {
 export async function getClient(id: number) {
   const tdb = await tenantDb()
 
-  return tdb.findFirst(
+  return tdb.findFirstRaw(
     clients,
     eq(clients.id, id)
   )
