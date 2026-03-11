@@ -9,13 +9,12 @@ export default function EventDetailPage() {
 
     const params = useParams();
     const router = useRouter();
-    //console.log("params:", params);
+  
 
     const eventId = Array.isArray(params.eventId)
-  ? params.eventId[0]
-  : params.eventId;
+        ? params.eventId[0]
+        : params.eventId;
 
-  //console.log("eventId:", eventId);
 
     const [event, setEvent] = useState<any>(null);
 
@@ -56,13 +55,15 @@ export default function EventDetailPage() {
             const data = await res.json();
 
             setEvent({
-  ...data,
-  clientName: data.client?.name
-});
+                ...data,
+                clientName: data.client?.name
+            });
 
             setForm({
                 name: data.name ?? "",
-                eventDate: data.eventDate ?? "",
+                eventDate: data.eventDate
+                    ? data.eventDate.split("T")[0]
+                    : "",
                 location: data.location ?? "",
                 notes: data.notes ?? "",
             });
@@ -75,11 +76,13 @@ export default function EventDetailPage() {
     };
 
     const updateEvent = async () => {
+
+
         try {
 
             setSaving(true);
 
-            await fetch(`/api/company/events/${eventId}`, {
+            const res = await fetch(`/api/company/events/${eventId}`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -87,6 +90,11 @@ export default function EventDetailPage() {
                 },
                 body: JSON.stringify(form),
             });
+
+
+            const data = await res.json()
+
+
 
             await fetchEvent();
 
@@ -99,15 +107,21 @@ export default function EventDetailPage() {
 
     const deleteEvent = async () => {
 
-         //console.log("Deleting eventId:", eventId);
-  //console.log("Event object:", event);
+
 
         if (!confirm("Delete this event?")) return;
 
-        await fetch(`/api/company/events/${eventId}`, {
+        const res = await fetch(`/api/company/events/${eventId}`, {
             method: "DELETE",
             credentials: "include",
         });
+
+
+
+        const data = await res.json()
+
+
+
         const clientId = event?.client?.id
 
         router.push(`/company/clients/${clientId}/events`);
@@ -146,10 +160,10 @@ export default function EventDetailPage() {
 
             <h1>Event Details</h1>
             {event?.client && (
-  <p>
-    <strong>Client:</strong> {event.client.name}
-  </p>
-)}
+                <p>
+                    <strong>Client:</strong> {event.client.name}
+                </p>
+            )}
 
             {error && <ErrorBox message={error} />}
 
