@@ -39,7 +39,16 @@ export default function ClientsPage() {
             });
 
             if (!res.ok) {
-                setError("Failed to fetch clients");
+                const data = await res.json();
+
+                console.log("Create client error:", data);
+
+                setError(
+                    data?.error?.fieldErrors
+                        ? JSON.stringify(data.error.fieldErrors)
+                        : "Failed to create client"
+                );
+
                 setErrorCode(res.status);
                 return;
             }
@@ -57,6 +66,11 @@ export default function ClientsPage() {
 
     const createClient = async () => {
         try {
+
+            if (!form.name || !form.phone || !form.email) {
+                setError("All fields are required");
+                return;
+            }
 
             const res = await fetch("/api/company/clients", {
                 method: "POST",
@@ -135,7 +149,7 @@ export default function ClientsPage() {
                             //description={service.description}
                             extra={[
                                 `Phone: ${client.phone}`,
-                                `Email: $${client.email}`,
+                                `Email: ${client.email}`,
                             ]}
                             link={`/company/clients/${client.id}`}
                         />

@@ -17,7 +17,7 @@ export async function GET() {
     const data = await db
       .select()
       .from(companies)
-      .where(isNull(companies.deletedAt));
+      //.where(isNull(companies.deletedAt));
 
     return Response.json(data);
   } catch {
