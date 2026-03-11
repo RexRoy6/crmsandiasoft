@@ -181,7 +181,11 @@ export default function ServiceDetailPage() {
                     saving={saving}
                     onSave={updateService}
                     onDelete={deleteService}
-                    onReactivate={reactivateService}
+                    actions={[
+                        ...(service.deletedAt
+                            ? [{ label: "Reactivate", onClick: reactivateService }]
+                            : []),
+                    ]}
                 />
             )}
         </div>

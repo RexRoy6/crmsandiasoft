@@ -56,6 +56,7 @@ export default function EventDetailPage() {
 
             setEvent({
                 ...data,
+                deletedAt: data.deletedAt ?? data.deleted,
                 clientName: data.client?.name
             });
 

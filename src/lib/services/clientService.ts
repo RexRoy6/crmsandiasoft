@@ -23,7 +23,7 @@ export async function createClient(data: {
 //getClients
 export async function getClients() {
   const tdb = await tenantDb()
-  return tdb.findMany(clients)
+  return tdb.findManyRaw(clients)
 }
 //getClient
 export async function getClient(id: number) {
