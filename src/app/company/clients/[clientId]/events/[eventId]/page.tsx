@@ -9,8 +9,13 @@ export default function EventDetailPage() {
 
     const params = useParams();
     const router = useRouter();
+    //console.log("params:", params);
 
-    const eventId = params.eventId;
+    const eventId = Array.isArray(params.eventId)
+  ? params.eventId[0]
+  : params.eventId;
+
+  //console.log("eventId:", eventId);
 
     const [event, setEvent] = useState<any>(null);
 
@@ -31,7 +36,7 @@ export default function EventDetailPage() {
         { name: "name", label: "Name" },
         { name: "eventDate", label: "Event Date" },
         { name: "location", label: "Location" },
-        { name: "notes", label: "Notes" },
+        { name: "notes", label: "Notes" }
     ];
 
     const fetchEvent = async () => {
@@ -50,7 +55,10 @@ export default function EventDetailPage() {
 
             const data = await res.json();
 
-            setEvent(data);
+            setEvent({
+  ...data,
+  clientName: data.client?.name
+});
 
             setForm({
                 name: data.name ?? "",
@@ -91,14 +99,18 @@ export default function EventDetailPage() {
 
     const deleteEvent = async () => {
 
+         //console.log("Deleting eventId:", eventId);
+  //console.log("Event object:", event);
+
         if (!confirm("Delete this event?")) return;
 
         await fetch(`/api/company/events/${eventId}`, {
             method: "DELETE",
             credentials: "include",
         });
+        const clientId = event?.client?.id
 
-        router.push(`/company/clients/${params.clientId}/events`);
+        router.push(`/company/clients/${clientId}/events`);
     };
 
     const reactivateEvent = async () => {
@@ -133,6 +145,11 @@ export default function EventDetailPage() {
         <div>
 
             <h1>Event Details</h1>
+            {event?.client && (
+  <p>
+    <strong>Client:</strong> {event.client.name}
+  </p>
+)}
 
             {error && <ErrorBox message={error} />}
 

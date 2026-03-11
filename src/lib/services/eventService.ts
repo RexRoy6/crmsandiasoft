@@ -1,7 +1,9 @@
+import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
-import { events , clients} from "@/db/schema"
-import { and, eq, isNotNull } from "drizzle-orm"
-import { CreateEventInput,UpdateEventInput } from "@/lib/validations/eventValidation"
+import { events, clients } from "@/db/schema"
+import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { and, eq, isNotNull, isNull } from "drizzle-orm"
+import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
 /* ---------- CREATE ---------- */
 
 export async function createEvent(data: CreateEventInput) {
@@ -25,24 +27,77 @@ export async function createEvent(data: CreateEventInput) {
 
 /* ---------- GET ALL ---------- */
 
-export async function getEvents(clientId?: string | null) {
-  const tdb = await tenantDb()
+// export async function getEvents(clientId?: string | null) {
+//   const tdb = await tenantDb()
 
-  if (clientId) {
-    return await tdb.findManyRaw(
-      events,
-      eq(events.clientId, Number(clientId))
-    )
-  }
+//   if (clientId) {
+//     return await tdb.findManyRaw(
+//       events,
+//       eq(events.clientId, Number(clientId))
+//     )
+//   }
 
-  return await tdb.findManyRaw(events)
+//   return await tdb.findManyRaw(events)
+// }
+export async function getEvents() {
+
+  const { companyId } = await getAuthContext()
+
+  return db
+    .select({
+      id: events.id,
+      name: events.name,
+      eventDate: events.eventDate,
+      location: events.location,
+      notes: events.notes,
+      deleted: events.deletedAt,
+
+      client: {
+        id: clients.id,
+        name: clients.name
+      }
+    })
+    .from(events)
+    .leftJoin(clients, eq(events.clientId, clients.id))
+    .where(eq(events.companyId, companyId!))
 }
 /* ---------- GET BY ID ---------- */
 
-export async function getEventById(id: number) {
-  const tdb = await tenantDb()
+// export async function getEventById(id: number) {
+//   const tdb = await tenantDb()
 
-  return await tdb.findFirstRaw(events, eq(events.id, id))
+//   return await tdb.findFirstRaw(events, eq(events.id, id))
+// }
+export async function getEventById(id: number) {
+
+  const { companyId } = await getAuthContext()
+
+  const result = await db
+    .select({
+      id: events.id,
+      name: events.name,
+      eventDate: events.eventDate,
+      location: events.location,
+      notes: events.notes,
+      deleted:events.deletedAt,
+
+      client: {
+        id: clients.id,
+        name: clients.name
+      }
+    })
+    .from(events)
+    .leftJoin(clients, eq(events.clientId, clients.id))
+    .where(
+      and(
+        eq(events.id, id),
+        eq(events.companyId, companyId!)
+        //isNull(events.deletedAt)
+      )
+    )
+    .limit(1)
+
+  return result[0] ?? null
 }
 
 /* ---------- UPDATE ---------- */

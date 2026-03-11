@@ -47,6 +47,7 @@ export default function EventsPage() {
       }
 
       const data = await res.json();
+      //console.log(events)
 
       setEvents(data);
 
@@ -145,11 +146,11 @@ export default function EventsPage() {
               key={event.id}
               title={event.name}
               extra={[
-                `Client: ${event.clientId}`,
+                `Client: ${event.client?.name}`,
                 `Date: ${new Date(event.eventDate).toLocaleDateString()}`,
                 `Location: ${event.location}`,
               ]}
-              link={`/company/clients/${event.clientId}/events/${event.id}`}
+              link={`/company/clients/${event.client?.id}/events/${event.id}`}
             />
           ))}
         </div>
