@@ -61,15 +61,15 @@ export default function DetailCard({
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button onClick={() => {
-    console.log("Edit button clicked")
-    setEditing(true)
-  }}>Edit</button>
+              console.log("Edit button clicked")
+              setEditing(true)
+            }}>Edit</button>
 
             <button
-               onClick={() => {
-    console.log("Delete button clicked")
-    onDelete?.()
-  }}
+              onClick={() => {
+                console.log("Delete button clicked")
+                onDelete?.()
+              }}
               style={{ background: "red", color: "white" }}
             >
               Delete
@@ -107,7 +107,10 @@ export default function DetailCard({
               onChange={(e) =>
                 setForm({
                   ...form,
-                  [field.name]: e.target.value,
+                  [field.name]:
+                    field.type === "number"
+                      ? Number(e.target.value)
+                      : e.target.value,
                 })
               }
             />
