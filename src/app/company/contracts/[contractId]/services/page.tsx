@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
+import type { Field } from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 
 export default function ContractServicesPage() {
@@ -52,20 +53,28 @@ export default function ContractServicesPage() {
     }));
 
   };
-  const fields = [
-    {
-      name: "serviceId",
-      label: "Service",
-      type: "select",
-      options: companyServices.map((s) => ({
-        value: String(s.id),
-        label: `${s.name} ($${s.price})`,
-      })),
-      onChange: handleServiceChange,
-    },
-    { name: "quantity", label: "Quantity", type: "number" },
-    { name: "unitPrice", label: "Unit Price", type: "number" },
-  ];
+const fields: Field[] = [
+  {
+    name: "serviceId",
+    label: "Service",
+    type: "select",
+    options: companyServices.map((s) => ({
+      value: String(s.id),
+      label: `${s.name} ($${s.price})`,
+    })),
+    onChange: handleServiceChange,
+  },
+  {
+    name: "quantity",
+    label: "Quantity",
+    type: "number",
+  },
+  {
+    name: "unitPrice",
+    label: "Unit Price",
+    type: "number",
+  },
+];
 
   /* ---------- FETCH SERVICES ---------- */
 
@@ -192,7 +201,11 @@ export default function ContractServicesPage() {
       );
 
       if (!res.ok) {
-        setError("Failed to delete service");
+
+        const data = await res.json();
+
+        setError(data?.error || "Failed to delete service");
+
         return;
       }
 

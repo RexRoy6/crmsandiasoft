@@ -113,7 +113,7 @@ export async function getContractServices(contractId: number) {
 
   const tdb = await tenantDb()
 
-  return tdb.findManyRaw(
+  return tdb.findMany(
     contractItems,
     eq(contractItems.contractId, contractId)
   )

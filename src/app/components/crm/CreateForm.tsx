@@ -1,7 +1,10 @@
-type Field = {
+export type Field = {
   name: string;
   label: string;
-  type?: string;
+  type?: "text" | "number" | "select";
+  options?: { value: string; label: string }[];
+  onChange?: (value: string) => void;
+  readOnly?: boolean;
 };
 
 type Props = {
@@ -33,24 +36,58 @@ export default function CreateForm({
     >
       <h3>{title}</h3>
 
-      {fields.map((field) => (
-        <div key={field.name} style={{ marginBottom: 10 }}>
-          <input
-            type={field.type || "text"}
-            placeholder={field.label}
-            value={form[field.name]}
-            onChange={(e) =>
+      {fields.map((field) => {
+  if (field.type === "select") {
+    return (
+      <div key={field.name} style={{ marginBottom: 10 }}>
+        <label>{field.label}</label>
+
+        <select
+          value={form[field.name] || ""}
+          onChange={(e) => {
+            const value = e.target.value;
+
+            if (field.onChange) {
+              field.onChange(value);
+            } else {
               setForm({
                 ...form,
-                [field.name]:
-                  field.type === "number"
-                    ? Number(e.target.value)
-                    : e.target.value,
-              })
+                [field.name]: value,
+              });
             }
-          />
-        </div>
-      ))}
+          }}
+        >
+          <option value="">Select...</option>
+
+          {field.options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  return (
+    <div key={field.name} style={{ marginBottom: 10 }}>
+      <input
+        type={field.type || "text"}
+        placeholder={field.label}
+        value={form[field.name] || ""}
+        onChange={(e) =>
+          setForm({
+            ...form,
+            [field.name]:
+              field.type === "number"
+                ? Number(e.target.value)
+                : e.target.value,
+          })
+        }
+      />
+    </div>
+  );
+})}
 
       <button onClick={onSubmit}>Create</button>
 
