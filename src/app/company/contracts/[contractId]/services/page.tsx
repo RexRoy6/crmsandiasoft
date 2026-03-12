@@ -14,6 +14,7 @@ export default function ContractServicesPage() {
   const contractId = Number(params.contractId);
 
   const [services, setServices] = useState<any[]>([]);
+  const [companyServices, setCompanyServices] = useState<any[]>([]);
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
 
@@ -36,9 +37,32 @@ export default function ContractServicesPage() {
     quantity: "",
     unitPrice: "",
   });
+  const handleServiceChange = (serviceId: string) => {
 
+    const service = companyServices.find(
+      (s) => String(s.id) === serviceId
+    );
+
+    if (!service) return;
+
+    setForm((prev) => ({
+      ...prev,
+      serviceId,
+      unitPrice: String(service.price)
+    }));
+
+  };
   const fields = [
-    { name: "serviceId", label: "Service ID", type: "number" },
+    {
+      name: "serviceId",
+      label: "Service",
+      type: "select",
+      options: companyServices.map((s) => ({
+        value: String(s.id),
+        label: `${s.name} ($${s.price})`,
+      })),
+      onChange: handleServiceChange,
+    },
     { name: "quantity", label: "Quantity", type: "number" },
     { name: "unitPrice", label: "Unit Price", type: "number" },
   ];
@@ -75,10 +99,31 @@ export default function ContractServicesPage() {
     }
   };
 
+  const fetchCompanyServices = async () => {
+
+    try {
+
+      const res = await fetch(
+        "/api/company/services",
+        { credentials: "include" }
+      );
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setCompanyServices(data);
+
+    } catch (error) {
+      console.error("Failed to load services");
+    }
+
+  };
+
   /* ---------- CREATE SERVICE ---------- */
 
   const createService = async () => {
-
+    setError("");
     try {
 
       const res = await fetch(
@@ -130,8 +175,10 @@ export default function ContractServicesPage() {
   };
 
 
-  const deleteItem = async (itemId: number) => {
 
+
+  const deleteItem = async (itemId: number) => {
+    setError("");
     if (!confirm("Remove this service from contract?")) return;
 
     try {
@@ -157,7 +204,7 @@ export default function ContractServicesPage() {
   };
 
   const updateItem = async (itemId: number) => {
-
+    setError("");
     try {
 
       const res = await fetch(
@@ -191,7 +238,17 @@ export default function ContractServicesPage() {
 
   useEffect(() => {
     fetchServices();
+    fetchCompanyServices();
   }, []);
+
+  const contractTotal = services.reduce((sum, item) => {
+
+    return sum +
+      Number(item.quantity) *
+      Number(item.unitPrice);
+
+  }, 0);
+
 
   return (
     <div>
@@ -201,6 +258,18 @@ export default function ContractServicesPage() {
         buttonLabel="+ Add Service"
         onClick={() => setShowForm(true)}
       />
+
+      <p
+        style={{
+          fontWeight: "bold",
+          fontSize: 18,
+          marginBottom: 20,
+        }}
+      >
+        Contract Total: ${contractTotal}
+      </p>
+
+
 
       {showForm && (
 
@@ -213,7 +282,32 @@ export default function ContractServicesPage() {
           onCancel={() => setShowForm(false)}
         />
 
+
+
       )}
+
+      {form.serviceId && (() => {
+
+        const service = companyServices.find(
+          s => String(s.id) === form.serviceId
+        );
+
+        if (!service) return null;
+
+        return (
+          <div>
+            <p>Stock available: {service.stock}</p>
+
+            {form.quantity && form.unitPrice && (
+              <p>
+                Subtotal: $
+                {Number(form.quantity) * Number(form.unitPrice)}
+              </p>
+            )}
+          </div>
+        );
+
+      })()}
 
       {error && <ErrorBox message={error} code={errorCode} />}
 
@@ -234,6 +328,10 @@ export default function ContractServicesPage() {
         >
 
           {services.map((item) => {
+
+            const service = companyServices.find(
+              (s) => s.id === item.serviceId
+            );
 
             const subtotal =
               Number(item.quantity) *
@@ -284,8 +382,9 @@ export default function ContractServicesPage() {
                 ) : (
 
                   <>
+
                     <ListCard
-                      title={`Service ${item.serviceId}`}
+                      title={service ? service.name : `Service ${item.serviceId}`}
                       extra={[
                         `Quantity: ${item.quantity}`,
                         `Unit Price: $${item.unitPrice}`,
