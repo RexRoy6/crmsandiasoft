@@ -15,6 +15,14 @@ export default function ContractServicesPage() {
 
   const [services, setServices] = useState<any[]>([]);
 
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+
+  const [editForm, setEditForm] = useState({
+    serviceId: "",
+    quantity: "",
+  });
+
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number | undefined>();
@@ -121,6 +129,66 @@ export default function ContractServicesPage() {
     }
   };
 
+
+  const deleteItem = async (itemId: number) => {
+
+    if (!confirm("Remove this service from contract?")) return;
+
+    try {
+
+      const res = await fetch(
+        `/api/company/contract-items/${itemId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) {
+        setError("Failed to delete service");
+        return;
+      }
+
+      fetchServices();
+
+    } catch {
+      setError("Connection error");
+    }
+  };
+
+  const updateItem = async (itemId: number) => {
+
+    try {
+
+      const res = await fetch(
+        `/api/company/contract-items/${itemId}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            serviceId: Number(editForm.serviceId),
+            quantity: Number(editForm.quantity),
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        setError("Failed to update item");
+        return;
+      }
+
+      setEditingItemId(null);
+
+      fetchServices();
+
+    } catch {
+      setError("Connection error");
+    }
+  };
+
   useEffect(() => {
     fetchServices();
   }, []);
@@ -173,16 +241,86 @@ export default function ContractServicesPage() {
 
             return (
 
-              <ListCard
+              <div
                 key={item.id}
-                title={`Service ${item.serviceId}`}
-                extra={[
-                  `Quantity: ${item.quantity}`,
-                  `Unit Price: $${item.unitPrice}`,
-                  `Subtotal: $${subtotal}`,
-                ]}
-                link={`/company/contracts/${contractId}/services/${item.id}`}
-              />
+                style={{
+                  border: "1px solid #ccc",
+                  padding: 12,
+                }}
+              >
+
+                {editingItemId === item.id ? (
+
+                  <>
+                    <p>Edit Service</p>
+
+                    <input
+                      type="number"
+                      placeholder="Service ID"
+                      value={editForm.serviceId}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, serviceId: e.target.value })
+                      }
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="Quantity"
+                      value={editForm.quantity}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, quantity: e.target.value })
+                      }
+                    />
+
+                    <button onClick={() => updateItem(item.id)}>
+                      Save
+                    </button>
+
+                    <button onClick={() => setEditingItemId(null)}>
+                      Cancel
+                    </button>
+                  </>
+
+                ) : (
+
+                  <>
+                    <ListCard
+                      title={`Service ${item.serviceId}`}
+                      extra={[
+                        `Quantity: ${item.quantity}`,
+                        `Unit Price: $${item.unitPrice}`,
+                        `Subtotal: $${subtotal}`,
+                      ]}
+                      link="#"
+                    />
+
+                    <div style={{ marginTop: 8 }}>
+
+                      <button
+                        onClick={() => {
+                          setEditingItemId(item.id);
+                          setEditForm({
+                            serviceId: String(item.serviceId),
+                            quantity: String(item.quantity),
+                          });
+                        }}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => deleteItem(item.id)}
+                        style={{ marginLeft: 10 }}
+                      >
+                        Remove
+                      </button>
+
+                    </div>
+                  </>
+
+                )}
+
+              </div>
 
             );
           })}
