@@ -11,7 +11,7 @@ import ListCard from "@/app/components/crm/ListCard";
 export default function ContractServicesPage() {
 
   const params = useParams();
-  const contractId = params.contractId;
+  const contractId = Number(params.contractId);
 
   const [services, setServices] = useState<any[]>([]);
 
@@ -93,11 +93,15 @@ export default function ContractServicesPage() {
 
         const data = await res.json();
 
-        setError(
-          JSON.stringify(data.error) || "Failed to add service"
-        );
+        if (data?.error?.fieldErrors) {
+          const messages = Object.values(data.error.fieldErrors)
+            .flat()
+            .join(", ");
 
-        setErrorCode(res.status);
+          setError(messages);
+        } else {
+          setError("Failed to add service");
+        }
 
         return;
       }
