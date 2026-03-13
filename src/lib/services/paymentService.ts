@@ -21,10 +21,42 @@ export async function getContractPayments(
 
   const tdb = await tenantDb()
 
-  return tdb.findManyRaw(
-    payments,
-    eq(payments.contractId, contractId)
+  /* contract exists */
+
+  const contract = await tdb.findFirst(
+    contracts,
+    eq(contracts.id, contractId)
   )
+
+  if (!contract) {
+    throw new Error("contract not found")
+  }
+
+  /* get payments */
+
+  const contractPayments =
+    await tdb.findMany(
+      payments,
+      eq(payments.contractId, contractId)
+    )
+
+  /* calculate totals */
+
+  const paidAmount = contractPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0
+  )
+
+  const contractTotal = Number(contract.totalAmount)
+
+  const remainingAmount = contractTotal - paidAmount
+
+  return {
+    contractTotal,
+    paidAmount,
+    remainingAmount,
+    payments: contractPayments
+  }
 
 }
 
