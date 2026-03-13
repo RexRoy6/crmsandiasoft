@@ -49,7 +49,7 @@ export default function ContractServicesPage() {
     setForm((prev) => ({
       ...prev,
       serviceId,
-      unitPrice: String(service.price)
+      unitPrice: String(service.priceBase)//price
     }));
 
   };
@@ -60,7 +60,7 @@ const fields: Field[] = [
     type: "select",
     options: companyServices.map((s) => ({
       value: String(s.id),
-      label: `${s.name} ($${s.price})`,
+      label: `${s.name} ($${s.priceBase})`,
     })),
     onChange: handleServiceChange,
   },

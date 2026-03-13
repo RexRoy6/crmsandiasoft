@@ -5,6 +5,7 @@ import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import CreateForm from "@/app/components/crm/CreateForm";
+import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function ContractsPage() {
 
@@ -23,7 +24,7 @@ export default function ContractsPage() {
         totalAmount: "",
     });
 
-    const contractFields = [
+    const contractFields: Field[] = [
         { name: "clientId", label: "Client ID", type: "number" },
         { name: "eventId", label: "Event ID", type: "number" },
         { name: "status", label: "Status" },
@@ -143,11 +144,11 @@ export default function ContractsPage() {
                             key={contract.id}
                             title={`Contract #${contract.id}`}
                             extra={[
-                                `Client ID: ${contract.clientId}`,
-                                `Event ID: ${contract.eventId}`,
-                                `Status: ${contract.status}`,
-                                `Total: $${contract.totalAmount}`,
-                            ]}
+  `Client: ${contract.client?.name}`,
+  `Event: ${contract.event?.name}`,
+  `Status: ${contract.status}`,
+  `Total: $${contract.totalAmount}`,
+]}
                             link={`/company/contracts/${contract.id}`}
                         />
 

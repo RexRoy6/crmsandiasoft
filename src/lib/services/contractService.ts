@@ -1,7 +1,9 @@
+import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
-import { contracts,events } from "@/db/schema"
+import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { contracts, events, clients } from "@/db/schema"
 
-import { eq } from "drizzle-orm"
+import { eq, and, isNull } from "drizzle-orm"
 
 import type {
   CreateContractInput,
@@ -16,13 +18,13 @@ export async function createContract(data: CreateContractInput) {
 
   const tdb = await tenantDb()
   const event = await tdb.findFirst(
-  events,
-  eq(events.id, data.eventId)
-)
+    events,
+    eq(events.id, data.eventId)
+  )
 
-if (!event) {
-  throw new Error("event not found")
-}
+  if (!event) {
+    throw new Error("event not found")
+  }
 
   const [result] = await tdb.insert(
     contracts,
@@ -41,12 +43,66 @@ if (!event) {
 
 /* ---------- GET COMPANY CONTRACTS ---------- */
 
+// export async function getCompanyContracts() {
+
+//   const tdb = await tenantDb()
+
+//   return tdb.findManyRaw(contracts)
+
+// }
 export async function getCompanyContracts() {
 
-  const tdb = await tenantDb()
+  const { companyId } = await getAuthContext()
 
-  return tdb.findManyRaw(contracts)
+  const rows = await db
+    .select({
+      id: contracts.id,
+      status: contracts.status,
+      totalAmount: contracts.totalAmount,
 
+      clientId: clients.id,
+      clientName: clients.name,
+
+      eventId: events.id,
+      eventName: events.name
+    })
+    .from(contracts)
+    .leftJoin(
+      clients,
+      eq(contracts.clientId, clients.id)
+    )
+    .leftJoin(
+      events,
+      eq(contracts.eventId, events.id)
+    )
+    .where(
+      companyId
+        ? and(
+          eq(contracts.companyId, companyId),
+          isNull(contracts.deletedAt)
+        )
+        : isNull(contracts.deletedAt)
+    )
+
+  return rows.map((row) => ({
+    id: row.id,
+    status: row.status,
+    totalAmount: row.totalAmount,
+
+    client: row.clientId
+      ? {
+        id: row.clientId,
+        name: row.clientName
+      }
+      : null,
+
+    event: row.eventId
+      ? {
+        id: row.eventId,
+        name: row.eventName
+      }
+      : null
+  }))
 }
 
 
