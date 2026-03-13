@@ -4,6 +4,7 @@ import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
+import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function ServicesPage() {
     const [services, setServices] = useState<any[]>([]);
@@ -19,7 +20,7 @@ export default function ServicesPage() {
         priceBase: "",
     });
     //campos para formulario de servicios
-    const serviceFields = [
+    const serviceFields: Field[] = [
         { name: "name", label: "Name" },
         { name: "description", label: "Description" },
         { name: "stockTotal", label: "Stock", type: "number" },

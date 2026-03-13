@@ -9,8 +9,12 @@ export default function EventDetailPage() {
 
     const params = useParams();
     const router = useRouter();
+  
 
-    const eventId = params.eventId;
+    const eventId = Array.isArray(params.eventId)
+        ? params.eventId[0]
+        : params.eventId;
+
 
     const [event, setEvent] = useState<any>(null);
 
@@ -31,7 +35,7 @@ export default function EventDetailPage() {
         { name: "name", label: "Name" },
         { name: "eventDate", label: "Event Date" },
         { name: "location", label: "Location" },
-        { name: "notes", label: "Notes" },
+        { name: "notes", label: "Notes" }
     ];
 
     const fetchEvent = async () => {
@@ -50,11 +54,17 @@ export default function EventDetailPage() {
 
             const data = await res.json();
 
-            setEvent(data);
+            setEvent({
+                ...data,
+                deletedAt: data.deletedAt ?? data.deleted,
+                clientName: data.client?.name
+            });
 
             setForm({
                 name: data.name ?? "",
-                eventDate: data.eventDate ?? "",
+                eventDate: data.eventDate
+                    ? data.eventDate.split("T")[0]
+                    : "",
                 location: data.location ?? "",
                 notes: data.notes ?? "",
             });
@@ -67,11 +77,13 @@ export default function EventDetailPage() {
     };
 
     const updateEvent = async () => {
+
+
         try {
 
             setSaving(true);
 
-            await fetch(`/api/company/events/${eventId}`, {
+            const res = await fetch(`/api/company/events/${eventId}`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
@@ -79,6 +91,11 @@ export default function EventDetailPage() {
                 },
                 body: JSON.stringify(form),
             });
+
+
+            const data = await res.json()
+
+
 
             await fetchEvent();
 
@@ -91,14 +108,24 @@ export default function EventDetailPage() {
 
     const deleteEvent = async () => {
 
+
+
         if (!confirm("Delete this event?")) return;
 
-        await fetch(`/api/company/events/${eventId}`, {
+        const res = await fetch(`/api/company/events/${eventId}`, {
             method: "DELETE",
             credentials: "include",
         });
 
-        router.push(`/company/clients/${params.clientId}/events`);
+
+
+        const data = await res.json()
+
+
+
+        const clientId = event?.client?.id
+
+        router.push(`/company/clients/${clientId}/events`);
     };
 
     const reactivateEvent = async () => {
@@ -133,6 +160,11 @@ export default function EventDetailPage() {
         <div>
 
             <h1>Event Details</h1>
+            {event?.client && (
+                <p>
+                    <strong>Client:</strong> {event.client.name}
+                </p>
+            )}
 
             {error && <ErrorBox message={error} />}
 

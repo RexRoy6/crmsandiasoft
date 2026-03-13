@@ -48,7 +48,7 @@ export async function addServiceToContract(
 
   /* existing item */
 
-  const existingItem = await tdb.findFirstRaw(
+  const existingItem = await tdb.findFirst(
     contractItems,
     and(
       eq(contractItems.contractId, contractId),
@@ -113,7 +113,7 @@ export async function getContractServices(contractId: number) {
 
   const tdb = await tenantDb()
 
-  return tdb.findManyRaw(
+  return tdb.findMany(
     contractItems,
     eq(contractItems.contractId, contractId)
   )
@@ -185,7 +185,7 @@ async function recalculateContractTotal(contractId: number) {
 
   const tdb = await tenantDb()
 
-  const items = await tdb.findManyRaw(
+  const items = await tdb.findMany(
     contractItems,
     eq(contractItems.contractId, contractId)
   )

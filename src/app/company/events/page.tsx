@@ -5,6 +5,7 @@ import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
+import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function EventsPage() {
 
@@ -23,7 +24,7 @@ export default function EventsPage() {
     notes: "",
   });
 
-  const eventFields = [
+  const eventFields: Field[] = [
     { name: "clientId", label: "Client ID", type: "number" },
     { name: "name", label: "Event Name" },
     { name: "eventDate", label: "Event Date", type: "date" },
@@ -47,6 +48,7 @@ export default function EventsPage() {
       }
 
       const data = await res.json();
+      //console.log(events)
 
       setEvents(data);
 
@@ -145,11 +147,11 @@ export default function EventsPage() {
               key={event.id}
               title={event.name}
               extra={[
-                `Client: ${event.clientId}`,
+                `Client: ${event.client?.name}`,
                 `Date: ${new Date(event.eventDate).toLocaleDateString()}`,
                 `Location: ${event.location}`,
               ]}
-              link={`/company/clients/${event.clientId}/events/${event.id}`}
+              link={`/company/clients/${event.client?.id}/events/${event.id}`}
             />
           ))}
         </div>

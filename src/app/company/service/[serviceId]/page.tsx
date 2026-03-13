@@ -46,10 +46,20 @@ export default function ServiceDetailPage() {
             });
 
             if (!res.ok) {
-                setError("Failed to fetch service");
-                setErrorCode(res.status);
-                return;
-            }
+  const data = await res.json();
+
+  if (data?.error?.fieldErrors) {
+    const messages = Object.values(data.error.fieldErrors)
+      .flat()
+      .join(", ");
+
+    setError(messages);
+  } else {
+    setError("Update failed");
+  }
+
+  return;
+}
 
             const data = await res.json();
 
@@ -86,10 +96,20 @@ export default function ServiceDetailPage() {
             });
 
             if (!res.ok) {
-                const data = await res.json();
-                setError(data.error || "Update failed");
-                return;
-            }
+  const data = await res.json();
+
+  if (data?.error?.fieldErrors) {
+    const messages = Object.values(data.error.fieldErrors)
+      .flat()
+      .join(", ");
+
+    setError(messages);
+  } else {
+    setError("Update failed");
+  }
+
+  return;
+}
 
             await fetchService();
             setEditing(false);
@@ -112,9 +132,20 @@ export default function ServiceDetailPage() {
             });
 
             if (!res.ok) {
-                setError("Delete failed");
-                return;
-            }
+  const data = await res.json();
+
+  if (data?.error?.fieldErrors) {
+    const messages = Object.values(data.error.fieldErrors)
+      .flat()
+      .join(", ");
+
+    setError(messages);
+  } else {
+    setError("Update failed");
+  }
+
+  return;
+}
 
             router.push("/company/service");
 
@@ -134,9 +165,20 @@ export default function ServiceDetailPage() {
             );
 
             if (!res.ok) {
-                setError("Reactivate failed");
-                return;
-            }
+  const data = await res.json();
+
+  if (data?.error?.fieldErrors) {
+    const messages = Object.values(data.error.fieldErrors)
+      .flat()
+      .join(", ");
+
+    setError(messages);
+  } else {
+    setError("Update failed");
+  }
+
+  return;
+}
 
             await fetchService();
 
@@ -181,7 +223,11 @@ export default function ServiceDetailPage() {
                     saving={saving}
                     onSave={updateService}
                     onDelete={deleteService}
-                    onReactivate={reactivateService}
+                    actions={[
+                        ...(service.deletedAt
+                            ? [{ label: "Reactivate", onClick: reactivateService }]
+                            : []),
+                    ]}
                 />
             )}
         </div>
