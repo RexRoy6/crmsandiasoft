@@ -7,7 +7,7 @@ import {
   contracts,clients, events
 } from "@/db/schema"
 
-import { eq,and, isNull } from "drizzle-orm"
+import { eq,and, isNull,sum } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
@@ -175,16 +175,20 @@ export async function getCompanyPayments() {
 
   const rows = await db
     .select({
-      id: payments.id,
+      paymentId: payments.id,
       amount: payments.amount,
       currency: payments.currency,
       paymentMethod: payments.paymentMethod,
       createdAt: payments.createdAt,
 
       contractId: contracts.id,
+      contractStatus: contracts.status,
+      contractTotal: contracts.totalAmount,
 
       clientName: clients.name,
-      eventName: events.name
+      eventName: events.name,
+
+      paidAmount: sum(payments.amount)
     })
     .from(payments)
     .leftJoin(
@@ -205,8 +209,36 @@ export async function getCompanyPayments() {
         isNull(payments.deletedAt)
       )
     )
+    .groupBy(
+      payments.id,
+      contracts.id,
+      clients.name,
+      events.name
+    )
 
-  return rows
+  /* calcular remaining + status */
+
+  return rows.map((row) => {
+
+    const contractTotal = Number(row.contractTotal)
+
+    const paidAmount = Number(row.paidAmount ?? 0)
+
+    const remainingAmount = contractTotal - paidAmount
+
+    const paymentStatus =
+      getPaymentStatus(contractTotal, paidAmount)
+
+    return {
+      ...row,
+      contractTotal,
+      paidAmount,
+      remainingAmount,
+      paymentStatus
+    }
+
+  })
+
 }
 /* ---------- GET SINGLE PAYMENT ---------- */
 
@@ -214,10 +246,47 @@ export async function getPayment(id: number) {
 
   const tdb = await tenantDb()
 
-  return tdb.findFirstRaw(
+  const payment = await tdb.findFirstRaw(
     payments,
     eq(payments.id, id)
   )
+
+  if (!payment) return null
+
+  const contract = await tdb.findFirst(
+    contracts,
+    eq(contracts.id, payment.contractId)
+  )
+
+  if (!contract) return null
+
+  const contractPayments =
+    await tdb.findMany(
+      payments,
+      eq(payments.contractId, payment.contractId)
+    )
+
+  const paidAmount = contractPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0
+  )
+
+  const contractTotal = Number(contract.totalAmount)
+
+  const remainingAmount = contractTotal - paidAmount
+
+  const paymentStatus =
+    getPaymentStatus(contractTotal, paidAmount)
+
+  return {
+    contractId: contract.id,
+    contractStatus: contract.status,
+    paymentStatus,
+    contractTotal,
+    paidAmount,
+    remainingAmount,
+    payments: contractPayments
+  }
 
 }
 export async function updatePayment(
