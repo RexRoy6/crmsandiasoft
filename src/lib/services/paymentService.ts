@@ -14,56 +14,22 @@ import type {
 } from "@/lib/validations/paymentValidation"
 
 
-async function recalcContractStatus(contractId: number) {
+function getPaymentStatus(total: number, paid: number) {
 
-  const tdb = await tenantDb()
+  if (paid === 0) return "unpaid"
 
-  const contract = await tdb.findFirst(
-    contracts,
-    eq(contracts.id, contractId)
-  )
+  if (paid < total) return "partial"
 
-  if (!contract) return
+  return "paid"
 
-  const contractPayments =
-    await tdb.findManyRaw(
-      payments,
-      eq(payments.contractId, contractId)
-    )
-
-  const paidAmount = contractPayments.reduce(
-    (sum, p) => sum + Number(p.amount),
-    0
-  )
-
-  const total = Number(contract.totalAmount)
-
-  let newStatus = contract.status
-
-  if (paidAmount === 0) {
-    newStatus = "draft"
-  } else if (paidAmount < total) {
-    newStatus = "partial"
-  } else {
-    newStatus = "paid"
-  }
-
-  await tdb.update(
-    contracts,
-    { status: newStatus },
-    eq(contracts.id, contractId)
-  )
 }
 
 /* ---------- GET CONTRACT PAYMENTS ---------- */
-
 export async function getContractPayments(
   contractId: number
 ) {
 
   const tdb = await tenantDb()
-
-  /* contract exists */
 
   const contract = await tdb.findFirst(
     contracts,
@@ -74,15 +40,11 @@ export async function getContractPayments(
     throw new Error("contract not found")
   }
 
-  /* get payments */
-
   const contractPayments =
     await tdb.findMany(
       payments,
       eq(payments.contractId, contractId)
     )
-
-  /* calculate totals */
 
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),
@@ -93,7 +55,15 @@ export async function getContractPayments(
 
   const remainingAmount = contractTotal - paidAmount
 
+  const paymentStatus = getPaymentStatus(
+    contractTotal,
+    paidAmount
+  )
+
   return {
+    contractId: contract.id,
+    contractStatus: contract.status,
+    paymentStatus,
     contractTotal,
     paidAmount,
     remainingAmount,
