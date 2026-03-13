@@ -13,6 +13,48 @@ import type {
   CreatePaymentInput
 } from "@/lib/validations/paymentValidation"
 
+
+async function recalcContractStatus(contractId: number) {
+
+  const tdb = await tenantDb()
+
+  const contract = await tdb.findFirst(
+    contracts,
+    eq(contracts.id, contractId)
+  )
+
+  if (!contract) return
+
+  const contractPayments =
+    await tdb.findManyRaw(
+      payments,
+      eq(payments.contractId, contractId)
+    )
+
+  const paidAmount = contractPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0
+  )
+
+  const total = Number(contract.totalAmount)
+
+  let newStatus = contract.status
+
+  if (paidAmount === 0) {
+    newStatus = "draft"
+  } else if (paidAmount < total) {
+    newStatus = "partial"
+  } else {
+    newStatus = "paid"
+  }
+
+  await tdb.update(
+    contracts,
+    { status: newStatus },
+    eq(contracts.id, contractId)
+  )
+}
+
 /* ---------- GET CONTRACT PAYMENTS ---------- */
 
 export async function getContractPayments(
@@ -148,6 +190,7 @@ export async function createPayment(
     { status: newStatus },
     eq(contracts.id, contractId)
   )
+  //await recalcContractStatus(contractId)
 
   return tdb.findFirst(
     payments,
@@ -194,4 +237,85 @@ export async function getCompanyPayments() {
     )
 
   return rows
+}
+/* ---------- GET SINGLE PAYMENT ---------- */
+
+export async function getPayment(id: number) {
+
+  const tdb = await tenantDb()
+
+  return tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+}
+export async function updatePayment(
+  id: number,
+  data: Partial<CreatePaymentInput>
+) {
+
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    payments,
+    data,
+    eq(payments.id, id)
+  )
+
+  //await recalcContractStatus(existing.contractId)
+
+  return tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+}
+export async function deletePayment(id: number) {
+
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    payments,
+    { deletedAt: new Date() },
+    eq(payments.id, id)
+  )
+
+  //await recalcContractStatus(existing.contractId)
+
+  return true
+}
+export async function reactivatePayment(id: number) {
+
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    payments,
+    { deletedAt: null },
+    eq(payments.id, id)
+  )
+
+  //await recalcContractStatus(existing.contractId)
+
+  return true
 }
