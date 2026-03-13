@@ -1,17 +1,17 @@
+import { db } from "@/db"
+import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { tenantDb } from "@/lib/db/tenantDb"
 
 import {
   payments,
-  contracts
+  contracts,clients, events
 } from "@/db/schema"
 
-import { eq } from "drizzle-orm"
+import { eq,and, isNull } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
 } from "@/lib/validations/paymentValidation"
-
-
 
 /* ---------- GET CONTRACT PAYMENTS ---------- */
 
@@ -110,11 +110,88 @@ export async function createPayment(
     paymentMethod: data.paymentMethod
   })
 
+  // const insertId = result.insertId
+
+  // return tdb.findFirst(
+  //   payments,
+  //   eq(payments.id, insertId)
+  // )
   const insertId = result.insertId
+
+  /* recalculate totals */
+
+  const updatedPayments =
+    await tdb.findManyRaw(
+      payments,
+      eq(payments.contractId, contractId)
+    )
+
+  const paidAmount = updatedPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0
+  )
+
+  const contractTotal = Number(contract.totalAmount)
+
+  let newStatus = contract.status
+
+  if (paidAmount === contractTotal) {
+    newStatus = "paid"
+  } else if (paidAmount > 0) {
+    newStatus = "partial"
+  }
+
+  /* update contract status */
+
+  await tdb.update(
+    contracts,
+    { status: newStatus },
+    eq(contracts.id, contractId)
+  )
 
   return tdb.findFirst(
     payments,
     eq(payments.id, insertId)
   )
 
+}
+
+export async function getCompanyPayments() {
+
+  const { companyId } = await getAuthContext()
+
+  const rows = await db
+    .select({
+      id: payments.id,
+      amount: payments.amount,
+      currency: payments.currency,
+      paymentMethod: payments.paymentMethod,
+      createdAt: payments.createdAt,
+
+      contractId: contracts.id,
+
+      clientName: clients.name,
+      eventName: events.name
+    })
+    .from(payments)
+    .leftJoin(
+      contracts,
+      eq(payments.contractId, contracts.id)
+    )
+    .leftJoin(
+      events,
+      eq(contracts.eventId, events.id)
+    )
+    .leftJoin(
+      clients,
+      eq(contracts.clientId, clients.id)
+    )
+    .where(
+      and(
+        eq(contracts.companyId, companyId!),
+        isNull(payments.deletedAt)
+      )
+    )
+
+  return rows
 }

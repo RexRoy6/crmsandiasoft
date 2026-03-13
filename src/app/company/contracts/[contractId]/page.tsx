@@ -192,19 +192,23 @@ export default function ContractDetailPage() {
           onSave={updateContract}
           onDelete={deleteContract}
           actions={[
-            {
-              label: "View Services",
-              href: `/company/contracts/${contractId}/services`,
-            },
-            ...(contract.deletedAt
-              ? [
-                  {
-                    label: "Reactivate",
-                    onClick: reactivateContract,
-                  },
-                ]
-              : []),
-          ]}
+  {
+    label: "View Services",
+    href: `/company/contracts/${contractId}/services`,
+  },
+  {
+    label: "View Payments",
+    href: `/company/contracts/${contractId}/payments`,
+  },
+  ...(contract.deletedAt
+    ? [
+        {
+          label: "Reactivate",
+          onClick: reactivateContract,
+        },
+      ]
+    : []),
+]}
         />
 
       )}
