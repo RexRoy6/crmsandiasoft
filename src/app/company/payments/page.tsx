@@ -14,7 +14,7 @@ export default function PaymentsPage() {
   const [error, setError] = useState("")
   const [errorCode, setErrorCode] = useState<number>()
 
-   const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   async function fetchPayments() {
 
@@ -57,8 +57,8 @@ export default function PaymentsPage() {
 
       <PageHeader
         title="Company Payments"
-         buttonLabel="+ New payment"
-                onClick={() => setShowForm(true)}
+        buttonLabel="+ New payment"
+        onClick={() => setShowForm(true)}
       />
 
       {error && (
@@ -87,13 +87,18 @@ export default function PaymentsPage() {
           {payments.map((payment) => (
 
             <ListCard
-              key={payment.id}
-              title={`Payment #${payment.id}`}
+              key={payment.paymentId}
+              title={`Payment #${payment.paymentId}`}
               extra={[
                 `Client: ${payment.clientName}`,
                 `Event: ${payment.eventName}`,
                 `Contract: #${payment.contractId}`,
+
                 `Amount: $${payment.amount}`,
+                `Contract Total: $${payment.contractTotal}`,
+                `Remaining: $${payment.remainingAmount}`,
+
+                `Status: ${payment.paymentStatus}`,
                 `Method: ${payment.paymentMethod}`
               ]}
               link={'#'}
