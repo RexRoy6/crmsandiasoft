@@ -104,6 +104,17 @@ export default function ContractsPage() {
     };
 
     const createContract = async () => {
+
+          const payload = {
+    eventId: Number(form.eventId),
+    status: form.status,
+    totalAmount: Number(form.totalAmount),
+  }
+
+  console.log("Contract payload:", payload)
+
+
+  
         try {
 
             const res = await fetch("/api/company/contracts", {
