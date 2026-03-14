@@ -10,8 +10,7 @@ import type { Field } from "@/app/components/crm/CreateForm";
 export default function ContractsPage() {
 
     const [contracts, setContracts] = useState<any[]>([]);
-    const [clients, setClients] = useState<any[]>([]);
-const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -21,42 +20,31 @@ const [events, setEvents] = useState<any[]>([]);
     /* create contract */
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({
-        clientId: "",
         eventId: "",
         status: "draft",
         totalAmount: "",
     });
 
-   const contractFields: Field[] = [
+    const contractFields: Field[] = [
 
-  {
-    name: "clientId",
-    label: "Client",
-    type: "select",
-    options: clients.map((client) => ({
-      value: client.id,
-      label: client.name,
-    })),
-  },
+        {
+            name: "eventId",
+            label: "Event",
+            type: "select",
+            options: events.map((event) => ({
+                value: event.id,
+                label: `${event.name} (${event.client?.name})`,
+            })),
+        },
 
-  {
-    name: "eventId",
-    label: "Event",
-    type: "select",
-    options: events.map((event) => ({
-      value: event.id,
-      label: `${event.name} (${event.client?.name})`,
-    })),
-  },
+        { name: "status", label: "Status" },
 
-  { name: "status", label: "Status" },
-
-  {
-    name: "totalAmount",
-    label: "Total Amount",
-    type: "number",
-  },
-];
+        {
+            name: "totalAmount",
+            label: "Total Amount",
+            type: "number",
+        },
+    ];
     const fetchContracts = async () => {
         try {
 
@@ -83,51 +71,28 @@ const [events, setEvents] = useState<any[]>([]);
         }
     };
 
-    const fetchClients = async () => {
+    const fetchEvents = async () => {
 
-  try {
+        try {
 
-    const res = await fetch(
-      "/api/company/clients",
-      { credentials: "include" }
-    );
+            const res = await fetch(
+                "/api/company/events",
+                { credentials: "include" }
+            );
 
-    if (!res.ok) return;
+            if (!res.ok) return;
 
-    const data = await res.json();
+            const data = await res.json();
 
-    const activeClients = data.filter(
-      (c: any) => !c.deletedAt
-    );
+            const activeEvents = data.filter(
+                (e: any) => !e.deleted
+            );
 
-    setClients(activeClients);
+            setEvents(activeEvents);
 
-  } catch {}
+        } catch { }
 
-};
-
-const fetchEvents = async () => {
-
-  try {
-
-    const res = await fetch(
-      "/api/company/events",
-      { credentials: "include" }
-    );
-
-    if (!res.ok) return;
-
-    const data = await res.json();
-
-    const activeEvents = data.filter(
-      (e: any) => !e.deleted
-    );
-
-    setEvents(activeEvents);
-
-  } catch {}
-
-};
+    };
 
     const createContract = async () => {
         try {
@@ -139,7 +104,6 @@ const fetchEvents = async () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    clientId: Number(form.clientId),
                     eventId: Number(form.eventId),
                     status: form.status,
                     totalAmount: Number(form.totalAmount),
@@ -156,7 +120,6 @@ const fetchEvents = async () => {
             setShowForm(false);
 
             setForm({
-                clientId: "",
                 eventId: "",
                 status: "draft",
                 totalAmount: "",
@@ -171,8 +134,7 @@ const fetchEvents = async () => {
 
     useEffect(() => {
         fetchContracts();
-        fetchClients();
-  fetchEvents();
+        fetchEvents();
     }, []);
 
     return (
@@ -218,11 +180,11 @@ const fetchEvents = async () => {
                             key={contract.id}
                             title={`Contract #${contract.id}`}
                             extra={[
-  `Client: ${contract.client?.name}`,
-  `Event: ${contract.event?.name}`,
-  `Status: ${contract.status}`,
-  `Total: $${contract.totalAmount}`,
-]}
+                                `Client: ${contract.client?.name}`,
+                                `Event: ${contract.event?.name}`,
+                                `Status: ${contract.status}`,
+                                `Total: $${contract.totalAmount}`,
+                            ]}
                             link={`/company/contracts/${contract.id}`}
                         />
 

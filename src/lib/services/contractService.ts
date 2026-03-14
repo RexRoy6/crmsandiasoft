@@ -15,21 +15,51 @@ import type {
 
 /* ---------- CREATE CONTRACT ---------- */
 
+// export async function createContract(data: CreateContractInput) {
+
+//   const tdb = await tenantDb()
+//   const event = await tdb.findFirst(
+//     events,
+//     eq(events.id, data.eventId)
+//   )
+
+//   if (!event) {
+//     throw new Error("event not found")
+//   }
+
+//   const [result] = await tdb.insert(
+//     contracts,
+//     data
+//   )
+
+//   const insertId = result.insertId
+
+//   return tdb.findFirst(
+//     contracts,
+//     eq(contracts.id, insertId)
+//   )
+// }
 export async function createContract(data: CreateContractInput) {
 
   const tdb = await tenantDb()
+
   const event = await tdb.findFirst(
     events,
     eq(events.id, data.eventId)
   )
 
   if (!event) {
-    throw new Error("event not found")
+    throw new Error("Event not found")
   }
 
   const [result] = await tdb.insert(
     contracts,
-    data
+    {
+      eventId: data.eventId,
+      clientId: event.clientId,   //clave
+      status: data.status,
+      totalAmount: data.totalAmount
+    }
   )
 
   const insertId = result.insertId
