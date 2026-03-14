@@ -6,6 +6,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
+import { CONTRACT_STATUS } from "@/db/schema"
 
 export default function ContractsPage() {
 
@@ -37,7 +38,15 @@ export default function ContractsPage() {
             })),
         },
 
-        { name: "status", label: "Status" },
+        {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: CONTRACT_STATUS.map((status) => ({
+                value: status,
+                label: status.charAt(0).toUpperCase() + status.slice(1)
+            }))
+        },
 
         {
             name: "totalAmount",
@@ -137,6 +146,27 @@ export default function ContractsPage() {
         fetchEvents();
     }, []);
 
+    function getStatusColor(status: string) {
+
+        switch (status) {
+
+            case "draft":
+                return "#6b7280"   // gray
+
+            case "active":
+                return "#2563eb"   // blue
+
+            case "cancelled":
+                return "#dc2626"   // red
+
+            case "completed":
+                return "#16a34a"   // green
+
+            default:
+                return "#6b7280"
+        }
+
+    }
     return (
         <div>
 
@@ -174,21 +204,73 @@ export default function ContractsPage() {
                     }}
                 >
 
-                    {contracts.map((contract) => (
+                    {contracts.map((contract) => {
 
-                        <ListCard
-                            key={contract.id}
-                            title={`Contract #${contract.id}`}
-                            extra={[
-                                `Client: ${contract.client?.name}`,
-                                `Event: ${contract.event?.name}`,
-                                `Status: ${contract.status}`,
-                                `Total: $${contract.totalAmount}`,
-                            ]}
-                            link={`/company/contracts/${contract.id}`}
-                        />
+                        const progress =
+                            contract.totalAmount > 0
+                                ? (contract.paidAmount / contract.totalAmount) * 100
+                                : 0
 
-                    ))}
+                        const statusColor = getStatusColor(contract.status)
+
+                        return (
+
+                            <div key={contract.id}>
+
+                                <ListCard
+                                    key={contract.id}
+                                    title={`Contract #${contract.id}`}
+                                    extra={[
+                                        `Client: ${contract.client?.name}`,
+                                        `Event: ${contract.event?.name}`,
+                                        `Status: ${contract.status}`,
+                                        `Total: $${contract.totalAmount}`,
+                                        `Paid: $${contract.paidAmount}`,
+                                        `Remaining: $${contract.remainingAmount}`,
+                                    ]}
+                                    link={`/company/contracts/${contract.id}`}
+
+                                />
+
+                                {/* Progress bar */}
+
+                                <div
+                                    style={{
+                                        background: "#e5e7eb",
+                                        borderRadius: 6,
+                                        height: 8,
+                                        marginTop: 6,
+                                        overflow: "hidden"
+                                    }}
+                                >
+
+                                    <div
+                                        style={{
+                                            width: `${progress}%`,
+                                            background: statusColor,
+                                            height: "100%",
+                                            transition: "width 0.3s ease"
+                                        }}
+                                    />
+
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 12,
+                                        marginTop: 4,
+                                        color: "#6b7280"
+                                    }}
+                                >
+                                    {Math.round(progress)}% paid
+                                </div>
+
+                            </div>
+
+
+                        )
+
+                    })}
 
                 </div>
             )}
