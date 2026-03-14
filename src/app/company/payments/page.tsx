@@ -25,14 +25,17 @@ export default function PaymentsPage() {
 });
 
 const [contracts, setContracts] = useState<any[]>([])
+const availableContracts = contracts.filter(
+  (c) => c.remainingAmount > 0
+)
 
 const paymentFields: Field[] = [
   {
     name: "contractId",
     label: "Contract",
     type: "select",
-    options: contracts.map((c) => ({
-      label: `#${c.id} - ${c.client.name} (${c.event.name})`,
+    options: availableContracts.map((c) => ({
+      label: `#${c.id} - ${c.client.name} (${c.event.name}) - Remaining $${c.remainingAmount}`,
       value: c.id
     }))
   },
