@@ -10,6 +10,7 @@ import type { Field } from "@/app/components/crm/CreateForm";
 export default function EventsPage() {
 
   const [events, setEvents] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
@@ -24,13 +25,21 @@ export default function EventsPage() {
     notes: "",
   });
 
-  const eventFields: Field[] = [
-    { name: "clientId", label: "Client ID", type: "number" },
-    { name: "name", label: "Event Name" },
-    { name: "eventDate", label: "Event Date", type: "date" },
-    { name: "location", label: "Location" },
-    { name: "notes", label: "Notes", type: "textarea" },
-  ];
+const eventFields: Field[] = [
+  {
+    name: "clientId",
+    label: "Client",
+    type: "select",
+    options: clients.map((client) => ({
+      value: client.id,
+      label: client.name,
+    })),
+  },
+  { name: "name", label: "Event Name" },
+  { name: "eventDate", label: "Event Date", type: "date" },
+  { name: "location", label: "Location" },
+  { name: "notes", label: "Notes", type: "textarea" },
+];
 
   const fetchEvents = async () => {
     try {
@@ -58,6 +67,30 @@ export default function EventsPage() {
       setLoading(false);
     }
   };
+  const fetchClients = async () => {
+
+  try {
+
+    const res = await fetch(
+      "/api/company/clients",
+      { credentials: "include" }
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    /* quitar clientes eliminados */
+    const activeClients = data.filter(
+      (c: any) => !c.deletedAt
+    );
+
+    setClients(activeClients);
+
+  } catch {}
+
+};
+
 
   const createEvent = async () => {
     try {
@@ -104,6 +137,7 @@ export default function EventsPage() {
 
   useEffect(() => {
     fetchEvents();
+    fetchClients();
   }, []);
 
   return (

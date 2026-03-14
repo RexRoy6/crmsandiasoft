@@ -6,10 +6,13 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
+import { CONTRACT_STATUS } from "@/db/schema"
 
 export default function ContractsPage() {
 
     const [contracts, setContracts] = useState<any[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [errorCode, setErrorCode] = useState<number | undefined>();
@@ -18,19 +21,39 @@ export default function ContractsPage() {
     /* create contract */
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({
-        clientId: "",
         eventId: "",
         status: "draft",
         totalAmount: "",
     });
 
     const contractFields: Field[] = [
-        { name: "clientId", label: "Client ID", type: "number" },
-        { name: "eventId", label: "Event ID", type: "number" },
-        { name: "status", label: "Status" },
-        { name: "totalAmount", label: "Total Amount", type: "number" },
-    ];
 
+        {
+            name: "eventId",
+            label: "Event",
+            type: "select",
+            options: events.map((event) => ({
+                value: event.id,
+                label: `${event.name} (${event.client?.name})`,
+            })),
+        },
+
+        {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: CONTRACT_STATUS.map((status) => ({
+                value: status,
+                label: status.charAt(0).toUpperCase() + status.slice(1)
+            }))
+        },
+
+        {
+            name: "totalAmount",
+            label: "Total Amount",
+            type: "number",
+        },
+    ];
     const fetchContracts = async () => {
         try {
 
@@ -57,7 +80,41 @@ export default function ContractsPage() {
         }
     };
 
+    const fetchEvents = async () => {
+
+        try {
+
+            const res = await fetch(
+                "/api/company/events",
+                { credentials: "include" }
+            );
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+
+            const activeEvents = data.filter(
+                (e: any) => !e.deleted
+            );
+
+            setEvents(activeEvents);
+
+        } catch { }
+
+    };
+
     const createContract = async () => {
+
+          const payload = {
+    eventId: Number(form.eventId),
+    status: form.status,
+    totalAmount: Number(form.totalAmount),
+  }
+
+  console.log("Contract payload:", payload)
+
+
+  
         try {
 
             const res = await fetch("/api/company/contracts", {
@@ -67,7 +124,6 @@ export default function ContractsPage() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    clientId: Number(form.clientId),
                     eventId: Number(form.eventId),
                     status: form.status,
                     totalAmount: Number(form.totalAmount),
@@ -84,7 +140,6 @@ export default function ContractsPage() {
             setShowForm(false);
 
             setForm({
-                clientId: "",
                 eventId: "",
                 status: "draft",
                 totalAmount: "",
@@ -99,8 +154,30 @@ export default function ContractsPage() {
 
     useEffect(() => {
         fetchContracts();
+        fetchEvents();
     }, []);
 
+    function getStatusColor(status: string) {
+
+        switch (status) {
+
+            case "draft":
+                return "#6b7280"   // gray
+
+            case "active":
+                return "#2563eb"   // blue
+
+            case "cancelled":
+                return "#dc2626"   // red
+
+            case "completed":
+                return "#16a34a"   // green
+
+            default:
+                return "#6b7280"
+        }
+
+    }
     return (
         <div>
 
@@ -138,21 +215,73 @@ export default function ContractsPage() {
                     }}
                 >
 
-                    {contracts.map((contract) => (
+                    {contracts.map((contract) => {
 
-                        <ListCard
-                            key={contract.id}
-                            title={`Contract #${contract.id}`}
-                            extra={[
-  `Client: ${contract.client?.name}`,
-  `Event: ${contract.event?.name}`,
-  `Status: ${contract.status}`,
-  `Total: $${contract.totalAmount}`,
-]}
-                            link={`/company/contracts/${contract.id}`}
-                        />
+                        const progress =
+                            contract.totalAmount > 0
+                                ? (contract.paidAmount / contract.totalAmount) * 100
+                                : 0
 
-                    ))}
+                        const statusColor = getStatusColor(contract.status)
+
+                        return (
+
+                            <div key={contract.id}>
+
+                                <ListCard
+                                    key={contract.id}
+                                    title={`Contract #${contract.id}`}
+                                    extra={[
+                                        `Client: ${contract.client?.name}`,
+                                        `Event: ${contract.event?.name}`,
+                                        `Status: ${contract.status}`,
+                                        `Total: $${contract.totalAmount}`,
+                                        `Paid: $${contract.paidAmount}`,
+                                        `Remaining: $${contract.remainingAmount}`,
+                                    ]}
+                                    link={`/company/contracts/${contract.id}`}
+
+                                />
+
+                                {/* Progress bar */}
+
+                                <div
+                                    style={{
+                                        background: "#e5e7eb",
+                                        borderRadius: 6,
+                                        height: 8,
+                                        marginTop: 6,
+                                        overflow: "hidden"
+                                    }}
+                                >
+
+                                    <div
+                                        style={{
+                                            width: `${progress}%`,
+                                            background: statusColor,
+                                            height: "100%",
+                                            transition: "width 0.3s ease"
+                                        }}
+                                    />
+
+                                </div>
+
+                                <div
+                                    style={{
+                                        fontSize: 12,
+                                        marginTop: 4,
+                                        color: "#6b7280"
+                                    }}
+                                >
+                                    {Math.round(progress)}% paid
+                                </div>
+
+                            </div>
+
+
+                        )
+
+                    })}
 
                 </div>
             )}

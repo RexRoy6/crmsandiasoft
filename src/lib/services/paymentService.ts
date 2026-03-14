@@ -4,10 +4,10 @@ import { tenantDb } from "@/lib/db/tenantDb"
 
 import {
   payments,
-  contracts,clients, events
+  contracts, clients, events
 } from "@/db/schema"
 
-import { eq,and, isNull,sum } from "drizzle-orm"
+import { eq, and, isNull, sum } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
@@ -147,20 +147,31 @@ export async function createPayment(
 
   let newStatus = contract.status
 
-  if (paidAmount === contractTotal) {
-    newStatus = "paid"
-  } else if (paidAmount > 0) {
-    newStatus = "partial"
+  if (paidAmount === 0) {
+    newStatus = "draft"
+  }
+  else if (paidAmount < contractTotal) {
+    newStatus = "active"
+  }
+  else if (paidAmount >= contractTotal) {
+    newStatus = "completed"
   }
 
   /* update contract status */
 
+  // await tdb.update(
+  //   contracts,
+  //   { status: newStatus },
+  //   eq(contracts.id, contractId)
+  // )
   await tdb.update(
     contracts,
     { status: newStatus },
-    eq(contracts.id, contractId)
+    and(
+      eq(contracts.id, contractId),
+      eq(contracts.companyId, contract.companyId)
+    )
   )
-  //await recalcContractStatus(contractId)
 
   return tdb.findFirst(
     payments,

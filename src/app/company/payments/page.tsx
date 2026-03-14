@@ -24,12 +24,51 @@ export default function PaymentsPage() {
   paymentMethod: "cash"
 });
 
+const [contracts, setContracts] = useState<any[]>([])
+const availableContracts = contracts.filter(
+  (c) => c.remainingAmount > 0
+)
+
 const paymentFields: Field[] = [
-  { name: "contractId", label: "Contract ID", type: "number" },
-  { name: "amount", label: "Amount", type: "number" },
-  { name: "currency", label: "Currency" },
-  { name: "paymentMethod", label: "Payment Method" }
-];
+  {
+    name: "contractId",
+    label: "Contract",
+    type: "select",
+    options: availableContracts.map((c) => ({
+      label: `#${c.id} - ${c.client.name} (${c.event.name}) - Remaining $${c.remainingAmount}`,
+      value: c.id
+    }))
+  },
+
+  {
+    name: "amount",
+    label: "Amount",
+    type: "number"
+  },
+
+  {
+    name: "currency",
+    label: "Currency",
+    type: "select",
+    options: [
+      { label: "MXN", value: "MXN" },
+      { label: "USD", value: "USD" }
+    ]
+  },
+
+  {
+    name: "paymentMethod",
+    label: "Payment Method",
+    type: "select",
+    options: [
+      { label: "Cash", value: "cash" },
+      { label: "Transfer", value: "transfer" },
+      { label: "Card", value: "card" }
+    ]
+  }
+]
+
+
 
 
   async function fetchPayments() {
@@ -62,6 +101,25 @@ const paymentFields: Field[] = [
     }
 
   }
+
+  async function fetchContracts() {
+
+  try {
+
+    const res = await fetch(
+      "/api/company/contracts",
+      { credentials: "include" }
+    )
+
+    if (!res.ok) return
+
+    const data = await res.json()
+
+    setContracts(data)
+
+  } catch {}
+
+}
 
   async function createPayment() {
 
@@ -120,10 +178,13 @@ const paymentFields: Field[] = [
     <div>
 
       <PageHeader
-        title="Company Payments"
-        buttonLabel="+ New payment"
-        onClick={() => setShowForm(true)}
-      />
+  title="Company Payments"
+  buttonLabel="+ New payment"
+  onClick={() => {
+    setShowForm(true)
+    fetchContracts()
+  }}
+/>
 
       {showForm && (
   <CreateForm
