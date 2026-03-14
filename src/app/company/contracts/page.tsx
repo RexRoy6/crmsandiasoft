@@ -10,6 +10,9 @@ import type { Field } from "@/app/components/crm/CreateForm";
 export default function ContractsPage() {
 
     const [contracts, setContracts] = useState<any[]>([]);
+    const [clients, setClients] = useState<any[]>([]);
+const [events, setEvents] = useState<any[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [errorCode, setErrorCode] = useState<number | undefined>();
@@ -24,13 +27,36 @@ export default function ContractsPage() {
         totalAmount: "",
     });
 
-    const contractFields: Field[] = [
-        { name: "clientId", label: "Client ID", type: "number" },
-        { name: "eventId", label: "Event ID", type: "number" },
-        { name: "status", label: "Status" },
-        { name: "totalAmount", label: "Total Amount", type: "number" },
-    ];
+   const contractFields: Field[] = [
 
+  {
+    name: "clientId",
+    label: "Client",
+    type: "select",
+    options: clients.map((client) => ({
+      value: client.id,
+      label: client.name,
+    })),
+  },
+
+  {
+    name: "eventId",
+    label: "Event",
+    type: "select",
+    options: events.map((event) => ({
+      value: event.id,
+      label: `${event.name} (${event.client?.name})`,
+    })),
+  },
+
+  { name: "status", label: "Status" },
+
+  {
+    name: "totalAmount",
+    label: "Total Amount",
+    type: "number",
+  },
+];
     const fetchContracts = async () => {
         try {
 
@@ -56,6 +82,52 @@ export default function ContractsPage() {
             setLoading(false);
         }
     };
+
+    const fetchClients = async () => {
+
+  try {
+
+    const res = await fetch(
+      "/api/company/clients",
+      { credentials: "include" }
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    const activeClients = data.filter(
+      (c: any) => !c.deletedAt
+    );
+
+    setClients(activeClients);
+
+  } catch {}
+
+};
+
+const fetchEvents = async () => {
+
+  try {
+
+    const res = await fetch(
+      "/api/company/events",
+      { credentials: "include" }
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    const activeEvents = data.filter(
+      (e: any) => !e.deleted
+    );
+
+    setEvents(activeEvents);
+
+  } catch {}
+
+};
 
     const createContract = async () => {
         try {
@@ -99,6 +171,8 @@ export default function ContractsPage() {
 
     useEffect(() => {
         fetchContracts();
+        fetchClients();
+  fetchEvents();
     }, []);
 
     return (
