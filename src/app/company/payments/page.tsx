@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import ErrorBox from "@/app/components/ErrorBox";
+import CreateForm from "@/app/components/crm/CreateForm";
+import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function PaymentsPage() {
 
@@ -14,7 +16,21 @@ export default function PaymentsPage() {
   const [error, setError] = useState("")
   const [errorCode, setErrorCode] = useState<number>()
 
-   const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+  contractId: "",
+  amount: "",
+  currency: "MXN",
+  paymentMethod: "cash"
+});
+
+const paymentFields: Field[] = [
+  { name: "contractId", label: "Contract ID", type: "number" },
+  { name: "amount", label: "Amount", type: "number" },
+  { name: "currency", label: "Currency" },
+  { name: "paymentMethod", label: "Payment Method" }
+];
+
 
   async function fetchPayments() {
 
@@ -47,6 +63,54 @@ export default function PaymentsPage() {
 
   }
 
+  async function createPayment() {
+
+  try {
+
+    const res = await fetch(
+      `/api/company/contracts/${form.contractId}/payments`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          amount: Number(form.amount),
+          currency: form.currency,
+          paymentMethod: form.paymentMethod
+        })
+      }
+    )
+
+    if (!res.ok) {
+
+      const data = await res.json()
+
+      setError(data?.error || "Failed to create payment")
+      setErrorCode(res.status)
+      return
+    }
+
+    setShowForm(false)
+
+    setForm({
+      contractId: "",
+      amount: "",
+      currency: "MXN",
+      paymentMethod: "cash"
+    })
+
+    fetchPayments()
+
+  } catch {
+
+    setError("Connection error")
+
+  }
+
+}
+
   useEffect(() => {
     fetchPayments()
   }, [])
@@ -57,9 +121,20 @@ export default function PaymentsPage() {
 
       <PageHeader
         title="Company Payments"
-         buttonLabel="+ New payment"
-                onClick={() => setShowForm(true)}
+        buttonLabel="+ New payment"
+        onClick={() => setShowForm(true)}
       />
+
+      {showForm && (
+  <CreateForm
+    title="Create Payment"
+    fields={paymentFields}
+    form={form}
+    setForm={setForm}
+    onSubmit={createPayment}
+    onCancel={() => setShowForm(false)}
+  />
+)}
 
       {error && (
         <ErrorBox
@@ -87,13 +162,18 @@ export default function PaymentsPage() {
           {payments.map((payment) => (
 
             <ListCard
-              key={payment.id}
-              title={`Payment #${payment.id}`}
+              key={payment.paymentId}
+              title={`Payment #${payment.paymentId}`}
               extra={[
                 `Client: ${payment.clientName}`,
                 `Event: ${payment.eventName}`,
                 `Contract: #${payment.contractId}`,
+
                 `Amount: $${payment.amount}`,
+                `Contract Total: $${payment.contractTotal}`,
+                `Remaining: $${payment.remainingAmount}`,
+
+                `Status: ${payment.paymentStatus}`,
                 `Method: ${payment.paymentMethod}`
               ]}
               link={'#'}

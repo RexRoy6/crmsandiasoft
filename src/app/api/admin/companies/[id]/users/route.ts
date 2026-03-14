@@ -120,8 +120,8 @@ export async function GET(
         /* ---------- check company exists ---------- */
         const company = await db.query.companies.findFirst({
             where: and(
-                eq(companies.id, companyId),
-                isNull(companies.deletedAt)
+                eq(companies.id, companyId)
+                //isNull(companies.deletedAt)
             )
         })
 
@@ -141,12 +141,13 @@ export async function GET(
                 role: users.role,
                 createdAt: users.createdAt,
                 updatedAt: users.updatedAt,
+                deletedAt:users.deletedAt
             })
             .from(users)
             .where(
                 and(
-                    eq(users.companyId, companyId),
-                    isNull(users.deletedAt) // exclude soft deleted users
+                    eq(users.companyId, companyId)
+                    //isNull(users.deletedAt) //// exclude soft deleted users
                 )
             )
 

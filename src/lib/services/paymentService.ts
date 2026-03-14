@@ -7,21 +7,29 @@ import {
   contracts,clients, events
 } from "@/db/schema"
 
-import { eq,and, isNull } from "drizzle-orm"
+import { eq,and, isNull,sum } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
 } from "@/lib/validations/paymentValidation"
 
-/* ---------- GET CONTRACT PAYMENTS ---------- */
 
+function getPaymentStatus(total: number, paid: number) {
+
+  if (paid === 0) return "unpaid"
+
+  if (paid < total) return "partial"
+
+  return "paid"
+
+}
+
+/* ---------- GET CONTRACT PAYMENTS ---------- */
 export async function getContractPayments(
   contractId: number
 ) {
 
   const tdb = await tenantDb()
-
-  /* contract exists */
 
   const contract = await tdb.findFirst(
     contracts,
@@ -32,15 +40,11 @@ export async function getContractPayments(
     throw new Error("contract not found")
   }
 
-  /* get payments */
-
   const contractPayments =
     await tdb.findMany(
       payments,
       eq(payments.contractId, contractId)
     )
-
-  /* calculate totals */
 
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),
@@ -51,7 +55,15 @@ export async function getContractPayments(
 
   const remainingAmount = contractTotal - paidAmount
 
+  const paymentStatus = getPaymentStatus(
+    contractTotal,
+    paidAmount
+  )
+
   return {
+    contractId: contract.id,
+    contractStatus: contract.status,
+    paymentStatus,
     contractTotal,
     paidAmount,
     remainingAmount,
@@ -148,6 +160,7 @@ export async function createPayment(
     { status: newStatus },
     eq(contracts.id, contractId)
   )
+  //await recalcContractStatus(contractId)
 
   return tdb.findFirst(
     payments,
@@ -162,16 +175,20 @@ export async function getCompanyPayments() {
 
   const rows = await db
     .select({
-      id: payments.id,
+      paymentId: payments.id,
       amount: payments.amount,
       currency: payments.currency,
       paymentMethod: payments.paymentMethod,
       createdAt: payments.createdAt,
 
       contractId: contracts.id,
+      contractStatus: contracts.status,
+      contractTotal: contracts.totalAmount,
 
       clientName: clients.name,
-      eventName: events.name
+      eventName: events.name,
+
+      paidAmount: sum(payments.amount)
     })
     .from(payments)
     .leftJoin(
@@ -192,6 +209,152 @@ export async function getCompanyPayments() {
         isNull(payments.deletedAt)
       )
     )
+    .groupBy(
+      payments.id,
+      contracts.id,
+      clients.name,
+      events.name
+    )
 
-  return rows
+  /* calcular remaining + status */
+
+  return rows.map((row) => {
+
+    const contractTotal = Number(row.contractTotal)
+
+    const paidAmount = Number(row.paidAmount ?? 0)
+
+    const remainingAmount = contractTotal - paidAmount
+
+    const paymentStatus =
+      getPaymentStatus(contractTotal, paidAmount)
+
+    return {
+      ...row,
+      contractTotal,
+      paidAmount,
+      remainingAmount,
+      paymentStatus
+    }
+
+  })
+
+}
+/* ---------- GET SINGLE PAYMENT ---------- */
+
+export async function getPayment(id: number) {
+
+  const tdb = await tenantDb()
+
+  const payment = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!payment) return null
+
+  const contract = await tdb.findFirst(
+    contracts,
+    eq(contracts.id, payment.contractId)
+  )
+
+  if (!contract) return null
+
+  const contractPayments =
+    await tdb.findMany(
+      payments,
+      eq(payments.contractId, payment.contractId)
+    )
+
+  const paidAmount = contractPayments.reduce(
+    (sum, p) => sum + Number(p.amount),
+    0
+  )
+
+  const contractTotal = Number(contract.totalAmount)
+
+  const remainingAmount = contractTotal - paidAmount
+
+  const paymentStatus =
+    getPaymentStatus(contractTotal, paidAmount)
+
+  return {
+    contractId: contract.id,
+    contractStatus: contract.status,
+    paymentStatus,
+    contractTotal,
+    paidAmount,
+    remainingAmount,
+    payments: contractPayments
+  }
+
+}
+export async function updatePayment(
+  id: number,
+  data: Partial<CreatePaymentInput>
+) {
+
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    payments,
+    data,
+    eq(payments.id, id)
+  )
+
+  //await recalcContractStatus(existing.contractId)
+
+  return tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+}
+export async function deletePayment(id: number) {
+
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    payments,
+    { deletedAt: new Date() },
+    eq(payments.id, id)
+  )
+
+  //await recalcContractStatus(existing.contractId)
+
+  return true
+}
+export async function reactivatePayment(id: number) {
+
+  const tdb = await tenantDb()
+
+  const existing = await tdb.findFirstRaw(
+    payments,
+    eq(payments.id, id)
+  )
+
+  if (!existing) return null
+
+  await tdb.update(
+    payments,
+    { deletedAt: null },
+    eq(payments.id, id)
+  )
+
+  //await recalcContractStatus(existing.contractId)
+
+  return true
 }
