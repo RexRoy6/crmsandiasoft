@@ -7,13 +7,31 @@ export default function CompanyLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        background: "var(--bg-primary)",
+      }}
+    >
       <Sidebar />
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         <Topbar />
 
-        <main style={{ flex: 1, padding: 40, background: "#f5f7fb" }}>
+        <main
+          style={{
+            flex: 1,
+            padding: 40,
+            background: "var(--bg-secondary)",
+          }}
+        >
           {children}
         </main>
       </div>

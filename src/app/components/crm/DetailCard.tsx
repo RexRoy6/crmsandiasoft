@@ -8,6 +8,12 @@ type Field = {
   type?: string;
 };
 
+type Action = {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+};
+
 type Props = {
   title: string;
   fields: Field[];
@@ -19,7 +25,7 @@ type Props = {
   saving: boolean;
   onSave: () => void;
   onDelete?: () => void;
-  onReactivate?: () => void;
+  actions?: Action[];
 };
 
 export default function DetailCard({
@@ -34,64 +40,133 @@ export default function DetailCard({
   onSave,
   onDelete,
   actions = [],
-}: any) {
+}: Props) {
   return (
     <div
       style={{
-        background: "white",
-        padding: 20,
-        borderRadius: 10,
+        background: "var(--bg-primary)",
+        padding: 24,
+        borderRadius: 12,
         marginTop: 20,
+        border: "1px solid var(--border-color)",
         display: "flex",
         flexDirection: "column",
-        gap: 10,
-        maxWidth: 400,
+        gap: 16,
+        maxWidth: 500,
       }}
     >
-      <h2>{title}</h2>
+      <h2
+        style={{
+          fontSize: 18,
+          fontWeight: 600,
+        }}
+      >
+        {title}
+      </h2>
 
       {/* VIEW MODE */}
       {!editing && (
         <>
-          {fields.map((field: any) => (
-            <p key={field.name}>
-              <strong>{field.label}:</strong> {data[field.name]}
-            </p>
-          ))}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {fields.map((field) => (
+              <div
+                key={field.name}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid var(--border-color)",
+                  paddingBottom: 6,
+                }}
+              >
+                <span style={{ color: "var(--text-secondary)" }}>
+                  {field.label}
+                </span>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button onClick={() => {
-              console.log("Edit button clicked")
-              setEditing(true)
-            }}>Edit</button>
+                <strong style={{ color: "var(--text-primary)" }}>
+                  {data[field.name]}
+                </strong>
+              </div>
+            ))}
+          </div>
 
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              marginTop: 10,
+            }}
+          >
             <button
-              onClick={() => {
-                console.log("Delete button clicked")
-                onDelete?.()
+              onClick={() => setEditing(true)}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 8,
+                border: "1px solid var(--border-color)",
+                background: "var(--bg-secondary)",
+                cursor: "pointer",
               }}
-              style={{ background: "red", color: "white" }}
             >
-              Delete
+              Edit
             </button>
 
-            {actions.map((action: any, index: number) => {
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "#ef4444",
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                Delete
+              </button>
+            )}
+
+            {actions.map((action, index) => {
               if (action.href) {
                 return (
                   <Link key={index} href={action.href}>
-                    <button>{action.label}</button>
+                    <button
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        border: "1px solid var(--border-color)",
+                        background: "var(--bg-secondary)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {action.label}
+                    </button>
                   </Link>
-                )
+                );
               }
 
               return (
-                <button key={index} onClick={action.onClick}>
+                <button
+                  key={index}
+                  onClick={action.onClick}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-color)",
+                    background: "var(--bg-secondary)",
+                    cursor: "pointer",
+                  }}
+                >
                   {action.label}
                 </button>
-              )
+              );
             })}
-
-
           </div>
         </>
       )}
@@ -99,29 +174,81 @@ export default function DetailCard({
       {/* EDIT MODE */}
       {editing && (
         <>
-          {fields.map((field: any) => (
-            <input
+          {fields.map((field) => (
+            <div
               key={field.name}
-              value={form[field.name]}
-              placeholder={field.label}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  [field.name]:
-                    field.type === "number"
-                      ? Number(e.target.value)
-                      : e.target.value,
-                })
-              }
-            />
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <label
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {field.label}
+              </label>
+
+              <input
+                type={field.type || "text"}
+                value={form[field.name] || ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    [field.name]:
+                      field.type === "number"
+                        ? Number(e.target.value)
+                        : e.target.value,
+                  })
+                }
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border-color)",
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                }}
+              />
+            </div>
           ))}
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={onSave} disabled={saving}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              marginTop: 10,
+            }}
+          >
+            <button
+              onClick={onSave}
+              disabled={saving}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 8,
+                border: "none",
+                background: "#2563eb",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
               {saving ? "Saving..." : "Save"}
             </button>
 
-            <button onClick={() => setEditing(false)}>Cancel</button>
+            <button
+              onClick={() => setEditing(false)}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 8,
+                border: "1px solid var(--border-color)",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </>
       )}

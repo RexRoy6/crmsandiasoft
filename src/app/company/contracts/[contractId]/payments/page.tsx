@@ -10,213 +10,296 @@ import ErrorBox from "@/app/components/ErrorBox";
 
 export default function ContractPaymentsPage() {
 
-    const params = useParams();
-    const contractId = params.contractId;
+  const params = useParams();
+  const contractId = params.contractId;
 
-    const [payments, setPayments] = useState<any[]>([])
-    const [contractTotal, setContractTotal] = useState(0)
-    const [paidAmount, setPaidAmount] = useState(0)
-    const [remainingAmount, setRemainingAmount] = useState(0)
+  const [payments, setPayments] = useState<any[]>([]);
 
-    const [loading, setLoading] = useState(true);
+  const [contractTotal, setContractTotal] = useState(0);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [remainingAmount, setRemainingAmount] = useState(0);
 
-    const [error, setError] = useState("");
-    const [errorCode, setErrorCode] = useState<number | undefined>();
+  const [loading, setLoading] = useState(true);
 
-    const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<number>();
 
-    const [form, setForm] = useState({
+  const [showForm, setShowForm] = useState(false);
+
+  const [form, setForm] = useState({
+    amount: "",
+    currency: "MXN",
+    paymentMethod: "cash",
+  });
+
+  const fields: Field[] = [
+    {
+      name: "amount",
+      label: "Amount",
+      type: "number",
+    },
+    {
+      name: "currency",
+      label: "Currency",
+      type: "select",
+      options: [
+        { label: "MXN", value: "MXN" },
+        { label: "USD", value: "USD" },
+      ],
+    },
+    {
+      name: "paymentMethod",
+      label: "Payment Method",
+      type: "select",
+      options: [
+        { label: "Cash", value: "cash" },
+        { label: "Transfer", value: "transfer" },
+        { label: "Card", value: "card" },
+      ],
+    },
+  ];
+
+  async function fetchPayments() {
+
+    try {
+
+      setLoading(true);
+
+      const res = await fetch(
+        `/api/company/contracts/${contractId}/payments`,
+        { credentials: "include" }
+      );
+
+      if (!res.ok) {
+        setError("Failed to fetch payments");
+        setErrorCode(res.status);
+        return;
+      }
+
+      const data = await res.json();
+
+      setPayments(data.payments);
+      setContractTotal(data.contractTotal);
+      setPaidAmount(data.paidAmount);
+      setRemainingAmount(data.remainingAmount);
+
+    } catch {
+
+      setError("Connection error");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  }
+
+  async function createPayment() {
+
+    try {
+
+      const res = await fetch(
+        `/api/company/contracts/${contractId}/payments`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: Number(form.amount),
+            currency: form.currency,
+            paymentMethod: form.paymentMethod,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+
+        const data = await res.json();
+
+        setError(
+          JSON.stringify(data.error) ||
+            "Failed to create payment"
+        );
+
+        setErrorCode(res.status);
+
+        return;
+
+      }
+
+      setShowForm(false);
+
+      setForm({
         amount: "",
         currency: "MXN",
-        paymentMethod: "cash"
-    });
+        paymentMethod: "cash",
+      });
 
-    const fields: Field[] = [
-        {
-            name: "amount",
-            label: "Amount",
-            type: "number"
-        },
-        {
-            name: "currency",
-            label: "Currency"
-        },
-        {
-            name: "paymentMethod",
-            label: "Payment Method"
-        }
-    ];
+      fetchPayments();
 
-    async function fetchPayments() {
+    } catch {
 
-        try {
-
-            setLoading(true);
-
-            const res = await fetch(
-                `/api/company/contracts/${contractId}/payments`,
-                { credentials: "include" }
-            );
-
-            if (!res.ok) {
-                setError("Failed to fetch payments");
-                setErrorCode(res.status);
-                return;
-            }
-
-            const data = await res.json()
-
-            setPayments(data.payments)
-            setContractTotal(data.contractTotal)
-            setPaidAmount(data.paidAmount)
-            setRemainingAmount(data.remainingAmount)
-
-        } catch {
-
-            setError("Connection error");
-
-        } finally {
-
-            setLoading(false);
-
-        }
+      setError("Connection error");
 
     }
 
-    async function createPayment() {
+  }
 
-        try {
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
-            const res = await fetch(
-                `/api/company/contracts/${contractId}/payments`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        amount: Number(form.amount),
-                        currency: form.currency,
-                        paymentMethod: form.paymentMethod
-                    })
-                }
-            );
+  const progress =
+    contractTotal > 0
+      ? (paidAmount / contractTotal) * 100
+      : 0;
 
-            if (!res.ok) {
+  return (
 
-                const data = await res.json();
+    <div>
 
-                setError(
-                    JSON.stringify(data.error) ||
-                    "Failed to create payment"
-                );
+      <PageHeader
+        title={`Contract ${contractId} Payments`}
+        buttonLabel="+ Add Payment"
+        onClick={() => setShowForm(true)}
+      />
 
-                setErrorCode(res.status);
+      {/* ---------- CONTRACT SUMMARY ---------- */}
 
-                return;
+      <div
+        style={{
+          background: "var(--bg-primary)",
+          padding: 20,
+          borderRadius: 12,
+          border: "1px solid var(--border-color)",
+          marginBottom: 20,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          maxWidth: 500,
+        }}
+      >
 
-            }
+        <strong>Contract Summary</strong>
 
-            setShowForm(false);
-
-            setForm({
-                amount: "",
-                currency: "MXN",
-                paymentMethod: "cash"
-            });
-
-            fetchPayments();
-
-        } catch {
-
-            setError("Connection error");
-
-        }
-
-    }
-
-    useEffect(() => {
-        fetchPayments();
-    }, []);
-
-    return (
         <div>
+          <span style={{ color: "var(--text-secondary)" }}>
+            Total:
+          </span>{" "}
+          ${contractTotal}
+        </div>
 
-            <PageHeader
-                title={`Contract ${contractId} Payments`}
-                buttonLabel="+ Add Payment"
-                onClick={() => setShowForm(true)}
+        <div>
+          <span style={{ color: "var(--text-secondary)" }}>
+            Paid:
+          </span>{" "}
+          ${paidAmount}
+        </div>
+
+        <div>
+          <span style={{ color: "var(--text-secondary)" }}>
+            Remaining:
+          </span>{" "}
+          ${remainingAmount}
+        </div>
+
+        {/* ---------- PAYMENT PROGRESS ---------- */}
+
+        <div
+          style={{
+            marginTop: 10,
+            height: 8,
+            borderRadius: 6,
+            background: "var(--bg-secondary)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: `${progress}%`,
+              background: "#22c55e",
+              height: "100%",
+            }}
+          />
+        </div>
+
+        <span
+          style={{
+            fontSize: 12,
+            color: "var(--text-secondary)",
+          }}
+        >
+          {progress.toFixed(0)}% paid
+        </span>
+
+      </div>
+
+      {showForm && (
+        <CreateForm
+          title="Add Payment"
+          fields={fields}
+          form={form}
+          setForm={setForm}
+          onSubmit={createPayment}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {error && (
+        <ErrorBox
+          message={error}
+          code={errorCode}
+        />
+      )}
+
+      {loading && (
+        <p style={{ color: "var(--text-secondary)" }}>
+          Loading payments...
+        </p>
+      )}
+
+      {!loading && payments.length === 0 && (
+        <p style={{ color: "var(--text-secondary)" }}>
+          No payments yet.
+        </p>
+      )}
+
+      {!loading && payments.length > 0 && (
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+
+          {payments.map((payment) => (
+
+            <ListCard
+              key={payment.id}
+              title={`Payment #${payment.id}`}
+              extra={[
+                `Amount: $${payment.amount}`,
+                `Currency: ${payment.currency}`,
+                `Method: ${payment.paymentMethod}`,
+                `Date: ${new Date(
+                  payment.createdAt
+                ).toLocaleDateString()}`,
+              ]}
+              link="#"
             />
-            <div
-                style={{
-                    background: "#f4f4f4",
-                    padding: 15,
-                    borderRadius: 10,
-                    marginBottom: 20
-                }}
-            >
 
-                <p><strong>Contract Total:</strong> ${contractTotal}</p>
-                <p><strong>Paid:</strong> ${paidAmount}</p>
-                <p><strong>Remaining:</strong> ${remainingAmount}</p>
-
-            </div>
-
-            {showForm && (
-                <CreateForm
-                    title="Add Payment"
-                    fields={fields}
-                    form={form}
-                    setForm={setForm}
-                    onSubmit={createPayment}
-                    onCancel={() => setShowForm(false)}
-                />
-            )}
-
-            {error && (
-                <ErrorBox
-                    message={error}
-                    code={errorCode}
-                />
-            )}
-
-            {loading && <p>Loading payments...</p>}
-
-            {!loading && payments.length === 0 && (
-                <p>No payments yet.</p>
-            )}
-
-            {!loading && payments.length > 0 && (
-
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10
-                    }}
-                >
-
-                    {payments.map((payment) => (
-
-                        <ListCard
-                            key={payment.id}
-                            title={`Payment #${payment.id}`}
-                            extra={[
-                                `Amount: $${payment.amount}`,
-                                `Currency: ${payment.currency}`,
-                                `Method: ${payment.paymentMethod}`,
-                                `Date: ${new Date(payment.createdAt).toLocaleDateString()}`
-                            ]}
-                            link={`#`}
-                        />
-
-                    ))}
-
-                </div>
-
-            )}
+          ))}
 
         </div>
-    );
+
+      )}
+
+    </div>
+
+  );
 }
