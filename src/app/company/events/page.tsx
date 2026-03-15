@@ -57,7 +57,6 @@ const eventFields: Field[] = [
       }
 
       const data = await res.json();
-      //console.log(events)
 
       setEvents(data);
 
@@ -184,6 +183,7 @@ const eventFields: Field[] = [
                 `Client: ${event.client?.name}`,
                 `Date: ${new Date(event.eventDate).toLocaleDateString()}`,
                 `Location: ${event.location}`,
+                 `Notes: ${event.notes} `
               ]}
               link={`/company/clients/${event.client?.id}/events/${event.id}`}
             />
