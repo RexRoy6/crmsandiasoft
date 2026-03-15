@@ -22,8 +22,9 @@ export default function ContractsPage() {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({
         eventId: "",
-        status: "draft",
-        totalAmount: "",
+        status: "draft"
+        // ,
+        // totalAmount: "",
     });
 
     const contractFields: Field[] = [
@@ -46,13 +47,14 @@ export default function ContractsPage() {
                 value: status,
                 label: status.charAt(0).toUpperCase() + status.slice(1)
             }))
-        },
+        }
+        //,
 
-        {
-            name: "totalAmount",
-            label: "Total Amount",
-            type: "number",
-        },
+        // {
+        //     name: "totalAmount",
+        //     label: "Total Amount",
+        //     type: "number",
+        // },
     ];
     const fetchContracts = async () => {
         try {
@@ -108,10 +110,10 @@ export default function ContractsPage() {
           const payload = {
     eventId: Number(form.eventId),
     status: form.status,
-    totalAmount: Number(form.totalAmount),
+    totalAmount:  0//Number(form.totalAmount),
   }
 
-  console.log("Contract payload:", payload)
+  //console.log("Contract payload:", payload)
 
 
   
@@ -126,7 +128,7 @@ export default function ContractsPage() {
                 body: JSON.stringify({
                     eventId: Number(form.eventId),
                     status: form.status,
-                    totalAmount: Number(form.totalAmount),
+                    totalAmount: 0//Number(form.totalAmount),
                 }),
             });
 
@@ -141,8 +143,9 @@ export default function ContractsPage() {
 
             setForm({
                 eventId: "",
-                status: "draft",
-                totalAmount: "",
+                status: "draft"
+                //,
+                //totalAmount: "",
             });
 
             fetchContracts();
