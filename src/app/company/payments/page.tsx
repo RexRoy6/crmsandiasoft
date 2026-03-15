@@ -7,6 +7,7 @@ import ListCard from "@/app/components/crm/ListCard";
 import ErrorBox from "@/app/components/ErrorBox";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
+import SearchBar from "@/app/components/crm/SearchBar"
 
 export default function PaymentsPage() {
 
@@ -18,57 +19,68 @@ export default function PaymentsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
-  contractId: "",
-  amount: "",
-  currency: "MXN",
-  paymentMethod: "cash"
-});
+    contractId: "",
+    amount: "",
+    currency: "MXN",
+    paymentMethod: "cash"
+  });
 
-const [contracts, setContracts] = useState<any[]>([])
-const availableContracts = contracts.filter(
-  (c) => c.remainingAmount > 0
-)
+  const [search, setSearch] = useState("")
 
-const paymentFields: Field[] = [
-  {
-    name: "contractId",
-    label: "Contract",
-    type: "select",
-    options: availableContracts.map((c) => ({
-      label: `#${c.id} - ${c.client.name} (${c.event.name}) - Remaining $${c.remainingAmount}`,
-      value: c.id
-    }))
-  },
+  const [contracts, setContracts] = useState<any[]>([])
+  const availableContracts = contracts.filter(
+    (c) => c.remainingAmount > 0
+  )
 
-  {
-    name: "amount",
-    label: "Amount",
-    type: "number"
-  },
+  const paymentFields: Field[] = [
+    {
+      name: "contractId",
+      label: "Contract",
+      type: "select",
+      options: availableContracts.map((c) => ({
+        label: `#${c.id} - ${c.client.name} (${c.event.name}) - Remaining $${c.remainingAmount}`,
+        value: c.id
+      }))
+    },
 
-  {
-    name: "currency",
-    label: "Currency",
-    type: "select",
-    options: [
-      { label: "MXN", value: "MXN" },
-      { label: "USD", value: "USD" }
-    ]
-  },
+    {
+      name: "amount",
+      label: "Amount",
+      type: "number"
+    },
 
-  {
-    name: "paymentMethod",
-    label: "Payment Method",
-    type: "select",
-    options: [
-      { label: "Cash", value: "cash" },
-      { label: "Transfer", value: "transfer" },
-      { label: "Card", value: "card" }
-    ]
-  }
-]
+    {
+      name: "currency",
+      label: "Currency",
+      type: "select",
+      options: [
+        { label: "MXN", value: "MXN" },
+        { label: "USD", value: "USD" }
+      ]
+    },
 
+    {
+      name: "paymentMethod",
+      label: "Payment Method",
+      type: "select",
+      options: [
+        { label: "Cash", value: "cash" },
+        { label: "Transfer", value: "transfer" },
+        { label: "Card", value: "card" }
+      ]
+    }
+  ]
 
+  const filteredPayments = payments.filter((payment) => {
+
+    const term = search.toLowerCase()
+
+    return (
+      payment.clientName?.toLowerCase().includes(term) ||
+      payment.eventName?.toLowerCase().includes(term)
+    )
+
+  })
 
 
   async function fetchPayments() {
@@ -104,70 +116,70 @@ const paymentFields: Field[] = [
 
   async function fetchContracts() {
 
-  try {
+    try {
 
-    const res = await fetch(
-      "/api/company/contracts",
-      { credentials: "include" }
-    )
+      const res = await fetch(
+        "/api/company/contracts",
+        { credentials: "include" }
+      )
 
-    if (!res.ok) return
-
-    const data = await res.json()
-
-    setContracts(data)
-
-  } catch {}
-
-}
-
-  async function createPayment() {
-
-  try {
-
-    const res = await fetch(
-      `/api/company/contracts/${form.contractId}/payments`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          amount: Number(form.amount),
-          currency: form.currency,
-          paymentMethod: form.paymentMethod
-        })
-      }
-    )
-
-    if (!res.ok) {
+      if (!res.ok) return
 
       const data = await res.json()
 
-      setError(data?.error || "Failed to create payment")
-      setErrorCode(res.status)
-      return
-    }
+      setContracts(data)
 
-    setShowForm(false)
-
-    setForm({
-      contractId: "",
-      amount: "",
-      currency: "MXN",
-      paymentMethod: "cash"
-    })
-
-    fetchPayments()
-
-  } catch {
-
-    setError("Connection error")
+    } catch { }
 
   }
 
-}
+  async function createPayment() {
+
+    try {
+
+      const res = await fetch(
+        `/api/company/contracts/${form.contractId}/payments`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            amount: Number(form.amount),
+            currency: form.currency,
+            paymentMethod: form.paymentMethod
+          })
+        }
+      )
+
+      if (!res.ok) {
+
+        const data = await res.json()
+
+        setError(data?.error || "Failed to create payment")
+        setErrorCode(res.status)
+        return
+      }
+
+      setShowForm(false)
+
+      setForm({
+        contractId: "",
+        amount: "",
+        currency: "MXN",
+        paymentMethod: "cash"
+      })
+
+      fetchPayments()
+
+    } catch {
+
+      setError("Connection error")
+
+    }
+
+  }
 
   useEffect(() => {
     fetchPayments()
@@ -178,24 +190,34 @@ const paymentFields: Field[] = [
     <div>
 
       <PageHeader
-  title="Company Payments"
-  buttonLabel="+ New payment"
-  onClick={() => {
-    setShowForm(true)
-    fetchContracts()
-  }}
-/>
+        title="Company Payments"
+        buttonLabel="+ New payment"
+        onClick={() => {
+          setShowForm(true)
+          fetchContracts()
+        }}
+      />
+
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search by client or event"
+      />
+      <p style={{ fontSize: 12, color: "#6b7280" }}>
+        {filteredPayments.length} payments found
+      </p>
+
 
       {showForm && (
-  <CreateForm
-    title="Create Payment"
-    fields={paymentFields}
-    form={form}
-    setForm={setForm}
-    onSubmit={createPayment}
-    onCancel={() => setShowForm(false)}
-  />
-)}
+        <CreateForm
+          title="Create Payment"
+          fields={paymentFields}
+          form={form}
+          setForm={setForm}
+          onSubmit={createPayment}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
 
       {error && (
         <ErrorBox
@@ -220,7 +242,8 @@ const paymentFields: Field[] = [
           }}
         >
 
-          {payments.map((payment) => (
+
+          {filteredPayments.map((payment) => (
 
             <ListCard
               key={payment.paymentId}
