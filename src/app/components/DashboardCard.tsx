@@ -8,24 +8,46 @@ export default function DashboardCard({
   return (
     <div
       style={{
-        background: "white",
+        background: "var(--bg-primary)",
         padding: 20,
-        borderRadius: 10,
-        boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-        minWidth: 160,
+        borderRadius: 12,
+        border: "1px solid var(--border-color)",
+        minWidth: 180,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        transition: "all 0.15s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow =
+          "0 6px 16px rgba(0,0,0,0.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
-      <div style={{ fontSize: 14, color: "#777" }}>{title}</div>
+      <span
+        style={{
+          fontSize: 13,
+          color: "var(--text-secondary)",
+          fontWeight: 500,
+        }}
+      >
+        {title}
+      </span>
 
-      <div
+      <span
         style={{
           fontSize: 28,
-          fontWeight: "bold",
-          marginTop: 8,
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          letterSpacing: "-0.02em",
         }}
       >
         {value}
-      </div>
+      </span>
     </div>
   );
 }
