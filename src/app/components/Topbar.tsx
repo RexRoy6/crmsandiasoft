@@ -4,64 +4,111 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Topbar() {
-  const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
 
   const fetchUser = async () => {
+
     try {
+
       const res = await fetch("/api/company/me", {
-        credentials: "include",
-      });
+        credentials: "include"
+      })
 
       if (res.status === 401) {
-        router.replace("/");
-        return;
+        router.replace("/")
+        return
       }
 
-      if (!res.ok) return;
+      if (!res.ok) return
 
-      const data = await res.json();
-      setUser(data);
-    } catch {}
-  };
+      const data = await res.json()
+      setUser(data)
+
+    } catch (error) {
+
+    console.error("Network error fetching user:", error)
+
+    // fallback: go to login
+    router.replace("/")
+
+  }
+
+  }
 
   const logout = async () => {
+
     await fetch("/api/auth/logout", {
       method: "POST",
-      credentials: "include",
-    });
+      credentials: "include"
+    })
 
-    router.replace("/");
-  };
+    router.replace("/")
+
+  }
 
   useEffect(() => {
-    fetchUser();
-  }, []);
+    fetchUser()
+  }, [])
 
   return (
+
     <div
       style={{
         height: 60,
-        borderBottom: "1px solid #eee",
+        borderBottom: "1px solid var(--border-color)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 20px",
-        background: "white",
+        background: "var(--bg-primary)",
+        color: "var(--text-primary)"
       }}
     >
-      <strong>CRM Dashboard</strong>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+      <strong style={{ fontSize: 16 }}>
+        CRM Dashboard
+      </strong>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16
+        }}
+      >
+
         {user && (
-          <span>
+
+          <span
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: 14
+            }}
+          >
             {user.email} — <strong>{user.companyName}</strong>
           </span>
+
         )}
 
-        <button onClick={logout}>Logout</button>
+        <button
+          onClick={logout}
+          style={{
+            padding: "6px 12px",
+            borderRadius: 6,
+            border: "1px solid var(--border-color)",
+            background: "var(--bg-secondary)",
+            cursor: "pointer"
+          }}
+        >
+          Logout
+        </button>
+
       </div>
+
     </div>
-  );
+
+  )
+
 }
