@@ -14,10 +14,8 @@ export async function GET() {
       return Response.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const data = await db
-      .select()
-      .from(companies)
-      //.where(isNull(companies.deletedAt));
+    const data = await db.select().from(companies);
+    // .where(isNull(companies.deletedAt));
 
     return Response.json(data);
   } catch {
