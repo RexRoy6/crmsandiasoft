@@ -1,7 +1,9 @@
 import { cookies } from "next/headers"
 import { verifyToken } from "@/lib/auth/jwt"
 import { isValidRole } from "@/lib/auth/roleUtils"
-import { UserRole } from "@/db/schema"
+import { UserRole,companies } from "@/db/schema"
+import { db } from "@/db"
+import { eq } from "drizzle-orm"
 
 export type AuthContext = {
   userId: number
@@ -26,6 +28,28 @@ export async function getAuthContext(): Promise<AuthContext> {
     const parsedCompanyId = payload.companyId
       ? Number(payload.companyId)
       : null
+
+    //
+    /* ---------- verificar company activa ---------- */
+
+if (parsedCompanyId !== null) {
+  const company = await db.query.companies.findFirst({
+    where: eq(companies.id, parsedCompanyId),
+    columns: {
+      deletedAt: true
+    }
+  })
+
+  if (!company) {
+    throw new Error("Unauthorized: company not found")
+  }
+
+  if (company.deletedAt !== null) {
+    throw new Error("Unauthorized: company disabled")
+  }
+}
+
+    //
 
     if (isNaN(parsedUserId)) {
       throw new Error("Invalid auth context")
