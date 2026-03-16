@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import ErrorBox from "@/app/components/ErrorBox";
 
 const AdminLogin: React.FC = () => {
   const router = useRouter();
@@ -13,57 +14,58 @@ const AdminLogin: React.FC = () => {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  try {
-    /* ---------- LOGIN ---------- */
+    try {
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
+      /* ---------- LOGIN ---------- */
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.message || "Invalid credentials");
-      return;
-    }
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
 
-    /* ---------- GET USER ROLE ---------- */
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || data.message || "Invalid credentials");
+        return;
+      }
 
-    const meRes = await fetch("/api/company/me", {
-      credentials: "include",
-    });
+      /* ---------- GET USER ROLE ---------- */
 
-    if (!meRes.ok) {
+      const meRes = await fetch("/api/company/me", {
+        credentials: "include",
+      });
+
+      if (!meRes.ok) {
+        const data = await meRes.json().catch(() => ({}));
+        setError(data.error || data.message || "Authentication error");
+        return;
+      }
+
+      const user = await meRes.json();
+
+      /* ---------- REDIRECT BASED ON ROLE ---------- */
+
+      if (user.role === "admin") {
+        router.replace("/admin");
+        return;
+      }
+
+      if (user.role === "owner") {
+        router.replace("/company");
+        return;
+      }
+
       router.replace("/");
-      return;
+
+    } catch {
+      setError("Connection error. Please try again.");
     }
-
-    const user = await meRes.json();
-
-    /* ---------- REDIRECT BASED ON ROLE ---------- */
-
-    if (user.role === "admin") {
-      router.replace("/admin");
-      return;
-    }
-
-    if (user.role === "owner") {
-      router.replace("/company");
-      return;
-    }
-
-    /* ---------- FALLBACK ---------- */
-
-    router.replace("/");
-  } catch {
-    setError("Connection error. Please try again.");
-  }
-};
+  };
 
   return (
     <div style={styles.page}>
@@ -145,7 +147,7 @@ const AdminLogin: React.FC = () => {
                 </button>
               </div>
 
-              {error && <div style={styles.error}>{error}</div>}
+              {error && <ErrorBox message={error} />}
 
               <button type="submit" style={styles.loginButton}>
                 Log In
