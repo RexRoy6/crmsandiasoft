@@ -43,6 +43,13 @@
       "when": 1772739657664,
       "tag": "0005_parallel_angel",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1773784949321,
+      "tag": "0006_spicy_the_stranger",
+      "breakpoints": true
     }
   ]
 }

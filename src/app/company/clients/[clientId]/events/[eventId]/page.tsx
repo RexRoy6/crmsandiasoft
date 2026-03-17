@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DetailCard from "@/app/components/crm/DetailCard";
 import ErrorBox from "@/app/components/ErrorBox";
+import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function EventDetailPage() {
 
     const params = useParams();
     const router = useRouter();
-  
+
 
     const eventId = Array.isArray(params.eventId)
         ? params.eventId[0]
@@ -21,6 +22,7 @@ export default function EventDetailPage() {
     const [form, setForm] = useState({
         name: "",
         eventDate: "",
+        eventTime: "",
         location: "",
         notes: "",
     });
@@ -31,9 +33,10 @@ export default function EventDetailPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const eventFields = [
+    const eventFields:  Field[] = [
         { name: "name", label: "Name" },
-        { name: "eventDate", label: "Event Date" },
+        { name: "eventDate", label: "Event Date", type: "date" },
+        { name: "eventTime", label: "Event Time", type: "time" },
         { name: "location", label: "Location" },
         { name: "notes", label: "Notes" }
     ];
@@ -60,11 +63,12 @@ export default function EventDetailPage() {
                 clientName: data.client?.name
             });
 
+            const date = new Date(data.eventDate);
+
             setForm({
                 name: data.name ?? "",
-                eventDate: data.eventDate
-                    ? data.eventDate.split("T")[0]
-                    : "",
+                eventDate: date.toISOString().split("T")[0], // fecha
+                eventTime: date.toTimeString().slice(0, 5),  // hora HH:mm 👈 clave
                 location: data.location ?? "",
                 notes: data.notes ?? "",
             });
@@ -83,17 +87,42 @@ export default function EventDetailPage() {
 
             setSaving(true);
 
+            // const res = await fetch(`/api/company/events/${eventId}`, {
+            //     method: "PATCH",
+            //     credentials: "include",
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //     },
+            //     body: JSON.stringify(form),
+            // });
+
+
+            // const data = await res.json()
+            const dateTime = new Date(`${form.eventDate}T${form.eventTime}`);
+            const pad = (n: number) => String(n).padStart(2, "0");
+
+const formatted = `${dateTime.getFullYear()}-${pad(
+  dateTime.getMonth() + 1
+)}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
+  dateTime.getMinutes()
+)}:00`;
+
+
+            const payload = {
+                name: form.name,
+                eventDate: formatted,
+                location: form.location,
+                notes: form.notes,
+            };
+
             const res = await fetch(`/api/company/events/${eventId}`, {
                 method: "PATCH",
                 credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(form),
+                body: JSON.stringify(payload),
             });
-
-
-            const data = await res.json()
 
 
 
@@ -156,6 +185,16 @@ export default function EventDetailPage() {
         fetchEvent();
     }, []);
 
+
+    //
+    const formattedEvent = event
+  ? {
+      ...event,
+      eventDate: new Date(event.eventDate).toLocaleString(),
+    }
+  : null;
+    //
+
     return (
         <div>
 
@@ -174,7 +213,7 @@ export default function EventDetailPage() {
                 <DetailCard
                     title={event.name}
                     fields={eventFields}
-                    data={event}
+                    data={formattedEvent}
                     form={form}
                     setForm={setForm}
                     editing={editing}

@@ -1,7 +1,7 @@
 export type Field = {
   name: string;
   label: string;
-  type?: "text" | "number" | "select" | "date" | "textarea" | "time";
+  type?: "text" | "number" | "select" | "date" | "time" | "textarea";
   options?: { value: string; label: string }[];
   onChange?: (value: string) => void;
   readOnly?: boolean;
