@@ -5,7 +5,6 @@ import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { and, eq, isNotNull, isNull } from "drizzle-orm"
 import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
 /* ---------- CREATE ---------- */
-
 export async function createEvent(data: CreateEventInput) {
   const tdb = await tenantDb()
 
@@ -18,7 +17,13 @@ export async function createEvent(data: CreateEventInput) {
     throw new Error("client not found")
   }
 
-  const [result] = await tdb.insert(events, data)
+  // 👇 SOLO ESTO
+  const insertData = {
+    ...data,
+    eventDate: new Date(data.eventDate),
+  }
+
+  const [result] = await tdb.insert(events, insertData)
 
   const insertId = result.insertId
 
@@ -111,7 +116,7 @@ export async function getEventById(id: number) {
       eventDate: events.eventDate,
       location: events.location,
       notes: events.notes,
-      deleted:events.deletedAt,
+      deleted: events.deletedAt,
 
       client: {
         id: clients.id,
@@ -162,7 +167,6 @@ export async function updateEvent(
 ) {
   const tdb = await tenantDb()
 
-  /* check exists */
   const existing = await tdb.findFirst(
     events,
     eq(events.id, id)
@@ -170,14 +174,19 @@ export async function updateEvent(
 
   if (!existing) return null
 
-  /* update */
+  const formattedData = {
+    ...data,
+    ...(data.eventDate && {
+      eventDate: new Date(data.eventDate),
+    }),
+  }
+
   await tdb.update(
     events,
-    data,
+    formattedData,
     eq(events.id, id)
   )
 
-  /* return updated */
   return tdb.findFirst(
     events,
     eq(events.id, id)

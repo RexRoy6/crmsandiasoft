@@ -8,7 +8,8 @@ import {
   timestamp,
   index,
   mysqlEnum,
-  uniqueIndex
+  uniqueIndex,
+  datetime
 } from "drizzle-orm/mysql-core"
 
 /* ---------- BASE COLUMNS (audit + soft delete) ---------- */
@@ -135,7 +136,7 @@ export const events = mysqlTable("events", {
 
   name: varchar("name", { length: 255 }).notNull(),
 
-  eventDate: date("event_date").notNull(),
+  eventDate: datetime("event_date").notNull(),
 
   location: varchar("location", { length: 255 }),
 
