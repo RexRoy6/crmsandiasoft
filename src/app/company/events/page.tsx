@@ -21,25 +21,27 @@ export default function EventsPage() {
     clientId: "",
     name: "",
     eventDate: "",
+    eventTime: "",
     location: "",
     notes: "",
   });
 
-const eventFields: Field[] = [
-  {
-    name: "clientId",
-    label: "Client",
-    type: "select",
-    options: clients.map((client) => ({
-      value: client.id,
-      label: client.name,
-    })),
-  },
-  { name: "name", label: "Event Name" },
-  { name: "eventDate", label: "Event Date", type: "date" },
-  { name: "location", label: "Location" },
-  { name: "notes", label: "Notes", type: "textarea" },
-];
+  const eventFields: Field[] = [
+    {
+      name: "clientId",
+      label: "Client",
+      type: "select",
+      options: clients.map((client) => ({
+        value: client.id,
+        label: client.name,
+      })),
+    },
+    { name: "name", label: "Event Name" },
+    { name: "eventDate", label: "Event Date", type: "date" },
+    { name: "eventTime", label: "Event Time", type: "time" },
+    { name: "location", label: "Location" },
+    { name: "notes", label: "Notes", type: "textarea" },
+  ];
 
   const fetchEvents = async () => {
     try {
@@ -68,27 +70,27 @@ const eventFields: Field[] = [
   };
   const fetchClients = async () => {
 
-  try {
+    try {
 
-    const res = await fetch(
-      "/api/company/clients",
-      { credentials: "include" }
-    );
+      const res = await fetch(
+        "/api/company/clients",
+        { credentials: "include" }
+      );
 
-    if (!res.ok) return;
+      if (!res.ok) return;
 
-    const data = await res.json();
+      const data = await res.json();
 
-    /* quitar clientes eliminados */
-    const activeClients = data.filter(
-      (c: any) => !c.deletedAt
-    );
+      /* quitar clientes eliminados */
+      const activeClients = data.filter(
+        (c: any) => !c.deletedAt
+      );
 
-    setClients(activeClients);
+      setClients(activeClients);
 
-  } catch {}
+    } catch { }
 
-};
+  };
 
 
   const createEvent = async () => {
@@ -123,9 +125,11 @@ const eventFields: Field[] = [
         clientId: "",
         name: "",
         eventDate: "",
+        eventTime: "",
         location: "",
         notes: "",
       });
+
 
       fetchEvents();
 
@@ -175,19 +179,26 @@ const eventFields: Field[] = [
             gap: 10,
           }}
         >
-          {events.map((event) => (
-            <ListCard
-              key={event.id}
-              title={event.name}
-              extra={[
-                `Client: ${event.client?.name}`,
-                `Date: ${new Date(event.eventDate).toLocaleDateString()}`,
-                `Location: ${event.location}`,
-                 `Notes: ${event.notes} `
-              ]}
-              link={`/company/clients/${event.client?.id}/events/${event.id}`}
-            />
-          ))}
+          {events.map((event) => {
+            const date = new Date(event.eventDate); // 👈 aquí sí existe
+
+            return (
+              <ListCard
+                key={event.id}
+                title={event.name}
+                extra={[
+                  `Client: ${event.client?.name}`,
+                  `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`,
+                  `Location: ${event.location}`,
+                  `Notes: ${event.notes} `
+                ]}
+                link={`/company/clients/${event.client?.id}/events/${event.id}`}
+              />
+            );
+          })}
         </div>
       )}
 
