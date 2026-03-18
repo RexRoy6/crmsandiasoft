@@ -223,9 +223,22 @@ export default function EventsPage() {
       setError("");
       setErrorCode(undefined);
 
+      const dateTime = new Date(`${form.eventDate}T${form.eventTime}`);
+
+      const pad = (n: number) => String(n).padStart(2, "0");
+
+      const formatted = `${dateTime.getFullYear()}-${pad(
+        dateTime.getMonth() + 1
+      )}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
+        dateTime.getMinutes()
+      )}:00`;
+
       const payload = {
-        ...form,
         clientId: Number(form.clientId),
+        name: form.name,
+        eventDate: formatted, // aquí va todo junto date + hora
+        location: form.location,
+        notes: form.notes,
       };
 
       const res = await fetch("/api/company/events", {
