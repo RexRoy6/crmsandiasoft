@@ -7,6 +7,7 @@ import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import type { Field } from "@/app/components/crm/CreateForm";
 import InlineClientForm from "@/app/components/crm/InlineClientForm";
+import { useRouter } from "next/navigation";
 
 export default function EventsPage() {
 
@@ -37,6 +38,9 @@ export default function EventsPage() {
     phone: "",
     email: "",
   })
+
+  //es para redirigir a la creacion de contrato
+  const router = useRouter();
 
   //fucion para crear un cx
 
@@ -256,7 +260,34 @@ export default function EventsPage() {
         return;
       }
 
-      setShowForm(false);
+      //setShowForm(false);
+      const newEvent = await res.json();
+
+      // es para crear contrato
+      const contractRes = await fetch("/api/company/contracts", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: Number(newEvent.id),
+          status: "draft",
+          totalAmount: 0,
+        }),
+      });
+
+      if (!contractRes.ok) {
+        setError("Event created, but failed to create contract");
+        return;
+      }
+
+      const newContract = await contractRes.json();
+      // es para crear contrato
+
+      //aqui se redirige al cx a la pagina de contratos
+      router.push(`/company/contracts/${newContract.id}/services`);
+      //aqui se redirige al cx a la pagina de contratos
 
       setForm({
         clientId: "",
@@ -268,12 +299,14 @@ export default function EventsPage() {
       });
 
 
-      fetchEvents();
+      //fetchEvents();
 
     } catch {
       setError("Connection error");
     }
   };
+
+
 
   useEffect(() => {
     fetchEvents();
