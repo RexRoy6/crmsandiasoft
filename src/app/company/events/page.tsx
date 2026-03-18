@@ -19,6 +19,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
+  const [createdContractId, setCreatedContractId] = useState<number | null>(null);
 
   //es para crear un nuevo cliente
   const [showClientForm, setShowClientForm] = useState(false)
@@ -286,7 +287,9 @@ export default function EventsPage() {
       // es para crear contrato
 
       //aqui se redirige al cx a la pagina de contratos
-      router.push(`/company/contracts/${newContract.id}/services`);
+      //router.push(`/company/contracts/${newContract.id}/services`);
+      setCreatedContractId(newContract.id);
+      setShowForm(false);
       //aqui se redirige al cx a la pagina de contratos
 
       setForm({
@@ -331,6 +334,55 @@ export default function EventsPage() {
           onSubmit={createEvent}
           onCancel={() => setShowForm(false)}
         />
+      )}
+
+      {createdContractId && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 16,
+            borderRadius: 10,
+            border: "1px solid var(--border-color)",
+            background: "var(--bg-secondary)",
+          }}
+        >
+          <p style={{ marginBottom: 10 }}>✔ Event created</p>
+          <p style={{ marginBottom: 16 }}>✔ Contract created</p>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={() =>
+                router.push(`/company/contracts/${createdContractId}/services`)
+              }
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "none",
+                background: "#2563eb",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              Add services now
+            </button>
+
+            <button
+              onClick={() => {
+                setCreatedContractId(null);
+                fetchEvents();
+              }}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid var(--border-color)",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+            >
+              Go back to events
+            </button>
+          </div>
+        </div>
       )}
 
       {error && <ErrorBox message={error} code={errorCode} />}

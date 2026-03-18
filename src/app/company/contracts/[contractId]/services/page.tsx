@@ -8,6 +8,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
+import EventInfoCard from "@/app/components/crm/EventInfoCard";
 
 export default function ContractServicesPage() {
 
@@ -18,6 +19,8 @@ export default function ContractServicesPage() {
   const [companyServices, setCompanyServices] = useState<any[]>([]);
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [contract, setContract] = useState<any>(null);
+
 
   const [editForm, setEditForm] = useState({
     serviceId: "",
@@ -53,28 +56,28 @@ export default function ContractServicesPage() {
     }));
 
   };
-const fields: Field[] = [
-  {
-    name: "serviceId",
-    label: "Service",
-    type: "select",
-    options: companyServices.map((s) => ({
-      value: String(s.id),
-      label: `${s.name} ($${s.priceBase})`,
-    })),
-    onChange: handleServiceChange,
-  },
-  {
-    name: "quantity",
-    label: "Quantity",
-    type: "number",
-  },
-  {
-    name: "unitPrice",
-    label: "Unit Price",
-    type: "number",
-  },
-];
+  const fields: Field[] = [
+    {
+      name: "serviceId",
+      label: "Service",
+      type: "select",
+      options: companyServices.map((s) => ({
+        value: String(s.id),
+        label: `${s.name} ($${s.priceBase})`,
+      })),
+      onChange: handleServiceChange,
+    },
+    {
+      name: "quantity",
+      label: "Quantity",
+      type: "number",
+    },
+    {
+      name: "unitPrice",
+      label: "Unit Price",
+      type: "number",
+    },
+  ];
 
   /* ---------- FETCH SERVICES ---------- */
 
@@ -184,6 +187,20 @@ const fields: Field[] = [
   };
 
 
+  const fetchContract = async () => {
+    try {
+      const res = await fetch(`/api/company/contracts/${contractId}`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setContract(data);
+
+    } catch { }
+  };
+
 
 
   const deleteItem = async (itemId: number) => {
@@ -252,6 +269,7 @@ const fields: Field[] = [
   useEffect(() => {
     fetchServices();
     fetchCompanyServices();
+    fetchContract();
   }, []);
 
   const contractTotal = services.reduce((sum, item) => {
@@ -265,6 +283,12 @@ const fields: Field[] = [
 
   return (
     <div>
+
+
+      {contract?.eventId && (
+        <EventInfoCard eventId={contract.eventId} />
+      )}
+
 
       <PageHeader
         title={`Contract ${contractId} Services`}
