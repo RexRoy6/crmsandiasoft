@@ -45,34 +45,30 @@ import type {
 //   )
 // }
 export async function createContract(data: CreateContractInput) {
-
   const tdb = await tenantDb()
 
-  /* 🔥 1. validar evento */
   const event = await tdb.findFirst(
     events,
     eq(events.id, data.eventId)
   )
 
   if (!event) {
-    throw new Error("event not found")
+    throw new Error("Event not found")
   }
 
-  /* 🔥 2. validar si ya existe contrato */
+  // 🔥 check si ya existe contrato
   const existing = await tdb.findFirst(
     contracts,
     and(
       eq(contracts.eventId, data.eventId),
-      isNull(contracts.deletedAt)
+      eq(contracts.companyId, event.companyId)
     )
   )
 
-  /* ✅ OPCIÓN PRO: reutilizar */
   if (existing) {
-    return existing
+    return existing // o throw error si prefieres
   }
 
-  /* 🔥 3. crear contrato */
   const [result] = await tdb.insert(
     contracts,
     {
@@ -83,11 +79,9 @@ export async function createContract(data: CreateContractInput) {
     }
   )
 
-  const insertId = result.insertId
-
   return tdb.findFirst(
     contracts,
-    eq(contracts.id, insertId)
+    eq(contracts.id, result.insertId)
   )
 }
 
@@ -203,32 +197,32 @@ export async function getCompanyContracts() {
   // }))
   return rows.map((row) => {
 
-  const total = Number(row.totalAmount)
-  const paid = Number(row.paidAmount)
+    const total = Number(row.totalAmount)
+    const paid = Number(row.paidAmount)
 
-  return {
-    id: row.id,
-    status: row.status,
-    totalAmount: total,
-    paidAmount: paid,
-    remainingAmount: total - paid,
+    return {
+      id: row.id,
+      status: row.status,
+      totalAmount: total,
+      paidAmount: paid,
+      remainingAmount: total - paid,
 
-    client: row.clientId
-      ? {
+      client: row.clientId
+        ? {
           id: row.clientId,
           name: row.clientName
         }
-      : null,
+        : null,
 
-    event: row.eventId
-      ? {
+      event: row.eventId
+        ? {
           id: row.eventId,
           name: row.eventName
         }
-      : null
-  }
+        : null
+    }
 
-})
+  })
 }
 
 
