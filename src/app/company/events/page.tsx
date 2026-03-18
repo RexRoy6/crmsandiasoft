@@ -6,6 +6,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import type { Field } from "@/app/components/crm/CreateForm";
+import InlineClientForm from "@/app/components/crm/InlineClientForm";
 
 export default function EventsPage() {
 
@@ -93,52 +94,51 @@ export default function EventsPage() {
         label: client.name,
       })),
 
-     after: (
-  <div style={{ marginTop: 6 }}>
-    {!showClientForm && (
-      <button
-        onClick={() => setShowClientForm(true)}
-        style={{
-          padding: "4px 8px",
-          fontSize: 12,
-          borderRadius: 6,
-          border: "none",
-          background: "transparent",
-          color: "#2563eb",
-          cursor: "pointer",
-          textAlign: "left",
-        }}
-      >
-        + Create new client
-      </button>
-    )}
+      after: (
+        <div style={{ marginTop: 6 }}>
+          {!showClientForm && (
+            <button
+              onClick={() => setShowClientForm(true)}
+              style={{
+                padding: "4px 8px",
+                fontSize: 12,
+                borderRadius: 6,
+                border: "none",
+                background: "transparent",
+                color: "#2563eb",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              + Create new client
+            </button>
+          )}
 
-    {showClientForm && (
-      <div
-        style={{
-          marginTop: 10,
-          padding: 12,
-          border: "1px solid var(--border-color)",
-          borderRadius: 8,
-          background: "var(--bg-secondary)",
-        }}
-      >
-        <CreateForm
-          title="New Client"
-          fields={[
-            { name: "name", label: "Name" },
-            { name: "phone", label: "Phone" },
-            { name: "email", label: "Email" },
-          ]}
-          form={clientForm}
-          setForm={setClientForm}
-          onSubmit={createClientInline}
-          onCancel={() => setShowClientForm(false)}
-        />
-      </div>
-    )}
-  </div>
-),
+          {showClientForm && (
+            <div
+              style={{
+                marginTop: 10,
+                padding: 12,
+                border: "1px solid var(--border-color)",
+                borderRadius: 8,
+                background: "var(--bg-secondary)",
+              }}
+            >
+              {showClientForm && (
+                <InlineClientForm
+                  form={clientForm}
+                  setForm={setClientForm}
+                  onSubmit={createClientInline}
+                  onCancel={() => setShowClientForm(false)}
+                />
+              )}
+
+
+
+            </div>
+          )}
+        </div>
+      ),
 
 
     },
@@ -268,22 +268,6 @@ export default function EventsPage() {
           setForm={setForm}
           onSubmit={createEvent}
           onCancel={() => setShowForm(false)}
-        />
-      )}
-
-      {/* 👇 ESTE VA AFUERA */}
-      {showClientForm && (
-        <CreateForm
-          title="Create Client"
-          fields={[
-            { name: "name", label: "Name" },
-            { name: "phone", label: "Phone" },
-            { name: "email", label: "Email" },
-          ]}
-          form={clientForm}
-          setForm={setClientForm}
-          onSubmit={createClientInline}
-          onCancel={() => setShowClientForm(false)}
         />
       )}
 
