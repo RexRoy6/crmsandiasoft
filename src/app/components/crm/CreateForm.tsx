@@ -1,3 +1,5 @@
+import { ReactNode } from "react"
+
 export type Field = {
   name: string;
   label: string;
@@ -5,6 +7,7 @@ export type Field = {
   options?: { value: string; label: string }[];
   onChange?: (value: string) => void;
   readOnly?: boolean;
+  after?: ReactNode;
 };
 
 type Props = {
@@ -98,6 +101,13 @@ export default function CreateForm({
                   </option>
                 ))}
               </select>
+
+              {/* 👇 AQUI VA EL BOTÓN */}
+              {field.after && (
+                <div style={{ marginTop: 4 }}>
+                  {field.after}
+                </div>
+              )}
             </div>
           );
         }
@@ -185,6 +195,8 @@ export default function CreateForm({
         );
       })}
 
+
+   
       <div
         style={{
           display: "flex",

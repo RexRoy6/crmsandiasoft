@@ -17,6 +17,10 @@ export default function EventsPage() {
 
   const [showForm, setShowForm] = useState(false);
 
+  //es para crear un nuevo cliente
+  const [showClientForm, setShowClientForm] = useState(false)
+
+
   const [form, setForm] = useState({
     clientId: "",
     name: "",
@@ -25,6 +29,12 @@ export default function EventsPage() {
     location: "",
     notes: "",
   });
+  //form para nuevo cx
+  const [clientForm, setClientForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  })
 
   const eventFields: Field[] = [
     {
@@ -35,7 +45,29 @@ export default function EventsPage() {
         value: client.id,
         label: client.name,
       })),
+
+      after: (
+        <button
+          onClick={() => setShowClientForm(true)}
+          style={{
+            padding: "4px 8px",
+            fontSize: 12,
+            borderRadius: 6,
+            border: "none",
+            background: "transparent",
+            color: "#2563eb",
+            cursor: "pointer",
+            textAlign: "left",
+          }}
+        >
+          + Create new client
+        </button>
+      ),
+
+
     },
+
+
     { name: "name", label: "Event Name" },
     { name: "eventDate", label: "Event Date", type: "date" },
     { name: "eventTime", label: "Event Time", type: "time" },
@@ -138,6 +170,54 @@ export default function EventsPage() {
     }
   };
 
+  //fucion para crear un cx
+
+  const createClientInline = async () => {
+    try {
+      if (!clientForm.name || !clientForm.phone || !clientForm.email) {
+        setError("All client fields are required")
+        return
+      }
+
+      const res = await fetch("/api/company/clients", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clientForm),
+      })
+
+      if (!res.ok) {
+        setError("Failed to create client")
+        return
+      }
+
+      const newClient = await res.json()
+
+      // 🔥 clave: actualizar lista
+      setClients((prev) => [...prev, newClient])
+
+      // 🔥 seleccionar automáticamente
+      setForm((prev) => ({
+        ...prev,
+        clientId: String(newClient.id),
+      }))
+
+      setShowClientForm(false)
+
+      setClientForm({
+        name: "",
+        phone: "",
+        email: "",
+      })
+
+    } catch {
+      setError("Connection error")
+    }
+  }
+
+
   useEffect(() => {
     fetchEvents();
     fetchClients();
@@ -160,6 +240,22 @@ export default function EventsPage() {
           setForm={setForm}
           onSubmit={createEvent}
           onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {/* 👇 ESTE VA AFUERA */}
+      {showClientForm && (
+        <CreateForm
+          title="Create Client"
+          fields={[
+            { name: "name", label: "Name" },
+            { name: "phone", label: "Phone" },
+            { name: "email", label: "Email" },
+          ]}
+          form={clientForm}
+          setForm={setClientForm}
+          onSubmit={createClientInline}
+          onCancel={() => setShowClientForm(false)}
         />
       )}
 
