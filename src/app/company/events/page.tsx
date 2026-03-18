@@ -36,6 +36,53 @@ export default function EventsPage() {
     email: "",
   })
 
+  //fucion para crear un cx
+
+  const createClientInline = async () => {
+    try {
+      if (!clientForm.name || !clientForm.phone || !clientForm.email) {
+        setError("All client fields are required")
+        return
+      }
+
+      const res = await fetch("/api/company/clients", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(clientForm),
+      })
+
+      if (!res.ok) {
+        setError("Failed to create client")
+        return
+      }
+
+      const newClient = await res.json()
+
+      // 🔥 clave: actualizar lista
+      setClients((prev) => [...prev, newClient])
+
+      // 🔥 seleccionar automáticamente
+      setForm((prev) => ({
+        ...prev,
+        clientId: String(newClient.id),
+      }))
+
+      setShowClientForm(false)
+
+      setClientForm({
+        name: "",
+        phone: "",
+        email: "",
+      })
+
+    } catch {
+      setError("Connection error")
+    }
+  }
+
   const eventFields: Field[] = [
     {
       name: "clientId",
@@ -46,23 +93,52 @@ export default function EventsPage() {
         label: client.name,
       })),
 
-      after: (
-        <button
-          onClick={() => setShowClientForm(true)}
-          style={{
-            padding: "4px 8px",
-            fontSize: 12,
-            borderRadius: 6,
-            border: "none",
-            background: "transparent",
-            color: "#2563eb",
-            cursor: "pointer",
-            textAlign: "left",
-          }}
-        >
-          + Create new client
-        </button>
-      ),
+     after: (
+  <div style={{ marginTop: 6 }}>
+    {!showClientForm && (
+      <button
+        onClick={() => setShowClientForm(true)}
+        style={{
+          padding: "4px 8px",
+          fontSize: 12,
+          borderRadius: 6,
+          border: "none",
+          background: "transparent",
+          color: "#2563eb",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        + Create new client
+      </button>
+    )}
+
+    {showClientForm && (
+      <div
+        style={{
+          marginTop: 10,
+          padding: 12,
+          border: "1px solid var(--border-color)",
+          borderRadius: 8,
+          background: "var(--bg-secondary)",
+        }}
+      >
+        <CreateForm
+          title="New Client"
+          fields={[
+            { name: "name", label: "Name" },
+            { name: "phone", label: "Phone" },
+            { name: "email", label: "Email" },
+          ]}
+          form={clientForm}
+          setForm={setClientForm}
+          onSubmit={createClientInline}
+          onCancel={() => setShowClientForm(false)}
+        />
+      </div>
+    )}
+  </div>
+),
 
 
     },
@@ -169,54 +245,6 @@ export default function EventsPage() {
       setError("Connection error");
     }
   };
-
-  //fucion para crear un cx
-
-  const createClientInline = async () => {
-    try {
-      if (!clientForm.name || !clientForm.phone || !clientForm.email) {
-        setError("All client fields are required")
-        return
-      }
-
-      const res = await fetch("/api/company/clients", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(clientForm),
-      })
-
-      if (!res.ok) {
-        setError("Failed to create client")
-        return
-      }
-
-      const newClient = await res.json()
-
-      // 🔥 clave: actualizar lista
-      setClients((prev) => [...prev, newClient])
-
-      // 🔥 seleccionar automáticamente
-      setForm((prev) => ({
-        ...prev,
-        clientId: String(newClient.id),
-      }))
-
-      setShowClientForm(false)
-
-      setClientForm({
-        name: "",
-        phone: "",
-        email: "",
-      })
-
-    } catch {
-      setError("Connection error")
-    }
-  }
-
 
   useEffect(() => {
     fetchEvents();
