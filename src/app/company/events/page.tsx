@@ -13,6 +13,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [error, setError] = useState("");
+  const [clientError, setClientError] = useState("");
   const [errorCode, setErrorCode] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +43,7 @@ export default function EventsPage() {
   const createClientInline = async () => {
     try {
       if (!clientForm.name || !clientForm.phone || !clientForm.email) {
-        setError("All client fields are required")
+        setClientError("All client fields are required")
         return
       }
 
@@ -56,9 +57,11 @@ export default function EventsPage() {
       })
 
       if (!res.ok) {
-        setError("Failed to create client")
+        setClientError("Failed to create client")
         return
       }
+
+      setClientError("")
 
       const newClient = await res.json()
 
@@ -125,12 +128,25 @@ export default function EventsPage() {
               }}
             >
               {showClientForm && (
-                <InlineClientForm
-                  form={clientForm}
-                  setForm={setClientForm}
-                  onSubmit={createClientInline}
-                  onCancel={() => setShowClientForm(false)}
-                />
+
+                <>
+                  <InlineClientForm
+                    form={clientForm}
+                    setForm={setClientForm}
+                    onSubmit={createClientInline}
+                    onCancel={() => setShowClientForm(false)}
+                  />
+
+                  {clientError && (
+                    <div style={{ marginTop: 8 }}>
+                      <ErrorBox message={clientError} />
+                    </div>
+                  )}
+                </>
+
+
+
+
               )}
 
 
@@ -288,7 +304,7 @@ export default function EventsPage() {
           }}
         >
           {events.map((event) => {
-            const date = new Date(event.eventDate); // 👈 aquí sí existe
+            const date = new Date(event.eventDate);
 
             return (
               <ListCard
