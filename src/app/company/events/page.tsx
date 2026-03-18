@@ -21,6 +21,8 @@ export default function EventsPage() {
   const [showForm, setShowForm] = useState(false);
   const [createdContractId, setCreatedContractId] = useState<number | null>(null);
 
+  const [contracts, setContracts] = useState<any[]>([]);
+
   //es para crear un nuevo cliente
   const [showClientForm, setShowClientForm] = useState(false)
 
@@ -310,10 +312,60 @@ export default function EventsPage() {
   };
 
 
+  //consultar contracts
+  const fetchContracts = async () => {
+    try {
+      const res = await fetch("/api/company/contracts", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setContracts(data);
+
+    } catch { }
+  };
+  const getContractForEvent = (eventId: number) => {
+    return contracts.find((c) => c.event?.id === eventId);
+  };
+
+  const createContractForEvent = async (eventId: number) => {
+    try {
+      const res = await fetch("/api/company/contracts", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId,
+          status: "draft",
+          totalAmount: 0,
+        }),
+      });
+
+      if (!res.ok) {
+        setError("Failed to create contract");
+        return;
+      }
+
+      const newContract = await res.json();
+
+      router.push(`/company/contracts/${newContract.id}/services`);
+
+    } catch {
+      setError("Connection error");
+    }
+  };
+
 
   useEffect(() => {
     fetchEvents();
     fetchClients();
+    fetchContracts();
   }, []);
 
   return (
@@ -403,22 +455,98 @@ export default function EventsPage() {
         >
           {events.map((event) => {
             const date = new Date(event.eventDate);
+            const contract = getContractForEvent(event.id);
 
+            // return (
+            //   <ListCard
+            //     key={event.id}
+            //     title={event.name}
+            //     extra={[
+            //       `Client: ${event.client?.name}`,
+            //       `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+            //         hour: "2-digit",
+            //         minute: "2-digit",
+            //       })}`,
+            //       `Location: ${event.location}`,
+            //       `Notes: ${event.notes} `
+            //     ]}
+            //     link={`/company/clients/${event.client?.id}/events/${event.id}`}
+
+
+            //   />
+
+
+
+            // );
             return (
-              <ListCard
+              <div
                 key={event.id}
-                title={event.name}
-                extra={[
-                  `Client: ${event.client?.name}`,
-                  `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}`,
-                  `Location: ${event.location}`,
-                  `Notes: ${event.notes} `
-                ]}
-                link={`/company/clients/${event.client?.id}/events/${event.id}`}
-              />
+                style={{
+                  border: "1px solid var(--border-color)",
+                  borderRadius: 10,
+                  padding: 12,
+                  background: "var(--bg-primary)",
+                }}
+              >
+                <ListCard
+                  title={event.name}
+                  extra={[
+                    `Client: ${event.client?.name}`,
+                    `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`,
+                    `Location: ${event.location}`,
+                    `Notes: ${event.notes} `,
+                  ]}
+                  link={`/company/clients/${event.client?.id}/events/${event.id}`}
+                />
+
+                {/* 👇 AQUÍ VA TU BOTÓN */}
+                <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+                  {contract ? (
+                    <>
+                      <button
+                        onClick={() =>
+                          router.push(`/company/contracts/${contract.id}/services`)
+                        }
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: 6,
+                          border: "none",
+                          background: "#16a34a",
+                          color: "white",
+                          cursor: "pointer",
+                        }}
+                      >
+                        View Contract
+                      </button>
+
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: "#6b7280",
+                        }}
+                      >
+                        Status: {contract.status}
+                      </span>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => createContractForEvent(event.id)}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 6,
+                        border: "1px solid var(--border-color)",
+                        background: "transparent",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Create Contract
+                    </button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
