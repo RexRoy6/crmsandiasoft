@@ -333,7 +333,7 @@ export default function ContractServicesPage() {
 
         return (
           <div>
-            <p>Stock available: {service.stock}</p>
+            <p>Stock available: {service.stockTotal}</p>
 
             {form.quantity && form.unitPrice && (
               <p>
