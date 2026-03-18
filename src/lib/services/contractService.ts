@@ -14,22 +14,27 @@ import type {
 
 
 /* ---------- CREATE CONTRACT ---------- */
-
 // export async function createContract(data: CreateContractInput) {
 
 //   const tdb = await tenantDb()
+
 //   const event = await tdb.findFirst(
 //     events,
 //     eq(events.id, data.eventId)
 //   )
 
 //   if (!event) {
-//     throw new Error("event not found")
+//     throw new Error("Event not found")
 //   }
 
 //   const [result] = await tdb.insert(
 //     contracts,
-//     data
+//     {
+//       eventId: data.eventId,
+//       clientId: event.clientId,   //clave
+//       status: data.status,
+//       totalAmount: data.totalAmount
+//     }
 //   )
 
 //   const insertId = result.insertId
@@ -43,20 +48,36 @@ export async function createContract(data: CreateContractInput) {
 
   const tdb = await tenantDb()
 
+  /* 🔥 1. validar evento */
   const event = await tdb.findFirst(
     events,
     eq(events.id, data.eventId)
   )
 
   if (!event) {
-    throw new Error("Event not found")
+    throw new Error("event not found")
   }
 
+  /* 🔥 2. validar si ya existe contrato */
+  const existing = await tdb.findFirst(
+    contracts,
+    and(
+      eq(contracts.eventId, data.eventId),
+      isNull(contracts.deletedAt)
+    )
+  )
+
+  /* ✅ OPCIÓN PRO: reutilizar */
+  if (existing) {
+    return existing
+  }
+
+  /* 🔥 3. crear contrato */
   const [result] = await tdb.insert(
     contracts,
     {
       eventId: data.eventId,
-      clientId: event.clientId,   //clave
+      clientId: event.clientId,
       status: data.status,
       totalAmount: data.totalAmount
     }
@@ -69,7 +90,6 @@ export async function createContract(data: CreateContractInput) {
     eq(contracts.id, insertId)
   )
 }
-
 
 
 /* ---------- GET COMPANY CONTRACTS ---------- */

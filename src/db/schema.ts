@@ -192,8 +192,14 @@ export const contracts = mysqlTable("contracts", {
   eventIdx: index("contracts_event_idx")
     .on(table.eventId),
 
+  eventUnique: uniqueIndex("contracts_event_unique")
+    .on(table.eventId),
+
   statusIdx: index("contracts_status_idx")
-    .on(table.status)
+    .on(table.status),
+
+  uniqueEventPerCompany: uniqueIndex("contracts_company_event_unique")
+    .on(table.companyId, table.eventId)
 
 }))
 
