@@ -33,7 +33,7 @@ export default function EventDetailPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const eventFields:  Field[] = [
+    const eventFields: Field[] = [
         { name: "name", label: "Name" },
         { name: "eventDate", label: "Event Date", type: "date" },
         { name: "eventTime", label: "Event Time", type: "time" },
@@ -65,10 +65,13 @@ export default function EventDetailPage() {
 
             const date = new Date(data.eventDate);
 
+            const datePart = date.toISOString().split("T")[0]; // YYYY-MM-DD
+            const timePart = date.toTimeString().slice(0, 5); // HH:mm
+
             setForm({
                 name: data.name ?? "",
-                eventDate: date.toISOString().split("T")[0], // fecha
-                eventTime: date.toTimeString().slice(0, 5),  // hora HH:mm 👈 clave
+                eventDate: datePart,
+                eventTime: timePart,
                 location: data.location ?? "",
                 notes: data.notes ?? "",
             });
@@ -101,11 +104,11 @@ export default function EventDetailPage() {
             const dateTime = new Date(`${form.eventDate}T${form.eventTime}`);
             const pad = (n: number) => String(n).padStart(2, "0");
 
-const formatted = `${dateTime.getFullYear()}-${pad(
-  dateTime.getMonth() + 1
-)}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
-  dateTime.getMinutes()
-)}:00`;
+            const formatted = `${dateTime.getFullYear()}-${pad(
+                dateTime.getMonth() + 1
+            )}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
+                dateTime.getMinutes()
+            )}:00`;
 
 
             const payload = {
@@ -188,11 +191,15 @@ const formatted = `${dateTime.getFullYear()}-${pad(
 
     //
     const formattedEvent = event
-  ? {
-      ...event,
-      eventDate: new Date(event.eventDate).toLocaleString(),
-    }
-  : null;
+        ? {
+            ...event,
+            eventDate: new Date(event.eventDate).toLocaleDateString(),
+            eventTime: new Date(event.eventDate).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+            }),
+        }
+        : null;
     //
 
     return (
