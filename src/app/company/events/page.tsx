@@ -10,7 +10,6 @@ import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import { useRouter } from "next/navigation";
 
 export default function EventsPage() {
-
   const [events, setEvents] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [error, setError] = useState("");
@@ -19,13 +18,14 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
 
   const [showForm, setShowForm] = useState(false);
-  const [createdContractId, setCreatedContractId] = useState<number | null>(null);
+  const [createdContractId, setCreatedContractId] = useState<number | null>(
+    null,
+  );
 
   const [contracts, setContracts] = useState<any[]>([]);
 
   //es para crear un nuevo cliente
-  const [showClientForm, setShowClientForm] = useState(false)
-
+  const [showClientForm, setShowClientForm] = useState(false);
 
   const [form, setForm] = useState({
     clientId: "",
@@ -40,7 +40,7 @@ export default function EventsPage() {
     name: "",
     phone: "",
     email: "",
-  })
+  });
 
   //es para redirigir a la creacion de contrato
   const router = useRouter();
@@ -50,8 +50,8 @@ export default function EventsPage() {
   const createClientInline = async () => {
     try {
       if (!clientForm.name || !clientForm.phone || !clientForm.email) {
-        setClientError("All client fields are required")
-        return
+        setClientError("All client fields are required");
+        return;
       }
 
       const res = await fetch("/api/company/clients", {
@@ -61,38 +61,37 @@ export default function EventsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(clientForm),
-      })
+      });
 
       if (!res.ok) {
-        setClientError("Failed to create client")
-        return
+        setClientError("Failed to create client");
+        return;
       }
 
-      setClientError("")
+      setClientError("");
 
-      const newClient = await res.json()
+      const newClient = await res.json();
 
       // 🔥 clave: actualizar lista
-      setClients((prev) => [...prev, newClient])
+      setClients((prev) => [...prev, newClient]);
 
       // 🔥 seleccionar automáticamente
       setForm((prev) => ({
         ...prev,
         clientId: String(newClient.id),
-      }))
+      }));
 
-      setShowClientForm(false)
+      setShowClientForm(false);
 
       setClientForm({
         name: "",
         phone: "",
         email: "",
-      })
-
+      });
     } catch {
-      setError("Connection error")
+      setError("Connection error");
     }
-  }
+  };
 
   const eventFields: Field[] = [
     {
@@ -135,7 +134,6 @@ export default function EventsPage() {
               }}
             >
               {showClientForm && (
-
                 <>
                   <InlineClientForm
                     form={clientForm}
@@ -150,22 +148,12 @@ export default function EventsPage() {
                     </div>
                   )}
                 </>
-
-
-
-
               )}
-
-
-
             </div>
           )}
         </div>
       ),
-
-
     },
-
 
     { name: "name", label: "Event Name" },
     { name: "eventDate", label: "Event Date", type: "date" },
@@ -176,7 +164,6 @@ export default function EventsPage() {
 
   const fetchEvents = async () => {
     try {
-
       setLoading(true);
 
       const res = await fetch("/api/company/events", {
@@ -192,7 +179,6 @@ export default function EventsPage() {
       const data = await res.json();
 
       setEvents(data);
-
     } catch {
       setError("Connection error");
     } finally {
@@ -200,33 +186,24 @@ export default function EventsPage() {
     }
   };
   const fetchClients = async () => {
-
     try {
-
-      const res = await fetch(
-        "/api/company/clients",
-        { credentials: "include" }
-      );
+      const res = await fetch("/api/company/clients", {
+        credentials: "include",
+      });
 
       if (!res.ok) return;
 
       const data = await res.json();
 
       /* quitar clientes eliminados */
-      const activeClients = data.filter(
-        (c: any) => !c.deletedAt
-      );
+      const activeClients = data.filter((c: any) => !c.deletedAt);
 
       setClients(activeClients);
-
-    } catch { }
-
+    } catch {}
   };
-
 
   const createEvent = async () => {
     try {
-
       setError("");
       setErrorCode(undefined);
 
@@ -235,9 +212,9 @@ export default function EventsPage() {
       const pad = (n: number) => String(n).padStart(2, "0");
 
       const formatted = `${dateTime.getFullYear()}-${pad(
-        dateTime.getMonth() + 1
+        dateTime.getMonth() + 1,
       )}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
-        dateTime.getMinutes()
+        dateTime.getMinutes(),
       )}:00`;
 
       const payload = {
@@ -303,14 +280,11 @@ export default function EventsPage() {
         notes: "",
       });
 
-
       //fetchEvents();
-
     } catch {
       setError("Connection error");
     }
   };
-
 
   //consultar contracts
   const fetchContracts = async () => {
@@ -325,8 +299,7 @@ export default function EventsPage() {
       const data = await res.json();
 
       setContracts(data);
-
-    } catch { }
+    } catch {}
   };
   const getContractForEvent = (eventId: number) => {
     return contracts.find((c) => c.event?.id === eventId);
@@ -355,12 +328,10 @@ export default function EventsPage() {
       const newContract = await res.json();
 
       router.push(`/company/contracts/${newContract.id}/services`);
-
     } catch {
       setError("Connection error");
     }
   };
-
 
   useEffect(() => {
     fetchEvents();
@@ -370,7 +341,6 @@ export default function EventsPage() {
 
   return (
     <div>
-
       <PageHeader
         title="Events"
         buttonLabel="+ New Event"
@@ -441,9 +411,7 @@ export default function EventsPage() {
 
       {loading && <p>Loading events...</p>}
 
-      {!loading && events.length === 0 && (
-        <p>No events found.</p>
-      )}
+      {!loading && events.length === 0 && <p>No events found.</p>}
 
       {!loading && events.length > 0 && (
         <div
@@ -472,10 +440,7 @@ export default function EventsPage() {
             //     ]}
             //     link={`/company/clients/${event.client?.id}/events/${event.id}`}
 
-
             //   />
-
-
 
             // );
             return (
@@ -492,10 +457,13 @@ export default function EventsPage() {
                   title={event.name}
                   extra={[
                     `Client: ${event.client?.name}`,
-                    `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}`,
+                    `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString(
+                      [],
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )}`,
                     `Location: ${event.location}`,
                     `Notes: ${event.notes} `,
                   ]}
@@ -508,7 +476,9 @@ export default function EventsPage() {
                     <>
                       <button
                         onClick={() =>
-                          router.push(`/company/contracts/${contract.id}/services`)
+                          router.push(
+                            `/company/contracts/${contract.id}/services`,
+                          )
                         }
                         style={{
                           padding: "6px 10px",
@@ -551,7 +521,6 @@ export default function EventsPage() {
           })}
         </div>
       )}
-
     </div>
   );
 }

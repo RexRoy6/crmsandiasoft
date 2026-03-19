@@ -9,48 +9,51 @@ import {
   Calendar,
   FileText,
   CreditCard,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 
 const menu = [
   {
     label: "Home",
     href: "/company",
-    icon: Home
+    icon: Home,
   },
   {
     label: "Services",
     href: "/company/service",
-    icon: Briefcase
+    icon: Briefcase,
   },
   {
     label: "Clients",
     href: "/company/clients",
-    icon: Users
+    icon: Users,
   },
   {
     label: "Events",
     href: "/company/events",
-    icon: Calendar
+    icon: Calendar,
   },
   {
     label: "Contracts",
     href: "/company/contracts",
-    icon: FileText
+    icon: FileText,
   },
   {
     label: "Payments",
     href: "/company/payments",
-    icon: CreditCard
-  }
+    icon: CreditCard,
+  },
+  {
+    label: "Calendar",
+    href: "/company/calendar",
+    icon: Calendar,
+  },
 ];
 
 export default function Sidebar() {
-
   const pathname = usePathname();
 
   return (
-
     <aside
       style={{
         width: 240,
@@ -60,30 +63,24 @@ export default function Sidebar() {
         padding: 20,
         display: "flex",
         flexDirection: "column",
-        gap: 30
+        gap: 30,
       }}
     >
-
-      <h2 style={{ fontSize: 18 }}>
-        Options menu
-      </h2>
+      <h2 style={{ fontSize: 18 }}>Options menu</h2>
 
       <nav
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 6
+          gap: 6,
         }}
       >
-
         {menu.map((item) => {
-
           const Icon = item.icon;
 
           const active = pathname === item.href;
 
           return (
-
             <Link
               key={item.href}
               href={item.href}
@@ -94,30 +91,18 @@ export default function Sidebar() {
                 padding: "10px 12px",
                 borderRadius: 8,
                 textDecoration: "none",
-                color: active
-                  ? "white"
-                  : "var(--text-primary)",
-                background: active
-                  ? "#2563eb"
-                  : "transparent",
-                fontSize: 14
+                color: active ? "white" : "var(--text-primary)",
+                background: active ? "#2563eb" : "transparent",
+                fontSize: 14,
               }}
             >
-
               <Icon size={18} />
 
               {item.label}
-
             </Link>
-
           );
-
         })}
-
       </nav>
-
     </aside>
-
   );
-
 }
