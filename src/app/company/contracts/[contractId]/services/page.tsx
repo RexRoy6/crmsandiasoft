@@ -42,6 +42,7 @@ export default function ContractServicesPage() {
     unitPrice: "",
   });
   const handleServiceChange = (serviceId: string) => {
+    //setError("");
 
     const service = companyServices.find(
       (s) => String(s.id) === serviceId
@@ -155,7 +156,6 @@ export default function ContractServicesPage() {
       );
 
       if (!res.ok) {
-
         const data = await res.json();
 
         if (data?.error?.fieldErrors) {
@@ -164,6 +164,19 @@ export default function ContractServicesPage() {
             .join(", ");
 
           setError(messages);
+
+        } else if (data?.error) {
+
+          if (data.available !== undefined) {
+            setError(`${data.error}. Only ${data.available} left.`);
+            setForm(prev => ({
+              ...prev,
+              quantity: String(data.available) // renderiza en el ux la cantidad disponible
+            }));
+          } else {
+            setError(data.error);
+          }
+
         } else {
           setError("Failed to add service");
         }
@@ -293,7 +306,11 @@ export default function ContractServicesPage() {
       <PageHeader
         title={`Contract ${contractId} Services`}
         buttonLabel="+ Add Service"
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          setError("");
+          setShowForm(true)
+        }
+        }
       />
 
       <p
@@ -317,6 +334,7 @@ export default function ContractServicesPage() {
           setForm={setForm}
           onSubmit={createService}
           onCancel={() => setShowForm(false)}
+          clearError={() => setError("")}
         />
 
 

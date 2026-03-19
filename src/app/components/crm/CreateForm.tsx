@@ -17,6 +17,7 @@ type Props = {
   setForm: (value: any) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  clearError?: () => void;
 };
 
 export default function CreateForm({
@@ -26,6 +27,7 @@ export default function CreateForm({
   setForm,
   onSubmit,
   onCancel,
+  clearError,
 }: Props) {
   return (
     <div
@@ -75,6 +77,7 @@ export default function CreateForm({
                 value={form[field.name] || ""}
                 onChange={(e) => {
                   const value = e.target.value;
+                  clearError?.();
 
                   if (field.onChange) {
                     field.onChange(value);
@@ -134,12 +137,14 @@ export default function CreateForm({
               <textarea
                 value={form[field.name] || ""}
                 rows={4}
-                onChange={(e) =>
+                onChange={(e) => {
+                  clearError?.();
+
                   setForm({
                     ...form,
                     [field.name]: e.target.value,
-                  })
-                }
+                  });
+                }}
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
@@ -174,15 +179,17 @@ export default function CreateForm({
               type={field.type || "text"}
               value={form[field.name] || ""}
               readOnly={field.readOnly}
-              onChange={(e) =>
+              onChange={(e) => {
+                clearError?.(); // 👈 limpia error en cualquier cambio
+
                 setForm({
                   ...form,
                   [field.name]:
                     field.type === "number"
                       ? Number(e.target.value)
                       : e.target.value,
-                })
-              }
+                });
+              }}
               style={{
                 padding: "10px 12px",
                 borderRadius: 8,
@@ -196,7 +203,7 @@ export default function CreateForm({
       })}
 
 
-   
+
       <div
         style={{
           display: "flex",
