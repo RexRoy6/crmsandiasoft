@@ -207,13 +207,88 @@ export async function getCompanyContracts() {
 
 export async function getContract(id: number) {
 
-  const tdb = await tenantDb()
+  const { companyId } = await getAuthContext()
 
-  return tdb.findFirst(
-    contracts,
-    eq(contracts.id, id)
-  )
+  const rows = await db
+    .select({
+      id: contracts.id,
+      status: contracts.status,
+      totalAmount: contracts.totalAmount,
 
+      paidAmount: sql<number>`COALESCE(SUM(${payments.amount}),0)`,
+
+      clientId: clients.id,
+      clientName: clients.name,
+
+      eventId: events.id,
+      eventName: events.name,
+      eventDate: events.eventDate,
+      eventLocation: events.location
+    })
+    .from(contracts)
+
+    .leftJoin(
+      clients,
+      eq(contracts.clientId, clients.id)
+    )
+
+    .leftJoin(
+      events,
+      eq(contracts.eventId, events.id)
+    )
+
+    .leftJoin(
+      payments,
+      eq(payments.contractId, contracts.id)
+    )
+
+    .where(
+      companyId
+        ? and(
+            eq(contracts.id, id),
+            eq(contracts.companyId, companyId)
+          )
+        : eq(contracts.id, id)
+    )
+
+    .groupBy(
+      contracts.id,
+      clients.id,
+      events.id,
+      events.eventDate,
+      events.location
+    )
+
+  const row = rows[0]
+
+  if (!row) return null
+
+  const total = Number(row.totalAmount)
+  const paid = Number(row.paidAmount)
+
+  return {
+    id: row.id,
+    status: row.status,
+    totalAmount: total,
+    paidAmount: paid,
+    remainingAmount: total - paid,
+
+    client: row.clientId
+      ? {
+          id: row.clientId,
+          name: row.clientName
+        }
+      : null,
+
+    event: row.eventId
+      ? {
+          id: row.eventId,
+          name: row.eventName,
+          eventDate: row.eventDate,
+          location: row.eventLocation
+        }
+      : null
+  }
 }
 
 
