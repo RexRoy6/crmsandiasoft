@@ -100,36 +100,6 @@ export async function getCompanyContracts() {
   const { companyId } = await getAuthContext()
 
   const rows = await db
-    // .select({
-    //   id: contracts.id,
-    //   status: contracts.status,
-    //   totalAmount: contracts.totalAmount,
-
-    //   clientId: clients.id,
-    //   clientName: clients.name,
-
-    //   eventId: events.id,
-    //   eventName: events.name
-    // })
-
-
-    // .from(contracts)
-    // .leftJoin(
-    //   clients,
-    //   eq(contracts.clientId, clients.id)
-    // )
-    // .leftJoin(
-    //   events,
-    //   eq(contracts.eventId, events.id)
-    // )
-    // .where(
-    //   companyId
-    //     ? and(
-    //       eq(contracts.companyId, companyId),
-    //       isNull(contracts.deletedAt)
-    //     )
-    //     : isNull(contracts.deletedAt)
-    // )
 
     .select({
       id: contracts.id,
@@ -142,7 +112,9 @@ export async function getCompanyContracts() {
       clientName: clients.name,
 
       eventId: events.id,
-      eventName: events.name
+      eventName: events.name,
+      eventDate: events.eventDate,
+      eventLocation: events.location
     })
     .from(contracts)
 
@@ -173,7 +145,9 @@ export async function getCompanyContracts() {
     .groupBy(
       contracts.id,
       clients.id,
-      events.id
+      events.id,
+      events.eventDate,
+      events.location
     )
 
   // return rows.map((row) => ({
@@ -217,7 +191,9 @@ export async function getCompanyContracts() {
       event: row.eventId
         ? {
           id: row.eventId,
-          name: row.eventName
+          name: row.eventName,
+          eventDate: row.eventDate,
+          location: row.eventLocation
         }
         : null
     }
