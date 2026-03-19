@@ -267,3 +267,19 @@ export const contractHistory = mysqlTable("contract_history", {
 
   ...baseColumns
 })
+
+
+// payments items
+export const paymentItems = mysqlTable("payment_items", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+
+  paymentId: bigint("payment_id", { mode: "number" })
+    .notNull()
+    .references(() => payments.id, { onDelete: "cascade" }),
+
+  contractItemId: bigint("contract_item_id", { mode: "number" })
+    .notNull()
+    .references(() => contractItems.id, { onDelete: "cascade" }),
+
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+})
