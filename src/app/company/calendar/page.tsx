@@ -3,82 +3,81 @@
 import React, { useEffect, useState } from "react";
 
 // =========================
-// TYPES
+// TYPES (AJUSTADO A TU API REAL)
 // =========================
-interface EventModel {
+interface Contract {
   id: number;
-  name: string;
-  eventDate: string; // 👈 fecha real
-  eventTime?: string; // 👈 opcional
-  location?: string;
-  notes?: string;
-  client?: { name: string };
-  deleted?: boolean;
+  status: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  client: {
+    id: number;
+    name: string;
+  };
+  event: {
+    id: number;
+    name: string;
+    eventDate: string; // 👈 fuente de fecha
+    location?: string;
+  };
 }
 
 interface CalendarEvent {
   id: number;
   title: string;
   date: Date;
+  status: string;
 }
 
 export default function GoogleLikeCalendar() {
-  const [events, setEvents] = useState<EventModel[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
 
   // =========================
-  // FETCH EVENTS (TU FUNCIÓN REAL)
+  // FETCH CONTRACTS
   // =========================
-  const fetchEvents = async () => {
+  const fetchContracts = async () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/company/events", {
+      const res = await fetch("/api/company/contracts", {
         credentials: "include",
       });
 
       if (!res.ok) return;
 
       const data = await res.json();
-
-      const activeEvents = data.filter((e: EventModel) => !e.deleted);
-
-      setEvents(activeEvents);
+      setContracts(data);
     } catch {
-      console.error("events error");
+      console.error("contracts error");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchContracts();
   }, []);
 
   // =========================
-  // MAP: EVENTS → CALENDAR
+  // MAP: CONTRACT → CALENDAR EVENT
   // =========================
   useEffect(() => {
-    if (!events.length) return;
+    if (!contracts.length) return;
 
-    const mapped: CalendarEvent[] = events.map((event) => {
-      // combinar fecha + hora
-      const dateTime = event.eventTime
-        ? new Date(`${event.eventDate}T${event.eventTime}`)
-        : new Date(event.eventDate);
-
-      return {
-        id: event.id,
-        title: `${event.name} (${event.client?.name || "N/A"})`,
-        date: dateTime,
-      };
-    });
+    const mapped: CalendarEvent[] = contracts.map((contract) => ({
+      id: contract.id,
+      title: `${contract.event.name} (${contract.client.name})`,
+      date: new Date(contract.event.eventDate), // 👈 CLAVE
+      status: contract.status,
+    }));
 
     setCalendarEvents(mapped);
-  }, [events]);
+  }, [contracts]);
 
   // =========================
   // DATE LOGIC
@@ -101,6 +100,21 @@ export default function GoogleLikeCalendar() {
         e.date.getMonth() === month &&
         e.date.getFullYear() === year,
     );
+  };
+
+  const getColor = (status: string) => {
+    switch (status) {
+      case "draft":
+        return "#6b7280";
+      case "active":
+        return "#2563eb";
+      case "cancelled":
+        return "#dc2626";
+      case "completed":
+        return "#16a34a";
+      default:
+        return "#6b7280";
+    }
   };
 
   // =========================
@@ -149,7 +163,13 @@ export default function GoogleLikeCalendar() {
 
                 <div style={styles.events}>
                   {getEvents(day).map((e) => (
-                    <div key={e.id} style={styles.event}>
+                    <div
+                      key={e.id}
+                      style={{
+                        ...styles.event,
+                        backgroundColor: getColor(e.status),
+                      }}
+                    >
                       {e.title}
                     </div>
                   ))}
@@ -197,6 +217,5 @@ const styles: Record<string, React.CSSProperties> = {
     color: "white",
     padding: "2px 4px",
     borderRadius: 4,
-    backgroundColor: "#4285f4",
   },
 };
