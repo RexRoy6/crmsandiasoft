@@ -49,7 +49,7 @@ export async function POST(
 
   } catch (error: any) {
 
-    console.error(error)
+    //console.error(error)
 
     if (error.message === "contract not found") {
       return Response.json(
@@ -65,9 +65,12 @@ export async function POST(
       )
     }
 
-    if (error.message === "not enough stock") {
+    if (error.code === "STOCK_EXCEEDED") {
       return Response.json(
-        { error: "not enough stock" },
+        {
+          error: "You exceeded available stock",
+          available: error.available
+        },
         { status: 400 }
       )
     }
@@ -76,8 +79,8 @@ export async function POST(
       { error: "internal server error" },
       { status: 500 }
     )
-  }
 
+  }
 }
 
 

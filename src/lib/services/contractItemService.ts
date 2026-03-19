@@ -59,11 +59,17 @@ export async function addServiceToContract(
   const used = existingItem ? existingItem.quantity : 0
 
   if (
-    service.stockTotal !== null &&
-    used + data.quantity > service.stockTotal
-  ) {
-    throw new Error("not enough stock")
-  }
+  service.stockTotal !== null &&
+  used + data.quantity > service.stockTotal
+) {
+  const available = service.stockTotal - used
+
+  const error: any = new Error("not enough stock")
+  error.code = "STOCK_EXCEEDED"
+  error.available = available
+
+  throw error
+}
 
   /* update existing */
 

@@ -14,22 +14,27 @@ import type {
 
 
 /* ---------- CREATE CONTRACT ---------- */
-
 // export async function createContract(data: CreateContractInput) {
 
 //   const tdb = await tenantDb()
+
 //   const event = await tdb.findFirst(
 //     events,
 //     eq(events.id, data.eventId)
 //   )
 
 //   if (!event) {
-//     throw new Error("event not found")
+//     throw new Error("Event not found")
 //   }
 
 //   const [result] = await tdb.insert(
 //     contracts,
-//     data
+//     {
+//       eventId: data.eventId,
+//       clientId: event.clientId,   //clave
+//       status: data.status,
+//       totalAmount: data.totalAmount
+//     }
 //   )
 
 //   const insertId = result.insertId
@@ -40,7 +45,6 @@ import type {
 //   )
 // }
 export async function createContract(data: CreateContractInput) {
-
   const tdb = await tenantDb()
 
   const event = await tdb.findFirst(
@@ -52,24 +56,34 @@ export async function createContract(data: CreateContractInput) {
     throw new Error("Event not found")
   }
 
+  // 🔥 check si ya existe contrato
+  const existing = await tdb.findFirst(
+    contracts,
+    and(
+      eq(contracts.eventId, data.eventId),
+      eq(contracts.companyId, event.companyId)
+    )
+  )
+
+  if (existing) {
+    return existing // o throw error si prefieres
+  }
+
   const [result] = await tdb.insert(
     contracts,
     {
       eventId: data.eventId,
-      clientId: event.clientId,   //clave
+      clientId: event.clientId,
       status: data.status,
       totalAmount: data.totalAmount
     }
   )
 
-  const insertId = result.insertId
-
   return tdb.findFirst(
     contracts,
-    eq(contracts.id, insertId)
+    eq(contracts.id, result.insertId)
   )
 }
-
 
 
 /* ---------- GET COMPANY CONTRACTS ---------- */
@@ -183,32 +197,32 @@ export async function getCompanyContracts() {
   // }))
   return rows.map((row) => {
 
-  const total = Number(row.totalAmount)
-  const paid = Number(row.paidAmount)
+    const total = Number(row.totalAmount)
+    const paid = Number(row.paidAmount)
 
-  return {
-    id: row.id,
-    status: row.status,
-    totalAmount: total,
-    paidAmount: paid,
-    remainingAmount: total - paid,
+    return {
+      id: row.id,
+      status: row.status,
+      totalAmount: total,
+      paidAmount: paid,
+      remainingAmount: total - paid,
 
-    client: row.clientId
-      ? {
+      client: row.clientId
+        ? {
           id: row.clientId,
           name: row.clientName
         }
-      : null,
+        : null,
 
-    event: row.eventId
-      ? {
+      event: row.eventId
+        ? {
           id: row.eventId,
           name: row.eventName
         }
-      : null
-  }
+        : null
+    }
 
-})
+  })
 }
 
 
