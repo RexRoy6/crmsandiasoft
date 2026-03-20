@@ -5,6 +5,9 @@ import { useEffect, useState } from "react";
 import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import ErrorBox from "@/app/components/ErrorBox";
+import CreateForm from "@/app/components/crm/CreateForm";
+import type { Field } from "@/app/components/crm/CreateForm";
+import SearchBar from "@/app/components/crm/SearchBar"
 
 export default function PaymentsPage() {
 
@@ -14,7 +17,71 @@ export default function PaymentsPage() {
   const [error, setError] = useState("")
   const [errorCode, setErrorCode] = useState<number>()
 
-   const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    contractId: "",
+    currency: "MXN",
+    paymentMethod: "cash",
+    items: [] as {
+      contractItemId: number;
+      amount: number;
+    }[]
+  });
+
+  //buscar info de los servicios de contrato
+  const [contractItems, setContractItems] = useState<any[]>([])
+
+
+  const [search, setSearch] = useState("")
+
+  const [contracts, setContracts] = useState<any[]>([])
+  const availableContracts = contracts.filter(
+    (c) => c.remainingAmount > 0
+  )
+
+  const paymentFields: Field[] = [
+    {
+      name: "contractId",
+      label: "Contract",
+      type: "select",
+      options: availableContracts.map((c) => ({
+        label: `#${c.id} - ${c.client.name} (${c.event.name}) - Remaining $${c.remainingAmount}`,
+        value: c.id
+      }))
+    },
+    {
+      name: "currency",
+      label: "Currency",
+      type: "select",
+      options: [
+        { label: "MXN", value: "MXN" },
+        { label: "USD", value: "USD" }
+      ]
+    },
+
+    {
+      name: "paymentMethod",
+      label: "Payment Method",
+      type: "select",
+      options: [
+        { label: "Cash", value: "cash" },
+        { label: "Transfer", value: "transfer" },
+        { label: "Card", value: "card" }
+      ]
+    }
+  ]
+
+  const filteredPayments = payments.filter((payment) => {
+
+    const term = search.toLowerCase()
+
+    return (
+      payment.clientName?.toLowerCase().includes(term) ||
+      payment.eventName?.toLowerCase().includes(term)
+    )
+
+  })
+
 
   async function fetchPayments() {
 
@@ -47,9 +114,117 @@ export default function PaymentsPage() {
 
   }
 
+  async function fetchContracts() {
+
+    try {
+
+      const res = await fetch(
+        "/api/company/contracts",
+        { credentials: "include" }
+      )
+
+      if (!res.ok) return
+
+      const data = await res.json()
+
+      setContracts(data)
+
+    } catch { }
+
+  }
+
+
+  async function fetchContractItems(contractId: string) {
+
+    const res = await fetch(
+      `/api/company/contracts/${contractId}/services`,
+      { credentials: "include" }
+    )
+
+    const data = await res.json()
+
+    setContractItems(data)
+
+    // inicializar items en form
+    setForm(prev => ({
+      ...prev,
+      items: data.map((item: any) => ({
+        contractItemId: item.id,
+        amount: 0
+      }))
+    }))
+  }
+
+
+  async function createPayment() {
+
+    try {
+
+      const total = form.items.reduce(
+        (sum, i) => sum + i.amount,
+        0
+      )
+
+      if (total <= 0) {
+        setError("Enter at least one amount")
+        return
+      }
+
+      const res = await fetch(
+        `/api/company/contracts/${form.contractId}/payments`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            currency: form.currency,
+            paymentMethod: form.paymentMethod,
+            items: form.items.filter(i => i.amount > 0)
+          })
+        }
+      )
+
+      if (!res.ok) {
+
+        const data = await res.json()
+
+        setError(data?.error || "Failed to create payment")
+        setErrorCode(res.status)
+        return
+      }
+
+      setShowForm(false)
+
+      setForm({
+        contractId: "",
+        currency: "MXN",
+        paymentMethod: "cash",
+        items: []
+      })
+
+      setContractItems([])
+
+      fetchPayments()
+
+    } catch {
+
+      setError("Connection error")
+
+    }
+
+  }
+
   useEffect(() => {
     fetchPayments()
   }, [])
+
+  useEffect(() => {
+    if (form.contractId) {
+      fetchContractItems(form.contractId)
+    }
+  }, [form.contractId])
 
   return (
 
@@ -57,9 +232,87 @@ export default function PaymentsPage() {
 
       <PageHeader
         title="Company Payments"
-         buttonLabel="+ New payment"
-                onClick={() => setShowForm(true)}
+        buttonLabel="+ New payment"
+        onClick={() => {
+          setShowForm(true)
+          fetchContracts()
+        }}
       />
+
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search by client or event"
+      />
+      <p style={{ fontSize: 12, color: "#6b7280" }}>
+        {filteredPayments.length} payments found
+      </p>
+
+
+      {showForm && (<CreateForm
+        title="Create Payment"
+        fields={paymentFields}
+        form={form}
+        setForm={setForm}
+        onSubmit={createPayment}
+        onCancel={() => setShowForm(false)}
+      />
+      )}
+
+      {showForm && contractItems.length > 0 && (
+
+        <div style={{ marginTop: 20 }}>
+
+          <h3>Allocate Payment</h3>
+
+          {contractItems.map((item, index) => {
+
+            const total =
+              item.quantity * Number(item.unitPrice)
+
+            return (
+              <div key={item.id} style={{ marginBottom: 10 }}>
+
+                <p>
+                  Service #{item.serviceId} — Total: ${total}
+                </p>
+
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={form.items[index]?.amount || ""}
+                  onChange={(e) => {
+
+                    const value = Number(e.target.value)
+
+                    setForm(prev => {
+                      const updated = [...prev.items]
+
+                      updated[index] = {
+                        ...updated[index],
+                        amount: value
+                      }
+
+                      return {
+                        ...prev,
+                        items: updated
+                      }
+                    })
+                  }}
+                />
+
+              </div>
+            )
+          })}
+
+          {/* 🔥 TOTAL DINÁMICO */}
+          <p style={{ marginTop: 10 }}>
+            Total Payment: $
+            {form.items.reduce((sum, i) => sum + i.amount, 0)}
+          </p>
+
+        </div>
+      )}
 
       {error && (
         <ErrorBox
@@ -84,7 +337,8 @@ export default function PaymentsPage() {
           }}
         >
 
-          {payments.map((payment) => (
+
+          {filteredPayments.map((payment) => (
 
             <ListCard
               key={payment.id}
@@ -92,9 +346,18 @@ export default function PaymentsPage() {
               extra={[
                 `Client: ${payment.clientName}`,
                 `Event: ${payment.eventName}`,
-                `Contract: #${payment.contractId}`,
+                `Contract: #${payment.contract.id}`,
+
                 `Amount: $${payment.amount}`,
-                `Method: ${payment.paymentMethod}`
+                `Contract Total: $${payment.contract.total}`,
+                `Remaining: $${payment.summary.remainingAmount}`,
+
+                `Status: ${payment.summary.paymentStatus}`,
+                `Method: ${payment.paymentMethod}`,
+                ...payment.items.map(
+                  (item: any) =>
+                    `• Service ${item.contractItemId}: $${item.amount}`
+                )
               ]}
               link={'#'}
             />

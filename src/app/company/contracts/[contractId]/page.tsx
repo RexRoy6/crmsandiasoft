@@ -29,6 +29,14 @@ export default function ContractDetailPage() {
   const contractFields = [
     { name: "status", label: "Status" },
     { name: "totalAmount", label: "Total Amount", type: "number" },
+
+    { name: "paidAmount", label: "Paid Amount" },
+    { name: "remainingAmount", label: "Remaining Amount" },
+
+    { name: "clientName", label: "Client" },
+    { name: "eventName", label: "Event" },
+    { name: "eventDate", label: "Event Date" },
+    { name: "eventLocation", label: "Location" },
   ];
 
   /* ---------- FETCH ---------- */
@@ -169,7 +177,28 @@ export default function ContractDetailPage() {
     fetchContract();
   }, []);
 
+  const formatMoney = (value: number) =>
+    `$${value.toLocaleString()}`
+
+
+  const formattedContract = contract
+    ? {
+      ...contract,
+      totalAmount: formatMoney(contract.totalAmount),
+      paidAmount: formatMoney(contract.paidAmount),
+      remainingAmount: formatMoney(contract.remainingAmount),
+
+      clientName: contract.client?.name,
+      eventName: contract.event?.name,
+      eventDate: contract.event?.eventDate,
+      eventLocation: contract.event?.location,
+    }
+    : null
+
+
   return (
+
+
     <div>
 
       <h1>Contract Details</h1>
@@ -180,10 +209,12 @@ export default function ContractDetailPage() {
 
       {contract && (
 
+
+
         <DetailCard
           title={`Contract #${contract.id}`}
           fields={contractFields}
-          data={contract}
+          data={formattedContract}
           form={form}
           setForm={setForm}
           editing={editing}
@@ -192,23 +223,23 @@ export default function ContractDetailPage() {
           onSave={updateContract}
           onDelete={deleteContract}
           actions={[
-  {
-    label: "View Services",
-    href: `/company/contracts/${contractId}/services`,
-  },
-  {
-    label: "View Payments",
-    href: `/company/contracts/${contractId}/payments`,
-  },
-  ...(contract.deletedAt
-    ? [
-        {
-          label: "Reactivate",
-          onClick: reactivateContract,
-        },
-      ]
-    : []),
-]}
+            {
+              label: "View Services",
+              href: `/company/contracts/${contractId}/services`,
+            },
+            {
+              label: "View Payments",
+              href: `/company/contracts/${contractId}/payments`,
+            },
+            ...(contract.deletedAt
+              ? [
+                {
+                  label: "Reactivate",
+                  onClick: reactivateContract,
+                },
+              ]
+              : []),
+          ]}
         />
 
       )}

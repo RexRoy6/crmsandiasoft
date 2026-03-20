@@ -7,45 +7,67 @@ export default function GlobalError({
   error: Error;
   reset: () => void;
 }) {
+
   console.error(error);
 
   return (
     <html>
       <body
         style={{
-          fontFamily: "sans-serif",
-          display: "flex",
           height: "100vh",
+          display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#f4f6fb",
+          background: "var(--background)",
+          color: "var(--text-primary)",
+          fontFamily: "sans-serif",
+          padding: 20,
         }}
       >
         <div
           style={{
-            background: "white",
+            background: "var(--bg-primary)",
+            border: "1px solid var(--border-color)",
             padding: 40,
-            borderRadius: 10,
+            borderRadius: 12,
             textAlign: "center",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+            maxWidth: 450,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
           }}
         >
-          <h1>Something went wrong</h1>
+          <div
+            style={{
+              fontSize: 42,
+              fontWeight: 700,
+            }}
+          >
+            ⚠️
+          </div>
 
-          <p style={{ marginTop: 10, color: "#666" }}>
+          <h2>Something went wrong</h2>
+
+          <p
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: 14,
+            }}
+          >
             {error.message || "Unexpected error"}
           </p>
 
           <button
             onClick={() => reset()}
             style={{
-              marginTop: 20,
-              padding: "10px 20px",
-              borderRadius: 6,
+              marginTop: 10,
+              padding: "10px 18px",
+              borderRadius: 8,
               border: "none",
-              background: "#2f4f78",
+              background: "#2563eb",
               color: "white",
               cursor: "pointer",
+              fontWeight: 500,
             }}
           >
             Try again

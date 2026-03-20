@@ -5,10 +5,10 @@ import { CONTRACT_STATUS } from "@/db/schema"
 
 export const createContractSchema = z.object({
 
-  clientId: z
-    .number()
-    .int()
-    .positive(),
+  // clientId: z
+  //   .number()
+  //   .int()
+  //   .positive(),
 
   eventId: z
     .number()

@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import DashboardCard from "@/app/components/DashboardCard";
 import ErrorBox from "@/app/components/ErrorBox";
+import PageHeader from "@/app/components/crm/PageHeader";
 
 export default function CompanyDashboard() {
+
   const router = useRouter();
 
   const [user, setUser] = useState<any>(null);
@@ -17,7 +20,9 @@ export default function CompanyDashboard() {
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
+
     try {
+
       setLoading(true);
 
       const meRes = await fetch("/api/company/me", {
@@ -50,11 +55,17 @@ export default function CompanyDashboard() {
 
       const dashData = await dashRes.json();
       setStats(dashData);
+
     } catch {
+
       setError("Connection error");
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   useEffect(() => {
@@ -63,16 +74,25 @@ export default function CompanyDashboard() {
 
   return (
     <div>
-      <h1 style={{ marginBottom: 20 }}>Company Dashboard</h1>
 
-      
+      <PageHeader title="Dashboard" />
 
-      {error && <ErrorBox message={error} code={errorCode} />}
+      {error && (
+        <ErrorBox
+          message={error}
+          code={errorCode}
+        />
+      )}
 
-      {loading && <p>Loading...</p>}
+      {loading && (
+        <p style={{ color: "var(--text-secondary)" }}>
+          Loading dashboard...
+        </p>
+      )}
 
       {!loading && stats && (
         <>
+
           {/* ---------- METRICS ---------- */}
 
           <div
@@ -83,9 +103,16 @@ export default function CompanyDashboard() {
               marginBottom: 40,
             }}
           >
-            <DashboardCard title="Clients" value={stats.clients} />
 
-            <DashboardCard title="Events" value={stats.events} />
+            <DashboardCard
+              title="Clients"
+              value={stats.clients}
+            />
+
+            <DashboardCard
+              title="Events"
+              value={stats.events}
+            />
 
             <DashboardCard
               title="Active Contracts"
@@ -101,40 +128,56 @@ export default function CompanyDashboard() {
               title="Pending Payments"
               value={`$${stats.pendingPayments}`}
             />
+
           </div>
 
-          {/* ---------- USER INFO ---------- */}
+          {/* ---------- COMPANY INFO ---------- */}
 
           {user && (
             <div
               style={{
-                background: "white",
-                padding: 20,
-                borderRadius: 10,
-                boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+                background: "var(--bg-primary)",
+                padding: 24,
+                borderRadius: 12,
+                border: "1px solid var(--border-color)",
+                maxWidth: 500,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
               }}
             >
-              <h2>Company Info</h2>
 
-              <p>
+              <h2
+                style={{
+                  fontSize: 18,
+                  marginBottom: 10,
+                }}
+              >
+                Company Info
+              </h2>
+
+              <div>
                 <strong>Email:</strong> {user.email}
-              </p>
+              </div>
 
-              <p>
+              <div>
                 <strong>Role:</strong> {user.role}
-              </p>
+              </div>
 
-              <p>
+              <div>
                 <strong>Company:</strong> {user.companyName}
-              </p>
+              </div>
 
-              <p>
+              <div>
                 <strong>Company ID:</strong> {user.companyId}
-              </p>
+              </div>
+
             </div>
           )}
+
         </>
       )}
+
     </div>
   );
 }

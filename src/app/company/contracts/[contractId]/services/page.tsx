@@ -8,6 +8,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
+import EventInfoCard from "@/app/components/crm/EventInfoCard";
 
 export default function ContractServicesPage() {
 
@@ -18,6 +19,8 @@ export default function ContractServicesPage() {
   const [companyServices, setCompanyServices] = useState<any[]>([]);
 
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [contract, setContract] = useState<any>(null);
+
 
   const [editForm, setEditForm] = useState({
     serviceId: "",
@@ -39,6 +42,7 @@ export default function ContractServicesPage() {
     unitPrice: "",
   });
   const handleServiceChange = (serviceId: string) => {
+    //setError("");
 
     const service = companyServices.find(
       (s) => String(s.id) === serviceId
@@ -53,28 +57,28 @@ export default function ContractServicesPage() {
     }));
 
   };
-const fields: Field[] = [
-  {
-    name: "serviceId",
-    label: "Service",
-    type: "select",
-    options: companyServices.map((s) => ({
-      value: String(s.id),
-      label: `${s.name} ($${s.priceBase})`,
-    })),
-    onChange: handleServiceChange,
-  },
-  {
-    name: "quantity",
-    label: "Quantity",
-    type: "number",
-  },
-  {
-    name: "unitPrice",
-    label: "Unit Price",
-    type: "number",
-  },
-];
+  const fields: Field[] = [
+    {
+      name: "serviceId",
+      label: "Service",
+      type: "select",
+      options: companyServices.map((s) => ({
+        value: String(s.id),
+        label: `${s.name} ($${s.priceBase})`,
+      })),
+      onChange: handleServiceChange,
+    },
+    {
+      name: "quantity",
+      label: "Quantity",
+      type: "number",
+    },
+    {
+      name: "unitPrice",
+      label: "Unit Price",
+      type: "number",
+    },
+  ];
 
   /* ---------- FETCH SERVICES ---------- */
 
@@ -152,7 +156,6 @@ const fields: Field[] = [
       );
 
       if (!res.ok) {
-
         const data = await res.json();
 
         if (data?.error?.fieldErrors) {
@@ -161,6 +164,19 @@ const fields: Field[] = [
             .join(", ");
 
           setError(messages);
+
+        } else if (data?.error) {
+
+          if (data.available !== undefined) {
+            setError(`${data.error}. Only ${data.available} left.`);
+            setForm(prev => ({
+              ...prev,
+              quantity: String(data.available) // renderiza en el ux la cantidad disponible
+            }));
+          } else {
+            setError(data.error);
+          }
+
         } else {
           setError("Failed to add service");
         }
@@ -183,6 +199,20 @@ const fields: Field[] = [
     }
   };
 
+
+  const fetchContract = async () => {
+    try {
+      const res = await fetch(`/api/company/contracts/${contractId}`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setContract(data);
+
+    } catch { }
+  };
 
 
 
@@ -252,6 +282,7 @@ const fields: Field[] = [
   useEffect(() => {
     fetchServices();
     fetchCompanyServices();
+    fetchContract();
   }, []);
 
   const contractTotal = services.reduce((sum, item) => {
@@ -266,10 +297,20 @@ const fields: Field[] = [
   return (
     <div>
 
+
+      {contract?.eventId && (
+        <EventInfoCard eventId={contract.eventId} />
+      )}
+
+
       <PageHeader
         title={`Contract ${contractId} Services`}
         buttonLabel="+ Add Service"
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          setError("");
+          setShowForm(true)
+        }
+        }
       />
 
       <p
@@ -293,6 +334,7 @@ const fields: Field[] = [
           setForm={setForm}
           onSubmit={createService}
           onCancel={() => setShowForm(false)}
+          clearError={() => setError("")}
         />
 
 
@@ -309,7 +351,7 @@ const fields: Field[] = [
 
         return (
           <div>
-            <p>Stock available: {service.stock}</p>
+            <p>Stock available: {service.stockTotal}</p>
 
             {form.quantity && form.unitPrice && (
               <p>

@@ -5,7 +5,6 @@ import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { and, eq, isNotNull, isNull } from "drizzle-orm"
 import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
 /* ---------- CREATE ---------- */
-
 export async function createEvent(data: CreateEventInput) {
   const tdb = await tenantDb()
 
@@ -18,7 +17,13 @@ export async function createEvent(data: CreateEventInput) {
     throw new Error("client not found")
   }
 
-  const [result] = await tdb.insert(events, data)
+  // 👇 SOLO ESTO
+  const insertData = {
+    ...data,
+    eventDate: new Date(data.eventDate),
+  }
+
+  const [result] = await tdb.insert(events, insertData)
 
   const insertId = result.insertId
 
@@ -39,9 +44,41 @@ export async function createEvent(data: CreateEventInput) {
 
 //   return await tdb.findManyRaw(events)
 // }
-export async function getEvents() {
+// export async function getEvents() {
+
+//   const { companyId } = await getAuthContext()
+
+//   return db
+//     .select({
+//       id: events.id,
+//       name: events.name,
+//       eventDate: events.eventDate,
+//       location: events.location,
+//       notes: events.notes,
+//       deleted: events.deletedAt,
+
+//       client: {
+//         id: clients.id,
+//         name: clients.name
+//       }
+//     })
+//     .from(events)
+//     .leftJoin(clients, eq(events.clientId, clients.id))
+//     .where(eq(events.companyId, companyId!))
+// }
+
+export async function getEvents(clientId?: number) {
 
   const { companyId } = await getAuthContext()
+
+  const conditions = [
+    eq(events.companyId, companyId!),
+    isNull(events.deletedAt)
+  ]
+
+  if (clientId) {
+    conditions.push(eq(events.clientId, clientId))
+  }
 
   return db
     .select({
@@ -50,7 +87,6 @@ export async function getEvents() {
       eventDate: events.eventDate,
       location: events.location,
       notes: events.notes,
-      deleted: events.deletedAt,
 
       client: {
         id: clients.id,
@@ -59,7 +95,8 @@ export async function getEvents() {
     })
     .from(events)
     .leftJoin(clients, eq(events.clientId, clients.id))
-    .where(eq(events.companyId, companyId!))
+    .where(and(...conditions))
+
 }
 /* ---------- GET BY ID ---------- */
 
@@ -79,7 +116,7 @@ export async function getEventById(id: number) {
       eventDate: events.eventDate,
       location: events.location,
       notes: events.notes,
-      deleted:events.deletedAt,
+      deleted: events.deletedAt,
 
       client: {
         id: clients.id,
@@ -100,6 +137,29 @@ export async function getEventById(id: number) {
   return result[0] ?? null
 }
 
+
+export async function getEventsByClient(clientId: number) {
+
+  const { companyId } = await getAuthContext()
+
+  return db
+    .select({
+      id: events.id,
+      name: events.name,
+      eventDate: events.eventDate,
+      location: events.location
+    })
+    .from(events)
+    .where(
+      and(
+        eq(events.clientId, clientId),
+        eq(events.companyId, companyId!),
+        isNull(events.deletedAt)
+      )
+    )
+
+}
+
 /* ---------- UPDATE ---------- */
 export async function updateEvent(
   id: number,
@@ -107,7 +167,6 @@ export async function updateEvent(
 ) {
   const tdb = await tenantDb()
 
-  /* check exists */
   const existing = await tdb.findFirst(
     events,
     eq(events.id, id)
@@ -115,14 +174,19 @@ export async function updateEvent(
 
   if (!existing) return null
 
-  /* update */
+  const formattedData = {
+    ...data,
+    ...(data.eventDate && {
+      eventDate: new Date(data.eventDate),
+    }),
+  }
+
   await tdb.update(
     events,
-    data,
+    formattedData,
     eq(events.id, id)
   )
 
-  /* return updated */
   return tdb.findFirst(
     events,
     eq(events.id, id)

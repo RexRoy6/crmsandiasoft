@@ -1,7 +1,8 @@
 import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
-import { contracts, events, clients } from "@/db/schema"
+import { contracts, events, clients, payments } from "@/db/schema"
+import { sql } from "drizzle-orm"
 
 import { eq, and, isNull } from "drizzle-orm"
 
@@ -13,32 +14,76 @@ import type {
 
 
 /* ---------- CREATE CONTRACT ---------- */
+// export async function createContract(data: CreateContractInput) {
 
+//   const tdb = await tenantDb()
+
+//   const event = await tdb.findFirst(
+//     events,
+//     eq(events.id, data.eventId)
+//   )
+
+//   if (!event) {
+//     throw new Error("Event not found")
+//   }
+
+//   const [result] = await tdb.insert(
+//     contracts,
+//     {
+//       eventId: data.eventId,
+//       clientId: event.clientId,   //clave
+//       status: data.status,
+//       totalAmount: data.totalAmount
+//     }
+//   )
+
+//   const insertId = result.insertId
+
+//   return tdb.findFirst(
+//     contracts,
+//     eq(contracts.id, insertId)
+//   )
+// }
 export async function createContract(data: CreateContractInput) {
-
   const tdb = await tenantDb()
+
   const event = await tdb.findFirst(
     events,
     eq(events.id, data.eventId)
   )
 
   if (!event) {
-    throw new Error("event not found")
+    throw new Error("Event not found")
+  }
+
+  // 🔥 check si ya existe contrato
+  const existing = await tdb.findFirst(
+    contracts,
+    and(
+      eq(contracts.eventId, data.eventId),
+      eq(contracts.companyId, event.companyId)
+    )
+  )
+
+  if (existing) {
+    return existing // o throw error si prefieres
   }
 
   const [result] = await tdb.insert(
     contracts,
-    data
+    {
+      eventId: data.eventId,
+      clientId: event.clientId,
+      status: data.status,
+      totalAmount: data.totalAmount
+    }
   )
-
-  const insertId = result.insertId
 
   return tdb.findFirst(
     contracts,
-    eq(contracts.id, insertId)
+    eq(contracts.id, result.insertId)
   )
 }
-
 
 
 /* ---------- GET COMPANY CONTRACTS ---------- */
@@ -55,26 +100,39 @@ export async function getCompanyContracts() {
   const { companyId } = await getAuthContext()
 
   const rows = await db
+
     .select({
       id: contracts.id,
       status: contracts.status,
       totalAmount: contracts.totalAmount,
 
+      paidAmount: sql<number>`COALESCE(SUM(${payments.amount}),0)`,
+
       clientId: clients.id,
       clientName: clients.name,
 
       eventId: events.id,
-      eventName: events.name
+      eventName: events.name,
+      eventDate: events.eventDate,
+      eventLocation: events.location
     })
     .from(contracts)
+
     .leftJoin(
       clients,
       eq(contracts.clientId, clients.id)
     )
+
     .leftJoin(
       events,
       eq(contracts.eventId, events.id)
     )
+
+    .leftJoin(
+      payments,
+      eq(payments.contractId, contracts.id)
+    )
+
     .where(
       companyId
         ? and(
@@ -84,25 +142,63 @@ export async function getCompanyContracts() {
         : isNull(contracts.deletedAt)
     )
 
-  return rows.map((row) => ({
-    id: row.id,
-    status: row.status,
-    totalAmount: row.totalAmount,
+    .groupBy(
+      contracts.id,
+      clients.id,
+      events.id,
+      events.eventDate,
+      events.location
+    )
 
-    client: row.clientId
-      ? {
-        id: row.clientId,
-        name: row.clientName
-      }
-      : null,
+  // return rows.map((row) => ({
+  //   id: row.id,
+  //   status: row.status,
+  //   totalAmount: row.totalAmount,
 
-    event: row.eventId
-      ? {
-        id: row.eventId,
-        name: row.eventName
-      }
-      : null
-  }))
+  //   client: row.clientId
+  //     ? {
+  //       id: row.clientId,
+  //       name: row.clientName
+  //     }
+  //     : null,
+
+  //   event: row.eventId
+  //     ? {
+  //       id: row.eventId,
+  //       name: row.eventName
+  //     }
+  //     : null
+  // }))
+  return rows.map((row) => {
+
+    const total = Number(row.totalAmount)
+    const paid = Number(row.paidAmount)
+
+    return {
+      id: row.id,
+      status: row.status,
+      totalAmount: total,
+      paidAmount: paid,
+      remainingAmount: total - paid,
+
+      client: row.clientId
+        ? {
+          id: row.clientId,
+          name: row.clientName
+        }
+        : null,
+
+      event: row.eventId
+        ? {
+          id: row.eventId,
+          name: row.eventName,
+          eventDate: row.eventDate,
+          location: row.eventLocation
+        }
+        : null
+    }
+
+  })
 }
 
 
@@ -111,13 +207,88 @@ export async function getCompanyContracts() {
 
 export async function getContract(id: number) {
 
-  const tdb = await tenantDb()
+  const { companyId } = await getAuthContext()
 
-  return tdb.findFirst(
-    contracts,
-    eq(contracts.id, id)
-  )
+  const rows = await db
+    .select({
+      id: contracts.id,
+      status: contracts.status,
+      totalAmount: contracts.totalAmount,
 
+      paidAmount: sql<number>`COALESCE(SUM(${payments.amount}),0)`,
+
+      clientId: clients.id,
+      clientName: clients.name,
+
+      eventId: events.id,
+      eventName: events.name,
+      eventDate: events.eventDate,
+      eventLocation: events.location
+    })
+    .from(contracts)
+
+    .leftJoin(
+      clients,
+      eq(contracts.clientId, clients.id)
+    )
+
+    .leftJoin(
+      events,
+      eq(contracts.eventId, events.id)
+    )
+
+    .leftJoin(
+      payments,
+      eq(payments.contractId, contracts.id)
+    )
+
+    .where(
+      companyId
+        ? and(
+            eq(contracts.id, id),
+            eq(contracts.companyId, companyId)
+          )
+        : eq(contracts.id, id)
+    )
+
+    .groupBy(
+      contracts.id,
+      clients.id,
+      events.id,
+      events.eventDate,
+      events.location
+    )
+
+  const row = rows[0]
+
+  if (!row) return null
+
+  const total = Number(row.totalAmount)
+  const paid = Number(row.paidAmount)
+
+  return {
+    id: row.id,
+    status: row.status,
+    totalAmount: total,
+    paidAmount: paid,
+    remainingAmount: total - paid,
+
+    client: row.clientId
+      ? {
+          id: row.clientId,
+          name: row.clientName
+        }
+      : null,
+
+    event: row.eventId
+      ? {
+          id: row.eventId,
+          name: row.eventName,
+          eventDate: row.eventDate,
+          location: row.eventLocation
+        }
+      : null
+  }
 }
 
 

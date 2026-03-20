@@ -8,7 +8,8 @@ import {
   timestamp,
   index,
   mysqlEnum,
-  uniqueIndex
+  uniqueIndex,
+  datetime
 } from "drizzle-orm/mysql-core"
 
 /* ---------- BASE COLUMNS (audit + soft delete) ---------- */
@@ -135,7 +136,7 @@ export const events = mysqlTable("events", {
 
   name: varchar("name", { length: 255 }).notNull(),
 
-  eventDate: date("event_date").notNull(),
+  eventDate: datetime("event_date").notNull(),
 
   location: varchar("location", { length: 255 }),
 
@@ -191,8 +192,14 @@ export const contracts = mysqlTable("contracts", {
   eventIdx: index("contracts_event_idx")
     .on(table.eventId),
 
+  eventUnique: uniqueIndex("contracts_event_unique")
+    .on(table.eventId),
+
   statusIdx: index("contracts_status_idx")
-    .on(table.status)
+    .on(table.status),
+
+  uniqueEventPerCompany: uniqueIndex("contracts_company_event_unique")
+    .on(table.companyId, table.eventId)
 
 }))
 
@@ -259,4 +266,20 @@ export const contractHistory = mysqlTable("contract_history", {
   newValue: varchar("new_value", { length: 255 }),
 
   ...baseColumns
+})
+
+
+// payments items
+export const paymentItems = mysqlTable("payment_items", {
+  id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+
+  paymentId: bigint("payment_id", { mode: "number" })
+    .notNull()
+    .references(() => payments.id, { onDelete: "cascade" }),
+
+  contractItemId: bigint("contract_item_id", { mode: "number" })
+    .notNull()
+    .references(() => contractItems.id, { onDelete: "cascade" }),
+
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
 })

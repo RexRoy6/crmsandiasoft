@@ -1,6 +1,6 @@
 import {
   createEvent,
-  getEvents
+  getEvents,getEventsByClient
 } from "@/lib/services/eventService"
 
 import {
@@ -40,14 +40,30 @@ export async function POST(req: Request) {
 
 
 /* ---------- GET (company events) ---------- */
-export async function GET() {//req: Request
+
+/* ---------- GET (company events) ---------- */
+export async function GET(req: Request) {
   try {
 
-    // const { searchParams } = new URL(req.url)
+    const { searchParams } = new URL(req.url)
 
-    // const clientId = searchParams.get("clientId")
+    const clientId = searchParams.get("clientId")
 
-    const events = await getEvents()//clientId
+    /* filter by client */
+
+    if (clientId) {
+
+      const events = await getEvents(
+        Number(clientId)
+      )
+
+      return Response.json(events)
+
+    }
+
+    /* all events */
+
+    const events = await getEvents()
 
     return Response.json(events)
 
@@ -59,5 +75,6 @@ export async function GET() {//req: Request
       { error: "internal server error" },
       { status: 500 }
     )
+
   }
 }

@@ -6,6 +6,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import ErrorBox from "@/app/components/ErrorBox";
+import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function ClientEventsPage() {
 
@@ -26,7 +27,7 @@ export default function ClientEventsPage() {
     notes: "",
   });
 
-  const eventFields = [
+  const eventFields : Field[] = [
     { name: "name", label: "Event name" },
     { name: "eventDate", label: "Event date", type: "date" },
     { name: "location", label: "Location" },

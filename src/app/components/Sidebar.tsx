@@ -1,28 +1,108 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import {
+  Home,
+  Users,
+  Calendar,
+  FileText,
+  CreditCard,
+  Briefcase,
+} from "lucide-react";
+
+const menu = [
+  {
+    label: "Home",
+    href: "/company",
+    icon: Home,
+  },
+  {
+    label: "Services",
+    href: "/company/service",
+    icon: Briefcase,
+  },
+  {
+    label: "Clients",
+    href: "/company/clients",
+    icon: Users,
+  },
+  {
+    label: "Events",
+    href: "/company/events",
+    icon: Calendar,
+  },
+  {
+    label: "Contracts",
+    href: "/company/contracts",
+    icon: FileText,
+  },
+  {
+    label: "Payments",
+    href: "/company/payments",
+    icon: CreditCard,
+  },
+  {
+    label: "Calendar",
+    href: "/company/calendar",
+    icon: Calendar,
+  },
+];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
   return (
-    <div
+    <aside
       style={{
         width: 240,
-        background: "#2f4f78",
-        color: "white",
         height: "100vh",
+        borderRight: "1px solid var(--border-color)",
+        background: "var(--bg-primary)",
         padding: 20,
+        display: "flex",
+        flexDirection: "column",
+        gap: 30,
       }}
     >
-      <h2 style={{ marginBottom: 40 }}>CRM</h2>
+      <h2 style={{ fontSize: 18 }}>Options menu</h2>
 
-      <nav style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <Link href="/company">Home</Link>
-        <Link href="/company/service">Services</Link>
-        <Link href="/company/clients">Clients</Link>
-        <Link href="/company/events">Events</Link>
-        <Link href="/company/contracts">Contracts</Link>
-        <Link href="/company/payments">Payments</Link>
+      <nav
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        {menu.map((item) => {
+          const Icon = item.icon;
+
+          const active = pathname === item.href;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 8,
+                textDecoration: "none",
+                color: active ? "white" : "var(--text-primary)",
+                background: active ? "#2563eb" : "transparent",
+                fontSize: 14,
+              }}
+            >
+              <Icon size={18} />
+
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
-    </div>
+    </aside>
   );
 }
