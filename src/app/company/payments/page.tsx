@@ -246,19 +246,23 @@ export default function PaymentsPage() {
           {filteredPayments.map((payment) => (
 
             <ListCard
-              key={payment.paymentId}
-              title={`Payment #${payment.paymentId}`}
+              key={payment.id}
+              title={`Payment #${payment.id}`}
               extra={[
                 `Client: ${payment.clientName}`,
                 `Event: ${payment.eventName}`,
-                `Contract: #${payment.contractId}`,
+                `Contract: #${payment.contract.id}`,
 
                 `Amount: $${payment.amount}`,
-                `Contract Total: $${payment.contractTotal}`,
-                `Remaining: $${payment.remainingAmount}`,
+                `Contract Total: $${payment.contract.total}`,
+                `Remaining: $${payment.summary.remainingAmount}`,
 
-                `Status: ${payment.paymentStatus}`,
-                `Method: ${payment.paymentMethod}`
+                `Status: ${payment.summary.paymentStatus}`,
+                `Method: ${payment.paymentMethod}`,
+                ...payment.items.map(
+                  (item: any) =>
+                    `• Service ${item.contractItemId}: $${item.amount}`
+                )
               ]}
               link={'#'}
             />
