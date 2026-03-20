@@ -4,10 +4,11 @@ import { tenantDb } from "@/lib/db/tenantDb"
 import { paymentItems, contractItems as contractItemsTable } from "@/db/schema"
 import {
   payments,
-  contracts, clients, events
+  contracts, clients, events,
 } from "@/db/schema"
 
-import { eq, and, isNull, sum } from "drizzle-orm"
+
+import { eq, and, isNull, sum, sql } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
@@ -93,33 +94,16 @@ export async function createPayment(
     throw new Error("contract not found")
   }
 
-  /* ---------- 2. calcular total desde items ---------- */
+  /* ---------- 2. calcular total ---------- */
 
   const total = data.items.reduce(
     (sum, item) => sum + item.amount,
     0
   )
 
-  /* ---------- 3. obtener pagos actuales ---------- */
-
-  const existingPayments =
-    await tdb.findManyRaw(
-      payments,
-      eq(payments.contractId, contractId)
-    )
-
-  const paid = existingPayments.reduce(
-    (sum, p) => sum + Number(p.amount),
-    0
-  )
-
   const contractTotal = Number(contract.totalAmount)
 
-  if (paid + total > contractTotal) {
-    throw new Error("payment exceeds contract total")
-  }
-
-  /* ---------- 4. validar contract items ---------- */
+  /* ---------- 3. validar contract items (O(n)) ---------- */
 
   const contractItems =
     await tdb.findMany(
@@ -127,24 +111,38 @@ export async function createPayment(
       eq(contractItemsTable.contractId, contractId)
     )
 
+  const contractItemsMap = new Map(
+    contractItems.map(ci => [ci.id, ci])
+  )
+
   for (const item of data.items) {
-
-    const contractItem = contractItems.find(
-      ci => ci.id === item.contractItemId
-    )
-
-    if (!contractItem) {
+    if (!contractItemsMap.has(item.contractItemId)) {
       throw new Error("invalid contract item")
     }
-
-    // 🔥 FASE 2: aquí después validaremos remaining por item
   }
 
-  /* ---------- 5. TRANSACTION 🔥 ---------- */
+  /* ---------- 4. TRANSACTION 🔥 ---------- */
 
-  let paymentId: number | null = null
+  let paymentId: number
 
-  await db.transaction(async (tx) => {
+  const resultSummary = await db.transaction(async (tx) => {
+
+    /* 4.1 obtener total pagado (DB SUM) */
+
+    const [row] = await tx
+      .select({
+        totalPaid: sql<number>`COALESCE(SUM(${payments.amount}),0)`
+      })
+      .from(payments)
+      .where(eq(payments.contractId, contractId))
+
+    const paid = Number(row.totalPaid)
+
+    if (paid + total > contractTotal) {
+      throw new Error("payment exceeds contract total")
+    }
+
+    /* 4.2 insertar payment */
 
     const result = await tx.insert(payments).values({
       contractId,
@@ -153,90 +151,76 @@ export async function createPayment(
       paymentMethod: data.paymentMethod
     })
 
-    paymentId = result[0].insertId // FIX
+    paymentId = result[0].insertId
+
+    /* 4.3 insertar payment_items */
 
     await tx.insert(paymentItems).values(
       data.items.map(item => ({
-        paymentId: paymentId!,
+        paymentId,
         contractItemId: item.contractItemId,
         amount: item.amount.toString()
       }))
     )
 
+    /* 4.4 calcular nuevo estado */
+
+    const newPaidAmount = paid + total
+
+    let newStatus: "draft" | "active" | "completed" = "draft"
+
+    if (newPaidAmount === 0) {
+      newStatus = "draft"
+    } else if (newPaidAmount < contractTotal) {
+      newStatus = "active"
+    } else {
+      newStatus = "completed"
+    }
+
+    /* 4.5 actualizar contrato */
+
+    await tx.update(contracts)
+      .set({ status: newStatus })
+      .where(
+        and(
+          eq(contracts.id, contractId),
+          eq(contracts.companyId, contract.companyId)
+        )
+      )
+
+    return {
+      paidAmount: newPaidAmount,
+      remainingAmount: contractTotal - newPaidAmount,
+      contractStatus: newStatus
+    }
+
   })
 
+  /* ---------- 5. construir response ---------- */
+
   const payment = {
-    id: paymentId,
+    id: paymentId!,
     contractId,
     amount: total.toString(),
     currency: data.currency,
-    paymentMethod: data.paymentMethod
-  }
-  if (!paymentId) {
-    throw new Error("payment creation failed")
+    paymentMethod: data.paymentMethod,
+    items: data.items // 🔥 útil para frontend
   }
 
-  /* ---------- 6. recalcular status ---------- */
-
-  const newPaidAmount = paid + total
-
-  let newStatus = contract.status
-
-  if (newPaidAmount === 0) {
-    newStatus = "draft"
-  }
-  else if (newPaidAmount < contractTotal) {
-    newStatus = "active"
-  }
-  else if (newPaidAmount >= contractTotal) {
-    newStatus = "completed"
-  }
-
-  await tdb.update(
-    contracts,
-    { status: newStatus },
-    and(
-      eq(contracts.id, contractId),
-      eq(contracts.companyId, contract.companyId)
-    )
-  )
-  // recalcular totales
-
-  const updatedPayments =
-    await tdb.findManyRaw(
-      payments,
-      eq(payments.contractId, contractId)
-    )
-
-  const paidAmount = paid + total
-
-  //const contractTotal = Number(contract.totalAmount)
-
-  const remainingAmount = contractTotal - paidAmount
-
-  //status
   const paymentStatus = getPaymentStatus(
     contractTotal,
-    paidAmount
+    resultSummary.paidAmount
   )
 
-  /* ---------- 7. return payment ---------- */
-
-  // if (!paymentId) return null
-
-  // return tdb.findFirst(
-  //   payments,
-  //   eq(payments.id, paymentId)
-  // )
   return {
     payment,
     summary: {
       contractId,
-      contractStatus: newStatus,
+      contractStatus: resultSummary.contractStatus,
       paymentStatus,
       contractTotal,
-      paidAmount,
-      remainingAmount
+      paidAmount: resultSummary.paidAmount,
+      remainingAmount: resultSummary.remainingAmount
     }
   }
 }
