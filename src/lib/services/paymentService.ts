@@ -146,8 +146,6 @@ export async function createPayment(
 
   await db.transaction(async (tx) => {
 
-    /* crear payment */
-
     const result = await tx.insert(payments).values({
       contractId,
       amount: total.toString(),
@@ -155,11 +153,8 @@ export async function createPayment(
       paymentMethod: data.paymentMethod
     })
 
-    const paymentId = result[0].insertId
+    paymentId = result[0].insertId // FIX
 
-    //paymentId = paymentResult.insertId
-
-    /* insertar payment_items */
     await tx.insert(paymentItems).values(
       data.items.map(item => ({
         paymentId: paymentId!,
@@ -169,6 +164,17 @@ export async function createPayment(
     )
 
   })
+
+  const payment = {
+    id: paymentId,
+    contractId,
+    amount: total.toString(),
+    currency: data.currency,
+    paymentMethod: data.paymentMethod
+  }
+  if (!paymentId) {
+    throw new Error("payment creation failed")
+  }
 
   /* ---------- 6. recalcular status ---------- */
 
@@ -194,15 +200,45 @@ export async function createPayment(
       eq(contracts.companyId, contract.companyId)
     )
   )
+  // recalcular totales
+
+  const updatedPayments =
+    await tdb.findManyRaw(
+      payments,
+      eq(payments.contractId, contractId)
+    )
+
+  const paidAmount = paid + total
+
+  //const contractTotal = Number(contract.totalAmount)
+
+  const remainingAmount = contractTotal - paidAmount
+
+  //status
+  const paymentStatus = getPaymentStatus(
+    contractTotal,
+    paidAmount
+  )
 
   /* ---------- 7. return payment ---------- */
 
-  if (!paymentId) return null
+  // if (!paymentId) return null
 
-  return tdb.findFirst(
-    payments,
-    eq(payments.id, paymentId)
-  )
+  // return tdb.findFirst(
+  //   payments,
+  //   eq(payments.id, paymentId)
+  // )
+  return {
+    payment,
+    summary: {
+      contractId,
+      contractStatus: newStatus,
+      paymentStatus,
+      contractTotal,
+      paidAmount,
+      remainingAmount
+    }
+  }
 }
 
 export async function getCompanyPayments() {
