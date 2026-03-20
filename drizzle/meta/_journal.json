@@ -64,6 +64,13 @@
       "when": 1773873409474,
       "tag": "0008_marvelous_jack_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1773964763561,
+      "tag": "0009_careless_warstar",
+      "breakpoints": true
     }
   ]
 }

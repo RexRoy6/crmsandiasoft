@@ -1,9 +1,15 @@
 import { z } from "zod"
 
 export const createPaymentSchema = z.object({
-  amount: z.number().positive(),
   currency: z.enum(["MXN", "USD"]),
-  paymentMethod: z.string().optional()
+  paymentMethod: z.string().optional(),
+
+  items: z.array(
+    z.object({
+      contractItemId: z.number(),
+      amount: z.number().positive()
+    })
+  ).min(1)
 })
 
 export type CreatePaymentInput =

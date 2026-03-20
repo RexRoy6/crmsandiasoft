@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Company, User } from "../types/admin";
+import { Company, User, Contract } from "../types/admin";
 import { fetchContracts } from "../services/adminService";
 
 export function useAdminCompany(companyId: string) {

@@ -27,17 +27,17 @@ export default function ContractPaymentsPage() {
   const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState({
-    amount: "",
     currency: "MXN",
     paymentMethod: "cash",
+    items: [] as {
+      contractItemId: number;
+      amount: number;
+    }[]
   });
+  const [contractItems, setContractItems] = useState<any[]>([])
+
 
   const fields: Field[] = [
-    {
-      name: "amount",
-      label: "Amount",
-      type: "number",
-    },
     {
       name: "currency",
       label: "Currency",
@@ -94,10 +94,38 @@ export default function ContractPaymentsPage() {
     }
 
   }
+  async function fetchContractItems() {
+    const res = await fetch(
+      `/api/company/contracts/${contractId}/services`,
+      { credentials: "include" }
+    )
+
+    const data = await res.json()
+
+    setContractItems(data)
+
+    setForm(prev => ({
+      ...prev,
+      items: data.map((item: any) => ({
+        contractItemId: item.id,
+        amount: 0
+      }))
+    }))
+  }
 
   async function createPayment() {
 
     try {
+
+      const total = form.items.reduce(
+        (sum, i) => sum + i.amount,
+        0
+      )
+
+      if (total <= 0) {
+        setError("Enter at least one amount")
+        return
+      }
 
       const res = await fetch(
         `/api/company/contracts/${contractId}/payments`,
@@ -108,9 +136,9 @@ export default function ContractPaymentsPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: Number(form.amount),
             currency: form.currency,
             paymentMethod: form.paymentMethod,
+            items: form.items.filter(i => i.amount > 0)
           }),
         }
       );
@@ -121,7 +149,7 @@ export default function ContractPaymentsPage() {
 
         setError(
           JSON.stringify(data.error) ||
-            "Failed to create payment"
+          "Failed to create payment"
         );
 
         setErrorCode(res.status);
@@ -133,10 +161,12 @@ export default function ContractPaymentsPage() {
       setShowForm(false);
 
       setForm({
-        amount: "",
         currency: "MXN",
         paymentMethod: "cash",
-      });
+        items: []
+      })
+
+      setContractItems([])
 
       fetchPayments();
 
@@ -164,7 +194,11 @@ export default function ContractPaymentsPage() {
       <PageHeader
         title={`Contract ${contractId} Payments`}
         buttonLabel="+ Add Payment"
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          setShowForm(true)
+          fetchContractItems() // importante
+        }}
+
       />
 
       {/* ---------- CONTRACT SUMMARY ---------- */}
@@ -248,6 +282,59 @@ export default function ContractPaymentsPage() {
         />
       )}
 
+      {showForm && contractItems.length > 0 && (
+
+        <div style={{ marginTop: 20 }}>
+
+          <h3>Allocate Payment</h3>
+
+          {contractItems.map((item, index) => {
+
+            const total =
+              item.quantity * Number(item.unitPrice)
+
+            return (
+              <div key={item.id} style={{ marginBottom: 10 }}>
+
+                <p>
+                  Service #{item.serviceId} — Total: ${total}
+                </p>
+
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={form.items[index]?.amount || ""}
+                  onChange={(e) => {
+
+                    const value = Number(e.target.value)
+
+                    setForm(prev => {
+                      const updated = [...prev.items]
+
+                      updated[index] = {
+                        ...updated[index],
+                        amount: value
+                      }
+
+                      return {
+                        ...prev,
+                        items: updated
+                      }
+                    })
+                  }}
+                />
+
+              </div>
+            )
+          })}
+
+          <p style={{ marginTop: 10 }}>
+            Total Payment: $
+            {form.items.reduce((sum, i) => sum + i.amount, 0)}
+          </p>
+
+        </div>
+      )}
       {error && (
         <ErrorBox
           message={error}
@@ -286,9 +373,12 @@ export default function ContractPaymentsPage() {
                 `Amount: $${payment.amount}`,
                 `Currency: ${payment.currency}`,
                 `Method: ${payment.paymentMethod}`,
-                `Date: ${new Date(
-                  payment.createdAt
-                ).toLocaleDateString()}`,
+                `Date: ${new Date(payment.createdAt).toLocaleDateString()}`,
+
+                ...payment.items.map(
+                  (item: any) =>
+                    `• Service ${item.contractItemId}: $${item.amount}`
+                )
               ]}
               link="#"
             />

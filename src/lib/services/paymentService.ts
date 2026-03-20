@@ -1,13 +1,14 @@
 import { db } from "@/db"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { tenantDb } from "@/lib/db/tenantDb"
-
+import { paymentItems, contractItems as contractItemsTable } from "@/db/schema"
 import {
   payments,
-  contracts, clients, events
+  contracts, clients, events,
 } from "@/db/schema"
 
-import { eq, and, isNull, sum } from "drizzle-orm"
+
+import { eq, and, isNull, sum, sql } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
@@ -46,6 +47,43 @@ export async function getContractPayments(
       eq(payments.contractId, contractId)
     )
 
+  //
+  const paymentItemsRows = await db
+    .select({
+      paymentId: paymentItems.paymentId,
+      contractItemId: paymentItems.contractItemId,
+      amount: paymentItems.amount
+    })
+    .from(paymentItems)
+    .innerJoin(
+      payments,
+      eq(paymentItems.paymentId, payments.id)
+    )
+    .where(eq(payments.contractId, contractId))
+
+  const itemsByPayment = new Map<number, any[]>()
+
+  for (const row of paymentItemsRows) {
+
+    if (!itemsByPayment.has(row.paymentId)) {
+      itemsByPayment.set(row.paymentId, [])
+    }
+
+    itemsByPayment.get(row.paymentId)!.push({
+      contractItemId: row.contractItemId,
+      amount: Number(row.amount)
+    })
+  }
+
+  const enrichedPayments = contractPayments.map(p => ({
+    ...p,
+    amount: Number(p.amount),
+    items: itemsByPayment.get(p.id) || []
+  }))
+
+
+  //
+
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),
     0
@@ -67,7 +105,7 @@ export async function getContractPayments(
     contractTotal,
     paidAmount,
     remainingAmount,
-    payments: contractPayments
+    payments: enrichedPayments//contractPayments
   }
 
 }
@@ -75,7 +113,6 @@ export async function getContractPayments(
 
 
 /* ---------- CREATE PAYMENT ---------- */
-
 export async function createPayment(
   contractId: number,
   data: CreatePaymentInput
@@ -83,7 +120,7 @@ export async function createPayment(
 
   const tdb = await tenantDb()
 
-  /* contract exists */
+  /* ---------- 1. contract exists ---------- */
 
   const contract = await tdb.findFirst(
     contracts,
@@ -94,90 +131,190 @@ export async function createPayment(
     throw new Error("contract not found")
   }
 
-  /* get existing payments */
+  /* ---------- 2. calcular total ---------- */
 
-  const existingPayments =
-    await tdb.findManyRaw(
-      payments,
-      eq(payments.contractId, contractId)
-    )
-
-  const paid = existingPayments.reduce(
-    (sum, p) => sum + Number(p.amount),
-    0
-  )
-
-  const total = Number(contract.totalAmount)
-
-  if (paid + data.amount > total) {
-    throw new Error("payment exceeds contract total")
-  }
-
-  /* insert payment */
-
-  const [result] = await tdb.insert(payments, {
-    contractId,
-    amount: data.amount,
-    currency: data.currency,
-    paymentMethod: data.paymentMethod
-  })
-
-  // const insertId = result.insertId
-
-  // return tdb.findFirst(
-  //   payments,
-  //   eq(payments.id, insertId)
-  // )
-  const insertId = result.insertId
-
-  /* recalculate totals */
-
-  const updatedPayments =
-    await tdb.findManyRaw(
-      payments,
-      eq(payments.contractId, contractId)
-    )
-
-  const paidAmount = updatedPayments.reduce(
-    (sum, p) => sum + Number(p.amount),
+  const total = data.items.reduce(
+    (sum, item) => sum + item.amount,
     0
   )
 
   const contractTotal = Number(contract.totalAmount)
 
-  let newStatus = contract.status
+  /* ---------- 3. validar contract items (O(n)) ---------- */
 
-  if (paidAmount === 0) {
-    newStatus = "draft"
-  }
-  else if (paidAmount < contractTotal) {
-    newStatus = "active"
-  }
-  else if (paidAmount >= contractTotal) {
-    newStatus = "completed"
-  }
-
-  /* update contract status */
-
-  // await tdb.update(
-  //   contracts,
-  //   { status: newStatus },
-  //   eq(contracts.id, contractId)
-  // )
-  await tdb.update(
-    contracts,
-    { status: newStatus },
-    and(
-      eq(contracts.id, contractId),
-      eq(contracts.companyId, contract.companyId)
+  const contractItems =
+    await tdb.findMany(
+      contractItemsTable,
+      eq(contractItemsTable.contractId, contractId)
     )
+
+  const contractItemsMap = new Map(
+    contractItems.map(ci => [ci.id, ci])
+  )
+  /* ---------- 4. TRANSACTION 🔥 ---------- */
+
+  let paymentId: number
+
+  const resultSummary = await db.transaction(async (tx) => {
+
+    //revisar cuanto falta por pagar o se ha pagado
+
+    const paidByItemRows = await tx
+      .select({
+        contractItemId: paymentItems.contractItemId,
+        paid: sql<number>`COALESCE(SUM(${paymentItems.amount}),0)`
+      })
+      .from(paymentItems)
+      .leftJoin(
+        payments,
+        eq(paymentItems.paymentId, payments.id)
+      )
+      .where(eq(payments.contractId, contractId))
+      .groupBy(paymentItems.contractItemId)
+
+
+    const paidByItemMap = new Map<number, number>()
+
+    for (const row of paidByItemRows) {
+      paidByItemMap.set(
+        Number(row.contractItemId),
+        Number(row.paid)
+      )
+    }
+
+
+
+    /* 4.1 obtener total pagado (DB SUM) */
+
+    const [row] = await tx
+      .select({
+        totalPaid: sql<number>`COALESCE(SUM(${payments.amount}),0)`
+      })
+      .from(payments)
+      .where(eq(payments.contractId, contractId))
+
+    const paid = Number(row.totalPaid)
+
+    if (paid + total > contractTotal) {
+      throw new Error("payment exceeds contract total")
+    }
+
+
+    //
+    for (const item of data.items) {
+
+      const contractItem = contractItemsMap.get(item.contractItemId)
+
+      if (!contractItem) {
+        throw new Error("invalid contract item")
+      }
+
+      const alreadyPaid =
+        paidByItemMap.get(item.contractItemId) || 0
+
+      const itemTotal = Number(
+        (Number(contractItem.unitPrice) * contractItem.quantity).toFixed(2)
+      )
+
+      const remaining = itemTotal - alreadyPaid
+
+      if (item.amount > remaining) {
+        throw new Error(
+          `payment exceeds item balance (item ${item.contractItemId})`
+        )
+      }
+    }
+    //
+
+    if (total <= 0) {
+      throw new Error("invalid payment amount")
+    }
+
+
+    /* 4.2 insertar payment */
+
+
+    const result = await tx.insert(payments).values({
+      contractId,
+      amount: total.toString(),
+      currency: data.currency,
+      paymentMethod: data.paymentMethod
+    })
+
+    paymentId = result[0].insertId
+
+    /* 4.3 insertar payment_items */
+
+    await tx.insert(paymentItems).values(
+      data.items.map(item => ({
+        paymentId,
+        contractItemId: item.contractItemId,
+        amount: item.amount.toString()
+      }))
+    )
+
+    /* 4.4 calcular nuevo estado */
+
+    const newPaidAmount = paid + total
+
+    let newStatus: "draft" | "active" | "completed" = "draft"
+
+    if (newPaidAmount === 0) {
+      newStatus = "draft"
+    } else if (newPaidAmount < contractTotal) {
+      newStatus = "active"
+    } else {
+      newStatus = "completed"
+    }
+
+    /* 4.5 actualizar contrato */
+
+    await tx.update(contracts)
+      .set({ status: newStatus })
+      .where(
+        and(
+          eq(contracts.id, contractId),
+          eq(contracts.companyId, contract.companyId)
+        )
+      )
+
+    return {
+      paidAmount: newPaidAmount,
+      remainingAmount: contractTotal - newPaidAmount,
+      contractStatus: newStatus
+    }
+
+  })
+
+  /* ---------- 5. construir response ---------- */
+
+  const payment = {
+    id: paymentId!,
+    contractId,
+    // amount: total.toString(),
+    amount: total.toFixed(2),
+    currency: data.currency,
+    paymentMethod: data.paymentMethod,
+    items: data.items, // 🔥 útil para frontend
+    createdAt: new Date(),
+  }
+
+  const paymentStatus = getPaymentStatus(
+    contractTotal,
+    resultSummary.paidAmount
   )
 
-  return tdb.findFirst(
-    payments,
-    eq(payments.id, insertId)
-  )
-
+  return {
+    payment,
+    summary: {
+      contractId,
+      contractStatus: resultSummary.contractStatus,
+      paymentStatus,
+      contractTotal,
+      paidAmount: resultSummary.paidAmount,
+      remainingAmount: resultSummary.remainingAmount
+    }
+  }
 }
 
 export async function getCompanyPayments() {
@@ -227,25 +364,77 @@ export async function getCompanyPayments() {
       events.name
     )
 
-  /* calcular remaining + status */
 
+  const paymentItemsRows = await db
+    .select({
+      paymentId: paymentItems.paymentId,
+      contractItemId: paymentItems.contractItemId,
+      amount: paymentItems.amount
+    })
+    .from(paymentItems)
+    .innerJoin(
+      payments,
+      eq(paymentItems.paymentId, payments.id)
+    )
+    .innerJoin(
+      contracts,
+      eq(payments.contractId, contracts.id)
+    )
+    .where(
+      and(
+        eq(contracts.companyId, companyId!),
+        isNull(payments.deletedAt)
+      )
+    )
+
+  const itemsByPayment = new Map<number, any[]>()
+
+  for (const row of paymentItemsRows) {
+
+    if (!itemsByPayment.has(row.paymentId)) {
+      itemsByPayment.set(row.paymentId, [])
+    }
+
+    itemsByPayment.get(row.paymentId)!.push({
+      contractItemId: row.contractItemId,
+      amount: Number(row.amount)
+    })
+  }
+
+
+  /* calcular remaining + status */
   return rows.map((row) => {
 
     const contractTotal = Number(row.contractTotal)
-
     const paidAmount = Number(row.paidAmount ?? 0)
-
     const remainingAmount = contractTotal - paidAmount
 
     const paymentStatus =
       getPaymentStatus(contractTotal, paidAmount)
 
     return {
-      ...row,
-      contractTotal,
-      paidAmount,
-      remainingAmount,
-      paymentStatus
+      id: row.paymentId,
+      amount: Number(row.amount),
+      currency: row.currency,
+      paymentMethod: row.paymentMethod,
+      createdAt: row.createdAt,
+
+      contract: {
+        id: row.contractId,
+        status: row.contractStatus,
+        total: contractTotal
+      },
+
+      clientName: row.clientName,
+      eventName: row.eventName,
+
+      summary: {
+        paidAmount,
+        remainingAmount,
+        paymentStatus
+      },
+
+      items: itemsByPayment.get(row.paymentId) || []
     }
 
   })

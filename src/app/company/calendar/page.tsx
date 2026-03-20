@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-// =========================
-// TYPES (AJUSTADO A TU API REAL)
-// =========================
 interface Contract {
   id: number;
   status: string;
@@ -18,7 +16,7 @@ interface Contract {
   event: {
     id: number;
     name: string;
-    eventDate: string; // 👈 fuente de fecha
+    eventDate: string;
     location?: string;
   };
 }
@@ -31,15 +29,13 @@ interface CalendarEvent {
 }
 
 export default function GoogleLikeCalendar() {
+  const router = useRouter();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
 
-  // =========================
-  // FETCH CONTRACTS
-  // =========================
   const fetchContracts = async () => {
     try {
       setLoading(true);
@@ -63,25 +59,19 @@ export default function GoogleLikeCalendar() {
     fetchContracts();
   }, []);
 
-  // =========================
-  // MAP: CONTRACT → CALENDAR EVENT
-  // =========================
   useEffect(() => {
     if (!contracts.length) return;
 
     const mapped: CalendarEvent[] = contracts.map((contract) => ({
       id: contract.id,
       title: `${contract.event.name} (${contract.client.name})`,
-      date: new Date(contract.event.eventDate), // 👈 CLAVE
+      date: new Date(contract.event.eventDate),
       status: contract.status,
     }));
 
     setCalendarEvents(mapped);
   }, [contracts]);
 
-  // =========================
-  // DATE LOGIC
-  // =========================
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -117,15 +107,9 @@ export default function GoogleLikeCalendar() {
     }
   };
 
-  // =========================
-  // NAVIGATION
-  // =========================
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
 
-  // =========================
-  // RENDER
-  // =========================
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -165,9 +149,11 @@ export default function GoogleLikeCalendar() {
                   {getEvents(day).map((e) => (
                     <div
                       key={e.id}
+                      onClick={() => router.push(`/company/contracts/${e.id}`)}
                       style={{
                         ...styles.event,
                         backgroundColor: getColor(e.status),
+                        cursor: "pointer",
                       }}
                     >
                       {e.title}
