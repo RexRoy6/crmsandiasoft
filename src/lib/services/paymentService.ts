@@ -114,18 +114,38 @@ export async function createPayment(
   const contractItemsMap = new Map(
     contractItems.map(ci => [ci.id, ci])
   )
-
-  for (const item of data.items) {
-    if (!contractItemsMap.has(item.contractItemId)) {
-      throw new Error("invalid contract item")
-    }
-  }
-
   /* ---------- 4. TRANSACTION 🔥 ---------- */
 
   let paymentId: number
 
   const resultSummary = await db.transaction(async (tx) => {
+
+    //revisar cuanto falta por pagar o se ha pagado
+
+    const paidByItemRows = await tx
+      .select({
+        contractItemId: paymentItems.contractItemId,
+        paid: sql<number>`COALESCE(SUM(${paymentItems.amount}),0)`
+      })
+      .from(paymentItems)
+      .leftJoin(
+        payments,
+        eq(paymentItems.paymentId, payments.id)
+      )
+      .where(eq(payments.contractId, contractId))
+      .groupBy(paymentItems.contractItemId)
+
+
+    const paidByItemMap = new Map<number, number>()
+
+    for (const row of paidByItemRows) {
+      paidByItemMap.set(
+        Number(row.contractItemId),
+        Number(row.paid)
+      )
+    }
+
+
 
     /* 4.1 obtener total pagado (DB SUM) */
 
@@ -142,7 +162,40 @@ export async function createPayment(
       throw new Error("payment exceeds contract total")
     }
 
+
+    //
+    for (const item of data.items) {
+
+      const contractItem = contractItemsMap.get(item.contractItemId)
+
+      if (!contractItem) {
+        throw new Error("invalid contract item")
+      }
+
+      const alreadyPaid =
+        paidByItemMap.get(item.contractItemId) || 0
+
+      const itemTotal = Number(
+        (Number(contractItem.unitPrice) * contractItem.quantity).toFixed(2)
+      )
+
+      const remaining = itemTotal - alreadyPaid
+
+      if (item.amount > remaining) {
+        throw new Error(
+          `payment exceeds item balance (item ${item.contractItemId})`
+        )
+      }
+    }
+    //
+
+    if (total <= 0) {
+      throw new Error("invalid payment amount")
+    }
+
+
     /* 4.2 insertar payment */
+
 
     const result = await tx.insert(payments).values({
       contractId,
@@ -201,10 +254,12 @@ export async function createPayment(
   const payment = {
     id: paymentId!,
     contractId,
-    amount: total.toString(),
+    // amount: total.toString(),
+    amount: total.toFixed(2),
     currency: data.currency,
     paymentMethod: data.paymentMethod,
-    items: data.items // 🔥 útil para frontend
+    items: data.items, // 🔥 útil para frontend
+    createdAt: new Date(),
   }
 
   const paymentStatus = getPaymentStatus(
