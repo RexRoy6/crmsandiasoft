@@ -20,10 +20,17 @@ export default function PaymentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     contractId: "",
-    amount: "",
     currency: "MXN",
-    paymentMethod: "cash"
+    paymentMethod: "cash",
+    items: [] as {
+      contractItemId: number;
+      amount: number;
+    }[]
   });
+
+  //buscar info de los servicios de contrato
+  const [contractItems, setContractItems] = useState<any[]>([])
+
 
   const [search, setSearch] = useState("")
 
@@ -42,13 +49,6 @@ export default function PaymentsPage() {
         value: c.id
       }))
     },
-
-    {
-      name: "amount",
-      label: "Amount",
-      type: "number"
-    },
-
     {
       name: "currency",
       label: "Currency",
@@ -133,9 +133,42 @@ export default function PaymentsPage() {
 
   }
 
+
+  async function fetchContractItems(contractId: string) {
+
+    const res = await fetch(
+      `/api/company/contracts/${contractId}/services`,
+      { credentials: "include" }
+    )
+
+    const data = await res.json()
+
+    setContractItems(data)
+
+    // inicializar items en form
+    setForm(prev => ({
+      ...prev,
+      items: data.map((item: any) => ({
+        contractItemId: item.id,
+        amount: 0
+      }))
+    }))
+  }
+
+
   async function createPayment() {
 
     try {
+
+      const total = form.items.reduce(
+        (sum, i) => sum + i.amount,
+        0
+      )
+
+      if (total <= 0) {
+        setError("Enter at least one amount")
+        return
+      }
 
       const res = await fetch(
         `/api/company/contracts/${form.contractId}/payments`,
@@ -146,9 +179,9 @@ export default function PaymentsPage() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            amount: Number(form.amount),
             currency: form.currency,
-            paymentMethod: form.paymentMethod
+            paymentMethod: form.paymentMethod,
+            items: form.items.filter(i => i.amount > 0)
           })
         }
       )
@@ -166,10 +199,12 @@ export default function PaymentsPage() {
 
       setForm({
         contractId: "",
-        amount: "",
         currency: "MXN",
-        paymentMethod: "cash"
+        paymentMethod: "cash",
+        items: []
       })
+
+      setContractItems([])
 
       fetchPayments()
 
@@ -184,6 +219,12 @@ export default function PaymentsPage() {
   useEffect(() => {
     fetchPayments()
   }, [])
+
+  useEffect(() => {
+    if (form.contractId) {
+      fetchContractItems(form.contractId)
+    }
+  }, [form.contractId])
 
   return (
 
@@ -208,15 +249,69 @@ export default function PaymentsPage() {
       </p>
 
 
-      {showForm && (
-        <CreateForm
-          title="Create Payment"
-          fields={paymentFields}
-          form={form}
-          setForm={setForm}
-          onSubmit={createPayment}
-          onCancel={() => setShowForm(false)}
-        />
+      {showForm && (<CreateForm
+        title="Create Payment"
+        fields={paymentFields}
+        form={form}
+        setForm={setForm}
+        onSubmit={createPayment}
+        onCancel={() => setShowForm(false)}
+      />
+      )}
+
+      {showForm && contractItems.length > 0 && (
+
+        <div style={{ marginTop: 20 }}>
+
+          <h3>Allocate Payment</h3>
+
+          {contractItems.map((item, index) => {
+
+            const total =
+              item.quantity * Number(item.unitPrice)
+
+            return (
+              <div key={item.id} style={{ marginBottom: 10 }}>
+
+                <p>
+                  Service #{item.serviceId} — Total: ${total}
+                </p>
+
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={form.items[index]?.amount || ""}
+                  onChange={(e) => {
+
+                    const value = Number(e.target.value)
+
+                    setForm(prev => {
+                      const updated = [...prev.items]
+
+                      updated[index] = {
+                        ...updated[index],
+                        amount: value
+                      }
+
+                      return {
+                        ...prev,
+                        items: updated
+                      }
+                    })
+                  }}
+                />
+
+              </div>
+            )
+          })}
+
+          {/* 🔥 TOTAL DINÁMICO */}
+          <p style={{ marginTop: 10 }}>
+            Total Payment: $
+            {form.items.reduce((sum, i) => sum + i.amount, 0)}
+          </p>
+
+        </div>
       )}
 
       {error && (
