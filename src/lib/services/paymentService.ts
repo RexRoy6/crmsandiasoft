@@ -47,6 +47,43 @@ export async function getContractPayments(
       eq(payments.contractId, contractId)
     )
 
+  //
+  const paymentItemsRows = await db
+    .select({
+      paymentId: paymentItems.paymentId,
+      contractItemId: paymentItems.contractItemId,
+      amount: paymentItems.amount
+    })
+    .from(paymentItems)
+    .innerJoin(
+      payments,
+      eq(paymentItems.paymentId, payments.id)
+    )
+    .where(eq(payments.contractId, contractId))
+
+  const itemsByPayment = new Map<number, any[]>()
+
+  for (const row of paymentItemsRows) {
+
+    if (!itemsByPayment.has(row.paymentId)) {
+      itemsByPayment.set(row.paymentId, [])
+    }
+
+    itemsByPayment.get(row.paymentId)!.push({
+      contractItemId: row.contractItemId,
+      amount: Number(row.amount)
+    })
+  }
+
+  const enrichedPayments = contractPayments.map(p => ({
+    ...p,
+    amount: Number(p.amount),
+    items: itemsByPayment.get(p.id) || []
+  }))
+
+
+  //
+
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),
     0
@@ -68,7 +105,7 @@ export async function getContractPayments(
     contractTotal,
     paidAmount,
     remainingAmount,
-    payments: contractPayments
+    payments: enrichedPayments//contractPayments
   }
 
 }
@@ -327,25 +364,77 @@ export async function getCompanyPayments() {
       events.name
     )
 
-  /* calcular remaining + status */
 
+  const paymentItemsRows = await db
+    .select({
+      paymentId: paymentItems.paymentId,
+      contractItemId: paymentItems.contractItemId,
+      amount: paymentItems.amount
+    })
+    .from(paymentItems)
+    .innerJoin(
+      payments,
+      eq(paymentItems.paymentId, payments.id)
+    )
+    .innerJoin(
+      contracts,
+      eq(payments.contractId, contracts.id)
+    )
+    .where(
+      and(
+        eq(contracts.companyId, companyId!),
+        isNull(payments.deletedAt)
+      )
+    )
+
+  const itemsByPayment = new Map<number, any[]>()
+
+  for (const row of paymentItemsRows) {
+
+    if (!itemsByPayment.has(row.paymentId)) {
+      itemsByPayment.set(row.paymentId, [])
+    }
+
+    itemsByPayment.get(row.paymentId)!.push({
+      contractItemId: row.contractItemId,
+      amount: Number(row.amount)
+    })
+  }
+
+
+  /* calcular remaining + status */
   return rows.map((row) => {
 
     const contractTotal = Number(row.contractTotal)
-
     const paidAmount = Number(row.paidAmount ?? 0)
-
     const remainingAmount = contractTotal - paidAmount
 
     const paymentStatus =
       getPaymentStatus(contractTotal, paidAmount)
 
     return {
-      ...row,
-      contractTotal,
-      paidAmount,
-      remainingAmount,
-      paymentStatus
+      id: row.paymentId,
+      amount: Number(row.amount),
+      currency: row.currency,
+      paymentMethod: row.paymentMethod,
+      createdAt: row.createdAt,
+
+      contract: {
+        id: row.contractId,
+        status: row.contractStatus,
+        total: contractTotal
+      },
+
+      clientName: row.clientName,
+      eventName: row.eventName,
+
+      summary: {
+        paidAmount,
+        remainingAmount,
+        paymentStatus
+      },
+
+      items: itemsByPayment.get(row.paymentId) || []
     }
 
   })
