@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { tenantDb } from "@/lib/db/tenantDb"
-
+import { paymentItems, contractItems as contractItemsTable } from "@/db/schema"
 import {
   payments,
   contracts, clients, events
@@ -75,7 +75,6 @@ export async function getContractPayments(
 
 
 /* ---------- CREATE PAYMENT ---------- */
-
 export async function createPayment(
   contractId: number,
   data: CreatePaymentInput
@@ -83,7 +82,7 @@ export async function createPayment(
 
   const tdb = await tenantDb()
 
-  /* contract exists */
+  /* ---------- 1. contract exists ---------- */
 
   const contract = await tdb.findFirst(
     contracts,
@@ -94,7 +93,14 @@ export async function createPayment(
     throw new Error("contract not found")
   }
 
-  /* get existing payments */
+  /* ---------- 2. calcular total desde items ---------- */
+
+  const total = data.items.reduce(
+    (sum, item) => sum + item.amount,
+    0
+  )
+
+  /* ---------- 3. obtener pagos actuales ---------- */
 
   const existingPayments =
     await tdb.findManyRaw(
@@ -107,63 +113,79 @@ export async function createPayment(
     0
   )
 
-  const total = Number(contract.totalAmount)
+  const contractTotal = Number(contract.totalAmount)
 
-  if (paid + data.amount > total) {
+  if (paid + total > contractTotal) {
     throw new Error("payment exceeds contract total")
   }
 
-  /* insert payment */
+  /* ---------- 4. validar contract items ---------- */
 
-  const [result] = await tdb.insert(payments, {
-    contractId,
-    amount: data.amount,
-    currency: data.currency,
-    paymentMethod: data.paymentMethod
-  })
-
-  // const insertId = result.insertId
-
-  // return tdb.findFirst(
-  //   payments,
-  //   eq(payments.id, insertId)
-  // )
-  const insertId = result.insertId
-
-  /* recalculate totals */
-
-  const updatedPayments =
-    await tdb.findManyRaw(
-      payments,
-      eq(payments.contractId, contractId)
+  const contractItems =
+    await tdb.findMany(
+      contractItemsTable,
+      eq(contractItemsTable.contractId, contractId)
     )
 
-  const paidAmount = updatedPayments.reduce(
-    (sum, p) => sum + Number(p.amount),
-    0
-  )
+  for (const item of data.items) {
 
-  const contractTotal = Number(contract.totalAmount)
+    const contractItem = contractItems.find(
+      ci => ci.id === item.contractItemId
+    )
+
+    if (!contractItem) {
+      throw new Error("invalid contract item")
+    }
+
+    // 🔥 FASE 2: aquí después validaremos remaining por item
+  }
+
+  /* ---------- 5. TRANSACTION 🔥 ---------- */
+
+  let paymentId: number | null = null
+
+  await db.transaction(async (tx) => {
+
+    /* crear payment */
+
+    const result = await tx.insert(payments).values({
+      contractId,
+      amount: total.toString(),
+      currency: data.currency,
+      paymentMethod: data.paymentMethod
+    })
+
+    const paymentId = result[0].insertId
+
+    //paymentId = paymentResult.insertId
+
+    /* insertar payment_items */
+    await tx.insert(paymentItems).values(
+      data.items.map(item => ({
+        paymentId: paymentId!,
+        contractItemId: item.contractItemId,
+        amount: item.amount.toString()
+      }))
+    )
+
+  })
+
+  /* ---------- 6. recalcular status ---------- */
+
+  const newPaidAmount = paid + total
 
   let newStatus = contract.status
 
-  if (paidAmount === 0) {
+  if (newPaidAmount === 0) {
     newStatus = "draft"
   }
-  else if (paidAmount < contractTotal) {
+  else if (newPaidAmount < contractTotal) {
     newStatus = "active"
   }
-  else if (paidAmount >= contractTotal) {
+  else if (newPaidAmount >= contractTotal) {
     newStatus = "completed"
   }
 
-  /* update contract status */
-
-  // await tdb.update(
-  //   contracts,
-  //   { status: newStatus },
-  //   eq(contracts.id, contractId)
-  // )
   await tdb.update(
     contracts,
     { status: newStatus },
@@ -173,11 +195,14 @@ export async function createPayment(
     )
   )
 
+  /* ---------- 7. return payment ---------- */
+
+  if (!paymentId) return null
+
   return tdb.findFirst(
     payments,
-    eq(payments.id, insertId)
+    eq(payments.id, paymentId)
   )
-
 }
 
 export async function getCompanyPayments() {
