@@ -384,9 +384,7 @@ export default function ContractServicesPage() {
 
           {services.map((item) => {
 
-            const service = companyServices.find(
-              (s) => s.id === item.serviceId
-            );
+            const service = item.service;
 
             const subtotal =
               Number(item.quantity) *
@@ -439,8 +437,9 @@ export default function ContractServicesPage() {
                   <>
 
                     <ListCard
-                      title={service ? service.name : `Service ${item.serviceId}`}
+                      title={service?.name || "Service"}
                       extra={[
+                        service?.description || "",
                         `Quantity: ${item.quantity}`,
                         `Unit Price: $${item.unitPrice}`,
                         `Subtotal: $${subtotal}`,
@@ -454,7 +453,7 @@ export default function ContractServicesPage() {
                         onClick={() => {
                           setEditingItemId(item.id);
                           setEditForm({
-                            serviceId: String(item.serviceId),
+                            serviceId: String(item.service?.id),
                             quantity: String(item.quantity),
                           });
                         }}
