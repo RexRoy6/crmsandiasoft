@@ -78,11 +78,11 @@ export default function CompanyTabs({
                     style={{ display: "flex", flexDirection: "column", gap: 4 }}
                   >
                     <strong style={{ fontSize: 15 }}>
-                      {contract.event?.name}
+                      {/* {contract.event?.name} */}
                     </strong>
 
                     <span style={{ fontSize: 13, color: "#6b7280" }}>
-                      Cliente: {contract.client?.name}
+                      {/* Cliente: {contract.client?.name} */}
                     </span>
                   </div>
 
@@ -99,7 +99,7 @@ export default function CompanyTabs({
                         fontWeight: 500,
                       }}
                     >
-                      ${contract.totalAmount}
+                      {/* ${contract.totalAmount} */}
                     </span>
 
                     <span
