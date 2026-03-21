@@ -8,6 +8,7 @@ import ErrorBox from "@/app/components/ErrorBox";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import SearchBar from "@/app/components/crm/SearchBar"
+import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
 
 export default function PaymentsPage() {
 
@@ -260,58 +261,11 @@ export default function PaymentsPage() {
       )}
 
       {showForm && contractItems.length > 0 && (
-
-        <div style={{ marginTop: 20 }}>
-
-          <h3>Allocate Payment</h3>
-
-          {contractItems.map((item, index) => {
-
-            const total =
-              item.quantity * Number(item.unitPrice)
-
-            return (
-              <div key={item.id} style={{ marginBottom: 10 }}>
-
-                <p>
-                  Service #{item.serviceId} — Total: ${total}
-                </p>
-
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={form.items[index]?.amount || ""}
-                  onChange={(e) => {
-
-                    const value = Number(e.target.value)
-
-                    setForm(prev => {
-                      const updated = [...prev.items]
-
-                      updated[index] = {
-                        ...updated[index],
-                        amount: value
-                      }
-
-                      return {
-                        ...prev,
-                        items: updated
-                      }
-                    })
-                  }}
-                />
-
-              </div>
-            )
-          })}
-
-          {/* 🔥 TOTAL DINÁMICO */}
-          <p style={{ marginTop: 10 }}>
-            Total Payment: $
-            {form.items.reduce((sum, i) => sum + i.amount, 0)}
-          </p>
-
-        </div>
+        <PaymentAllocationCard
+          items={contractItems}
+          formItems={form.items}
+          setForm={setForm}
+        />
       )}
 
       {error && (
@@ -354,10 +308,15 @@ export default function PaymentsPage() {
 
                 `Status: ${payment.summary.paymentStatus}`,
                 `Method: ${payment.paymentMethod}`,
-                ...payment.items.map(
-                  (item: any) =>
-                    `• Service ${item.contractItemId}: $${item.amount}`
-                )
+                // ...payment.items.map(
+                //   (item: any) =>
+                //     `• Service ${item.contractItemId}: $${item.amount}`
+                // )
+
+                ...payment.items.flatMap((item: any) => [
+                  `• ${item.service.name}: $${item.amount}`,
+                  `  ${item.service.description}`
+                ])
               ]}
               link={'#'}
             />
