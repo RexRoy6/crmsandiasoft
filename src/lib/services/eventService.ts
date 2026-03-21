@@ -2,7 +2,7 @@ import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
 import { events, clients } from "@/db/schema"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
-import { and, eq, isNotNull, isNull } from "drizzle-orm"
+import { and, eq, isNotNull, isNull, or, like, desc } from "drizzle-orm"
 import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
 /* ---------- CREATE ---------- */
 export async function createEvent(data: CreateEventInput) {
@@ -30,57 +30,50 @@ export async function createEvent(data: CreateEventInput) {
   return tdb.findFirst(events, eq(events.id, insertId))
 }
 
-/* ---------- GET ALL ---------- */
-
-// export async function getEvents(clientId?: string | null) {
-//   const tdb = await tenantDb()
-
-//   if (clientId) {
-//     return await tdb.findManyRaw(
-//       events,
-//       eq(events.clientId, Number(clientId))
-//     )
-//   }
-
-//   return await tdb.findManyRaw(events)
-// }
-// export async function getEvents() {
-
-//   const { companyId } = await getAuthContext()
-
-//   return db
-//     .select({
-//       id: events.id,
-//       name: events.name,
-//       eventDate: events.eventDate,
-//       location: events.location,
-//       notes: events.notes,
-//       deleted: events.deletedAt,
-
-//       client: {
-//         id: clients.id,
-//         name: clients.name
-//       }
-//     })
-//     .from(events)
-//     .leftJoin(clients, eq(events.clientId, clients.id))
-//     .where(eq(events.companyId, companyId!))
-// }
-
-export async function getEvents(clientId?: number) {
+//get all
+export async function getEvents({
+  clientId,
+  search,
+  page = 1,
+  limit = 10
+}: {
+  clientId?: number
+  search?: string
+  page?: number
+  limit?: number
+}) {
 
   const { companyId } = await getAuthContext()
 
-  const conditions = [
+  const offset = (page - 1) * limit
+
+  const filters = [
     eq(events.companyId, companyId!),
     isNull(events.deletedAt)
   ]
 
+  /* filter by client */
   if (clientId) {
-    conditions.push(eq(events.clientId, clientId))
+    filters.push(eq(events.clientId, clientId))
   }
 
-  return db
+  /* 🔥 SEARCH */
+  if (search) {
+    const term = `%${search}%`
+
+    filters.push(
+      or(
+        like(events.name, term),       // event name
+        like(events.location, term),   // location
+        like(clients.name, term)       // client name
+        // 👉 eventDate lo vemos abajo 👇
+      )!
+    )
+  }
+
+  /* ---------- DATA ---------- */
+
+  const data = await db
     .select({
       id: events.id,
       name: events.name,
@@ -95,16 +88,34 @@ export async function getEvents(clientId?: number) {
     })
     .from(events)
     .leftJoin(clients, eq(events.clientId, clients.id))
-    .where(and(...conditions))
+    .where(and(...filters))
+    .orderBy(desc(events.eventDate))
+    .limit(limit)
+    .offset(offset)
 
+  /* ---------- TOTAL ---------- */
+
+  const totalResult = await db
+    .select({ id: events.id })
+    .from(events)
+    .leftJoin(clients, eq(events.clientId, clients.id))
+    .where(and(...filters))
+
+  const total = totalResult.length
+
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    }
+  }
 }
-/* ---------- GET BY ID ---------- */
 
-// export async function getEventById(id: number) {
-//   const tdb = await tenantDb()
+//get all
 
-//   return await tdb.findFirstRaw(events, eq(events.id, id))
-// }
 export async function getEventById(id: number) {
 
   const { companyId } = await getAuthContext()

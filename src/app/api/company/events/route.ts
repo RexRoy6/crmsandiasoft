@@ -40,32 +40,24 @@ export async function POST(req: Request) {
 
 
 /* ---------- GET (company events) ---------- */
-
-/* ---------- GET (company events) ---------- */
 export async function GET(req: Request) {
   try {
 
     const { searchParams } = new URL(req.url)
 
     const clientId = searchParams.get("clientId")
+    const search = searchParams.get("search") || undefined
+    const page = Number(searchParams.get("page") || 1)
+    const limit = Number(searchParams.get("limit") || 10)
 
-    /* filter by client */
+    const result = await getEvents({
+      clientId: clientId ? Number(clientId) : undefined,
+      search,
+      page,
+      limit
+    })
 
-    if (clientId) {
-
-      const events = await getEvents(
-        Number(clientId)
-      )
-
-      return Response.json(events)
-
-    }
-
-    /* all events */
-
-    const events = await getEvents()
-
-    return Response.json(events)
+    return Response.json(result)
 
   } catch (error) {
 
@@ -75,6 +67,6 @@ export async function GET(req: Request) {
       { error: "internal server error" },
       { status: 500 }
     )
-
   }
 }
+/* ---------- GET (company events) ---------- */

@@ -1,10 +1,27 @@
 import { getClients, createClient } from "@/lib/services/clientService"
 import { createClientSchema } from "@/lib/validations/clientValidation"
 
-export async function GET() {
-  const data = await getClients()
+// export async function GET() {
+//   const data = await getClients()
+//   return Response.json(data)
+// }
+export async function GET(req: Request) {
+
+  const { searchParams } = new URL(req.url)
+
+  const search = searchParams.get("search") || ""
+  const page = Number(searchParams.get("page") || 1)
+  const limit = Number(searchParams.get("limit") || 10)
+
+  const data = await getClients({
+    search,
+    page,
+    limit
+  })
+
   return Response.json(data)
 }
+
 export async function POST(req: Request) {
 
   const body = await req.json()

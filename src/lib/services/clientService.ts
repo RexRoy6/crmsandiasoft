@@ -1,7 +1,10 @@
 import { tenantDb } from "@/lib/db/tenantDb"
 import { clients } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, and, or, like, desc, isNull } from "drizzle-orm"
 import type { UpdateClientInput } from "@/lib/validations/clientValidation"
+import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { db } from "@/db"
+
 
 //createClient
 export async function createClient(data: {
@@ -21,10 +24,72 @@ export async function createClient(data: {
   )
 }
 //getClients
-export async function getClients() {
-  const tdb = await tenantDb()
-  return tdb.findManyRaw(clients)
+// export async function getClients() {
+//   const tdb = await tenantDb()
+//   return tdb.findManyRaw(clients)
+// }
+
+export async function getClients({
+  search = "",
+  page = 1,
+  limit = 10
+}: {
+  search?: string
+  page?: number
+  limit?: number
+}) {
+
+  const { companyId } = await getAuthContext()
+
+  const offset = (page - 1) * limit
+
+  const filters = [
+    eq(clients.companyId, companyId!),
+    isNull(clients.deletedAt)
+  ]
+
+  const whereClause = and(
+    eq(clients.companyId, companyId!),
+    isNull(clients.deletedAt),
+    search
+      ? or(
+        like(clients.name, `%${search}%`),
+        like(clients.phone, `%${search}%`),
+        like(clients.email, `%${search}%`)
+      )
+      : undefined
+  )
+
+  /* ---------- DATA ---------- */
+
+  const data = await db
+    .select()
+    .from(clients)
+    .where(whereClause)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(desc(clients.createdAt))
+
+  /* ---------- TOTAL ---------- */
+
+  const totalRows = await db
+    .select()
+    .from(clients)
+    .where(whereClause)
+
+  const total = totalRows.length
+
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    }
+  }
 }
+//
 //getClient
 export async function getClient(id: number) {
   const tdb = await tenantDb()
