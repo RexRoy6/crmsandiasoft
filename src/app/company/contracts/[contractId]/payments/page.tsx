@@ -294,18 +294,32 @@ export default function ContractPaymentsPage() {
               item.quantity * Number(item.unitPrice)
 
             return (
-              <div key={item.id} style={{ marginBottom: 10 }}>
+              <div
+                key={item.id}
+                style={{
+                  padding: 10,
+                  border: "1px solid var(--border-color)",
+                  borderRadius: 8,
+                  marginBottom: 10
+                }}
+              >
+                <strong>{item.service.name}</strong>
+
+                <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                  {item.service.description}
+                </p>
 
                 <p>
-                  Service #{item.serviceId} — Total: ${total}
+                  Qty: {item.quantity} × ${Number(item.unitPrice)} ={" "}
+                  <strong>${total}</strong>
                 </p>
 
                 <input
                   type="number"
                   placeholder="Amount"
                   value={form.items[index]?.amount || ""}
+                  max={total} // 🔥 tu mejora PRO aquí
                   onChange={(e) => {
-
                     const value = Number(e.target.value)
 
                     setForm(prev => {
@@ -323,7 +337,6 @@ export default function ContractPaymentsPage() {
                     })
                   }}
                 />
-
               </div>
             )
           })}
