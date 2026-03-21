@@ -375,10 +375,14 @@ export default function ContractPaymentsPage() {
                 `Method: ${payment.paymentMethod}`,
                 `Date: ${new Date(payment.createdAt).toLocaleDateString()}`,
 
-                ...payment.items.map(
-                  (item: any) =>
-                    `• Service ${item.contractItemId}: $${item.amount}`
-                )
+                // ...payment.items.map(
+                //   (item: any) =>
+                //     `• Service ${item.contractItemId}: $${item.amount}`
+                // )
+                ...payment.items.flatMap((item: any) => [
+                  `• ${item.service.name}: $${item.amount}`,
+                  `  ${item.service.description}`
+                ])
               ]}
               link="#"
             />

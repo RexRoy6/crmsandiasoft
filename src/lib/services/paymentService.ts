@@ -1,10 +1,14 @@
 import { db } from "@/db"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { tenantDb } from "@/lib/db/tenantDb"
-import { paymentItems, contractItems as contractItemsTable } from "@/db/schema"
 import {
   payments,
-  contracts, clients, events,
+  contracts,
+  clients,
+  events,
+  services,
+  paymentItems,
+  contractItems as contractItemsTable
 } from "@/db/schema"
 
 
@@ -48,16 +52,40 @@ export async function getContractPayments(
     )
 
   //
+  // const paymentItemsRows = await db
+  //   .select({
+  //     paymentId: paymentItems.paymentId,
+  //     contractItemId: paymentItems.contractItemId,
+  //     amount: paymentItems.amount
+  //   })
+  //   .from(paymentItems)
+  //   .innerJoin(
+  //     payments,
+  //     eq(paymentItems.paymentId, payments.id)
+  //   )
+  //   .where(eq(payments.contractId, contractId))
   const paymentItemsRows = await db
     .select({
       paymentId: paymentItems.paymentId,
       contractItemId: paymentItems.contractItemId,
-      amount: paymentItems.amount
+      amount: paymentItems.amount,
+
+      serviceId: services.id,
+      serviceName: services.name,
+      serviceDescription: services.description
     })
     .from(paymentItems)
     .innerJoin(
       payments,
       eq(paymentItems.paymentId, payments.id)
+    )
+    .innerJoin(
+      contractItemsTable,
+      eq(paymentItems.contractItemId, contractItemsTable.id)
+    )
+    .innerJoin(
+      services,
+      eq(contractItemsTable.serviceId, services.id)
     )
     .where(eq(payments.contractId, contractId))
 
@@ -71,7 +99,12 @@ export async function getContractPayments(
 
     itemsByPayment.get(row.paymentId)!.push({
       contractItemId: row.contractItemId,
-      amount: Number(row.amount)
+      amount: Number(row.amount),
+      service: {
+        id: row.serviceId,
+        name: row.serviceName,
+        description: row.serviceDescription
+      }
     })
   }
 
