@@ -7,6 +7,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import ErrorBox from "@/app/components/ErrorBox";
+import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
 
 export default function ContractPaymentsPage() {
 
@@ -281,72 +282,12 @@ export default function ContractPaymentsPage() {
           onCancel={() => setShowForm(false)}
         />
       )}
-
       {showForm && contractItems.length > 0 && (
-
-        <div style={{ marginTop: 20 }}>
-
-          <h3>Allocate Payment</h3>
-
-          {contractItems.map((item, index) => {
-
-            const total =
-              item.quantity * Number(item.unitPrice)
-
-            return (
-              <div
-                key={item.id}
-                style={{
-                  padding: 10,
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 8,
-                  marginBottom: 10
-                }}
-              >
-                <strong>{item.service.name}</strong>
-
-                <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                  {item.service.description}
-                </p>
-
-                <p>
-                  Qty: {item.quantity} × ${Number(item.unitPrice)} ={" "}
-                  <strong>${total}</strong>
-                </p>
-
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={form.items[index]?.amount || ""}
-                  max={total} // 🔥 tu mejora PRO aquí
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-
-                    setForm(prev => {
-                      const updated = [...prev.items]
-
-                      updated[index] = {
-                        ...updated[index],
-                        amount: value
-                      }
-
-                      return {
-                        ...prev,
-                        items: updated
-                      }
-                    })
-                  }}
-                />
-              </div>
-            )
-          })}
-
-          <p style={{ marginTop: 10 }}>
-            Total Payment: $
-            {form.items.reduce((sum, i) => sum + i.amount, 0)}
-          </p>
-
-        </div>
+        <PaymentAllocationCard
+          items={contractItems}
+          formItems={form.items}
+          setForm={setForm}
+        />
       )}
       {error && (
         <ErrorBox
@@ -387,11 +328,6 @@ export default function ContractPaymentsPage() {
                 `Currency: ${payment.currency}`,
                 `Method: ${payment.paymentMethod}`,
                 `Date: ${new Date(payment.createdAt).toLocaleDateString()}`,
-
-                // ...payment.items.map(
-                //   (item: any) =>
-                //     `• Service ${item.contractItemId}: $${item.amount}`
-                // )
                 ...payment.items.flatMap((item: any) => [
                   `• ${item.service.name}: $${item.amount}`,
                   `  ${item.service.description}`
