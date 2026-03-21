@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import ErrorBox from "@/app/components/ErrorBox";
-import Link from "next/link";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import SearchBar from "@/app/components/crm/SearchBar"
+import Pagination from "@/app/components/crm/Pagination"
 
 export default function ClientsPage() {
 
@@ -109,9 +109,12 @@ export default function ClientsPage() {
         }
     };
 
-    // useEffect(() => {
-    //     fetchClients()
-    // }, [search, page])
+    //  RESET PAGE cuando cambia búsqueda
+    useEffect(() => {
+        setPage(1)
+    }, [search])
+
+    //  FETCH (con debounce)
     useEffect(() => {
         const timeout = setTimeout(() => {
             fetchClients()
@@ -176,27 +179,11 @@ export default function ClientsPage() {
                         />
                     ))}
                     {/* pagination */}
-                    <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-
-                        <button
-                            disabled={page === 1}
-                            onClick={() => setPage(p => p - 1)}
-                        >
-                            Prev
-                        </button>
-
-                        <span>
-                            Page {page} of {pagination.totalPages}
-                        </span>
-
-                        <button
-                            disabled={page === pagination.totalPages}
-                            onClick={() => setPage(p => p + 1)}
-                        >
-                            Next
-                        </button>
-
-                    </div>
+                    <Pagination
+                        page={page}
+                        totalPages={pagination.totalPages}
+                        onPageChange={setPage}
+                    />
                     {/* pagination */}
 
                 </div>
