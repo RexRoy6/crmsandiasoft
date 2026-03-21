@@ -6,14 +6,15 @@ import {
   contracts
 } from "@/db/schema"
 
-import { eq, and } from "drizzle-orm"
+import { eq, and ,isNull } from "drizzle-orm"
 
 import type {
   CreateContractItemInput,
   UpdateContractItemInput
 } from "@/lib/validations/contractItemValidation"
 
-
+import { db } from "@/db"
+import { getAuthContext } from "@/lib/auth/getAuthContext"
 
 /* ---------- ADD SERVICE TO CONTRACT ---------- */
 
@@ -59,17 +60,17 @@ export async function addServiceToContract(
   const used = existingItem ? existingItem.quantity : 0
 
   if (
-  service.stockTotal !== null &&
-  used + data.quantity > service.stockTotal
-) {
-  const available = service.stockTotal - used
+    service.stockTotal !== null &&
+    used + data.quantity > service.stockTotal
+  ) {
+    const available = service.stockTotal - used
 
-  const error: any = new Error("not enough stock")
-  error.code = "STOCK_EXCEEDED"
-  error.available = available
+    const error: any = new Error("not enough stock")
+    error.code = "STOCK_EXCEEDED"
+    error.available = available
 
-  throw error
-}
+    throw error
+  }
 
   /* update existing */
 
@@ -115,17 +116,68 @@ export async function addServiceToContract(
 
 /* ---------- GET CONTRACT SERVICES ---------- */
 
+// export async function getContractServices(contractId: number) {
+
+//   const tdb = await tenantDb()
+
+//   return tdb.findMany(
+//     contractItems,
+//     eq(contractItems.contractId, contractId)
+//   )
+
+// }
+
+/* ---------- GET CONTRACT SERVICES ---------- */
+
 export async function getContractServices(contractId: number) {
 
-  const tdb = await tenantDb()
+  const { companyId } = await getAuthContext()
 
-  return tdb.findMany(
-    contractItems,
-    eq(contractItems.contractId, contractId)
-  )
+  const rows = await db
+    .select({
+      id: contractItems.id,
+      contractId: contractItems.contractId,
+      quantity: contractItems.quantity,
+      unitPrice: contractItems.unitPrice,
 
+      serviceId: services.id,
+      serviceName: services.name,
+      serviceDescription: services.description
+    })
+    .from(contractItems)
+
+    // 🔥 JOIN CONTRACT (para tenant)
+    .innerJoin(
+      contracts,
+      eq(contractItems.contractId, contracts.id)
+    )
+
+    .innerJoin(
+      services,
+      eq(contractItems.serviceId, services.id)
+    )
+
+    .where(
+      and(
+        eq(contractItems.contractId, contractId),
+        eq(contracts.companyId, companyId!), // ✅ AQUÍ
+        isNull(contractItems.deletedAt)
+      )
+    )
+
+  return rows.map((row: any) => ({
+    id: row.id,
+    contractId: row.contractId,
+    quantity: row.quantity,
+    unitPrice: row.unitPrice,
+    service: {
+      id: row.serviceId,
+      name: row.serviceName,
+      description: row.serviceDescription
+    }
+  }))
 }
-
+/* ---------- GET CONTRACT SERVICES ---------- */
 
 
 /* ---------- UPDATE ITEM ---------- */
