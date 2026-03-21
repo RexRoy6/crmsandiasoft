@@ -7,10 +7,10 @@ import {
   clients,
   events,
   services,
+  contractItems,
   paymentItems,
   contractItems as contractItemsTable
 } from "@/db/schema"
-
 
 import { eq, and, isNull, sum, sql } from "drizzle-orm"
 
@@ -398,27 +398,39 @@ export async function getCompanyPayments() {
     )
 
 
-  const paymentItemsRows = await db
-    .select({
-      paymentId: paymentItems.paymentId,
-      contractItemId: paymentItems.contractItemId,
-      amount: paymentItems.amount
-    })
-    .from(paymentItems)
-    .innerJoin(
-      payments,
-      eq(paymentItems.paymentId, payments.id)
+ const paymentItemsRows = await db
+  .select({
+    paymentId: paymentItems.paymentId,
+    contractItemId: paymentItems.contractItemId,
+    amount: paymentItems.amount,
+
+    serviceId: services.id,
+    serviceName: services.name,
+    serviceDescription: services.description
+  })
+  .from(paymentItems)
+  .innerJoin(
+    payments,
+    eq(paymentItems.paymentId, payments.id)
+  )
+  .innerJoin(
+    contracts,
+    eq(payments.contractId, contracts.id)
+  )
+  .innerJoin(
+    contractItems,
+    eq(paymentItems.contractItemId, contractItems.id)
+  )
+  .innerJoin(
+    services,
+    eq(contractItems.serviceId, services.id)
+  )
+  .where(
+    and(
+      eq(contracts.companyId, companyId!),
+      isNull(payments.deletedAt)
     )
-    .innerJoin(
-      contracts,
-      eq(payments.contractId, contracts.id)
-    )
-    .where(
-      and(
-        eq(contracts.companyId, companyId!),
-        isNull(payments.deletedAt)
-      )
-    )
+  )
 
   const itemsByPayment = new Map<number, any[]>()
 
@@ -429,9 +441,14 @@ export async function getCompanyPayments() {
     }
 
     itemsByPayment.get(row.paymentId)!.push({
-      contractItemId: row.contractItemId,
-      amount: Number(row.amount)
-    })
+  contractItemId: row.contractItemId,
+  amount: Number(row.amount),
+  service: {
+    id: row.serviceId,
+    name: row.serviceName,
+    description: row.serviceDescription
+  }
+})
   }
 
 
