@@ -63,12 +63,11 @@ export function useAdminCompany(companyId: string) {
 
     setSuspendConfirm(false);
   };
-
   const loadContracts = async () => {
     try {
-      const data = await fetchContracts();
+      const result = await fetchContracts();
 
-      setContracts(data);
+      setContracts(result.data || []); // ✅ FIX
     } catch {
       setError("Error al cargar eventos");
     }
