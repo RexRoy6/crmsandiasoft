@@ -2,13 +2,22 @@ import {
   getCompanyPayments
 } from "@/lib/services/paymentService"
 
-export async function GET() {
-
+export async function GET(req: Request) {
   try {
 
-    const payments = await getCompanyPayments()
+    const { searchParams } = new URL(req.url)
 
-    return Response.json(payments)
+    const search = searchParams.get("search") || ""
+    const page = Number(searchParams.get("page") || 1)
+    const limit = Number(searchParams.get("limit") || 10)
+
+    const result = await getCompanyPayments({
+      search,
+      page,
+      limit
+    })
+
+    return Response.json(result)
 
   } catch (error) {
 
@@ -19,5 +28,4 @@ export async function GET() {
       { status: 500 }
     )
   }
-
 }
