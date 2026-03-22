@@ -9,6 +9,8 @@ import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import SearchBar from "@/app/components/crm/SearchBar"
 import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
+import Pagination from "@/app/components/crm/Pagination"
+
 
 export default function PaymentsPage() {
 
@@ -39,6 +41,11 @@ export default function PaymentsPage() {
   const availableContracts = contracts.filter(
     (c) => c.remainingAmount > 0
   )
+
+  //esto es para el search y pagination
+  const [page, setPage] = useState(1)
+const [pagination, setPagination] = useState<any>(null)
+
 
   const paymentFields: Field[] = [
     {
@@ -72,48 +79,35 @@ export default function PaymentsPage() {
     }
   ]
 
-  const filteredPayments = payments.filter((payment) => {
 
-    const term = search.toLowerCase()
 
-    return (
-      payment.clientName?.toLowerCase().includes(term) ||
-      payment.eventName?.toLowerCase().includes(term)
+ async function fetchPayments() {
+  try {
+
+    setLoading(true)
+
+    const res = await fetch(
+      `/api/company/payments?search=${search}&page=${page}&limit=4`,
+      { credentials: "include" }
     )
 
-  })
-
-
-  async function fetchPayments() {
-
-    try {
-
-      const res = await fetch(
-        "/api/company/payments",
-        { credentials: "include" }
-      )
-
-      if (!res.ok) {
-        setError("Failed to fetch payments")
-        setErrorCode(res.status)
-        return
-      }
-
-      const data = await res.json()
-
-      setPayments(data)
-
-    } catch {
-
-      setError("Connection error")
-
-    } finally {
-
-      setLoading(false)
-
+    if (!res.ok) {
+      setError("Failed to fetch payments")
+      setErrorCode(res.status)
+      return
     }
 
+    const result = await res.json()
+
+    setPayments(result.data)
+    setPagination(result.pagination)
+
+  } catch {
+    setError("Connection error")
+  } finally {
+    setLoading(false)
   }
+}
 
   async function fetchContracts() {
 
@@ -218,14 +212,22 @@ export default function PaymentsPage() {
   }
 
   useEffect(() => {
-    fetchPayments()
-  }, [])
+    const timeout = setTimeout(() => {
+      fetchPayments()
+    }, 300)
+
+    return () => clearTimeout(timeout)
+  }, [search, page])
 
   useEffect(() => {
     if (form.contractId) {
       fetchContractItems(form.contractId)
     }
   }, [form.contractId])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
 
   return (
 
@@ -246,7 +248,7 @@ export default function PaymentsPage() {
         placeholder="Search by client or event"
       />
       <p style={{ fontSize: 12, color: "#6b7280" }}>
-        {filteredPayments.length} payments found
+        {pagination?.total ?? 0} payments found
       </p>
 
 
@@ -282,6 +284,7 @@ export default function PaymentsPage() {
       )}
 
       {!loading && payments.length > 0 && (
+        <>
 
         <div
           style={{
@@ -292,7 +295,7 @@ export default function PaymentsPage() {
         >
 
 
-          {filteredPayments.map((payment) => (
+          {payments.map((payment) => (
 
             <ListCard
               key={payment.id}
@@ -324,6 +327,17 @@ export default function PaymentsPage() {
           ))}
 
         </div>
+
+            {/* 👇 pagination SEPARADO */}
+                  {pagination && (
+                    <Pagination
+                      page={page}
+                      totalPages={pagination.totalPages}
+                      onPageChange={setPage}
+                    />
+                  )}
+                </>
+        
 
       )}
 
