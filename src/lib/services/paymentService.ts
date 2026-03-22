@@ -12,7 +12,7 @@ import {
   contractItems as contractItemsTable
 } from "@/db/schema"
 
-import { eq, and, isNull, sum, sql } from "drizzle-orm"
+import { eq, and, isNull, sum, sql, like, or, desc } from "drizzle-orm"
 
 import type {
   CreatePaymentInput
@@ -350,10 +350,39 @@ export async function createPayment(
   }
 }
 
-export async function getCompanyPayments() {
+
+export async function getCompanyPayments({
+  search,
+  page = 1,
+  limit = 10
+}: {
+  search?: string
+  page?: number
+  limit?: number
+}) {
 
   const { companyId } = await getAuthContext()
 
+  const offset = (page - 1) * limit
+
+  /* ---------- WHERE dinámico ---------- */
+  const conditions = [
+    eq(contracts.companyId, companyId!),
+    isNull(payments.deletedAt)
+  ]
+
+  if (search) {
+    const term = `%${search}%`
+
+    conditions.push(
+      or(
+        like(clients.name, term),
+        like(events.name, term)
+      )!
+    )
+  }
+
+  /* ---------- QUERY PRINCIPAL ---------- */
   const rows = await db
     .select({
       paymentId: payments.id,
@@ -372,88 +401,74 @@ export async function getCompanyPayments() {
       paidAmount: sum(payments.amount)
     })
     .from(payments)
-    .leftJoin(
-      contracts,
-      eq(payments.contractId, contracts.id)
-    )
-    .leftJoin(
-      events,
-      eq(contracts.eventId, events.id)
-    )
-    .leftJoin(
-      clients,
-      eq(contracts.clientId, clients.id)
-    )
-    .where(
-      and(
-        eq(contracts.companyId, companyId!),
-        isNull(payments.deletedAt)
-      )
-    )
+    .leftJoin(contracts, eq(payments.contractId, contracts.id))
+    .leftJoin(events, eq(contracts.eventId, events.id))
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
+    .where(and(...conditions))
     .groupBy(
       payments.id,
       contracts.id,
       clients.name,
       events.name
     )
+    .orderBy(desc(payments.createdAt))
+    .limit(limit)
+    .offset(offset)
 
+  /* ---------- TOTAL ---------- */
+  const totalResult = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .leftJoin(contracts, eq(payments.contractId, contracts.id))
+    .leftJoin(events, eq(contracts.eventId, events.id))
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
+    .where(and(...conditions))
 
- const paymentItemsRows = await db
-  .select({
-    paymentId: paymentItems.paymentId,
-    contractItemId: paymentItems.contractItemId,
-    amount: paymentItems.amount,
+  const total = totalResult.length
 
-    serviceId: services.id,
-    serviceName: services.name,
-    serviceDescription: services.description
-  })
-  .from(paymentItems)
-  .innerJoin(
-    payments,
-    eq(paymentItems.paymentId, payments.id)
-  )
-  .innerJoin(
-    contracts,
-    eq(payments.contractId, contracts.id)
-  )
-  .innerJoin(
-    contractItems,
-    eq(paymentItems.contractItemId, contractItems.id)
-  )
-  .innerJoin(
-    services,
-    eq(contractItems.serviceId, services.id)
-  )
-  .where(
-    and(
-      eq(contracts.companyId, companyId!),
-      isNull(payments.deletedAt)
+  /* ---------- ITEMS ---------- */
+  const paymentItemsRows = await db
+    .select({
+      paymentId: paymentItems.paymentId,
+      contractItemId: paymentItems.contractItemId,
+      amount: paymentItems.amount,
+
+      serviceId: services.id,
+      serviceName: services.name,
+      serviceDescription: services.description
+    })
+    .from(paymentItems)
+    .innerJoin(payments, eq(paymentItems.paymentId, payments.id))
+    .innerJoin(contracts, eq(payments.contractId, contracts.id))
+    .innerJoin(contractItems, eq(paymentItems.contractItemId, contractItems.id))
+    .innerJoin(services, eq(contractItems.serviceId, services.id))
+    .where(
+      and(
+        eq(contracts.companyId, companyId!),
+        isNull(payments.deletedAt)
+      )
     )
-  )
 
   const itemsByPayment = new Map<number, any[]>()
 
   for (const row of paymentItemsRows) {
-
     if (!itemsByPayment.has(row.paymentId)) {
       itemsByPayment.set(row.paymentId, [])
     }
 
     itemsByPayment.get(row.paymentId)!.push({
-  contractItemId: row.contractItemId,
-  amount: Number(row.amount),
-  service: {
-    id: row.serviceId,
-    name: row.serviceName,
-    description: row.serviceDescription
-  }
-})
+      contractItemId: row.contractItemId,
+      amount: Number(row.amount),
+      service: {
+        id: row.serviceId,
+        name: row.serviceName,
+        description: row.serviceDescription
+      }
+    })
   }
 
-
-  /* calcular remaining + status */
-  return rows.map((row) => {
+  /* ---------- MAP FINAL ---------- */
+  const data = rows.map((row) => {
 
     const contractTotal = Number(row.contractTotal)
     const paidAmount = Number(row.paidAmount ?? 0)
@@ -486,9 +501,18 @@ export async function getCompanyPayments() {
 
       items: itemsByPayment.get(row.paymentId) || []
     }
-
   })
 
+  /* ---------- RETURN ---------- */
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    }
+  }
 }
 /* ---------- GET SINGLE PAYMENT ---------- */
 

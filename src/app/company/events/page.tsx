@@ -206,12 +206,15 @@ export default function EventsPage() {
 
       if (!res.ok) return;
 
-      const data = await res.json();
 
+      const result = await res.json();
       /* quitar clientes eliminados */
-      const activeClients = data.filter((c: any) => !c.deletedAt);
+
+      const activeClients = result.data.filter((c: any) => !c.deletedAt);
 
       setClients(activeClients);
+
+
     } catch { }
   };
 
@@ -309,9 +312,9 @@ export default function EventsPage() {
 
       if (!res.ok) return;
 
-      const data = await res.json();
+      const result = await res.json();
+      setContracts(result.data);
 
-      setContracts(data);
     } catch { }
   };
   const getContractForEvent = (eventId: number) => {

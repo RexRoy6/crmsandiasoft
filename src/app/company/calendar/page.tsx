@@ -45,9 +45,9 @@ export default function GoogleLikeCalendar() {
       });
 
       if (!res.ok) return;
+      const result = await res.json();
 
-      const data = await res.json();
-      setContracts(data);
+      setContracts(result.data);
     } catch {
       console.error("contracts error");
     } finally {
@@ -60,7 +60,7 @@ export default function GoogleLikeCalendar() {
   }, []);
 
   useEffect(() => {
-    if (!contracts.length) return;
+    if (!Array.isArray(contracts) || contracts.length === 0) return;
 
     const mapped: CalendarEvent[] = contracts.map((contract) => ({
       id: contract.id,
