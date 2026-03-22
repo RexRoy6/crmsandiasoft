@@ -1,88 +1,77 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-// =========================
-// TYPES
-// =========================
-interface EventModel {
+interface Contract {
   id: number;
-  name: string;
-  eventDate: string; // 👈 fecha real
-  eventTime?: string; // 👈 opcional
-  location?: string;
-  notes?: string;
-  client?: { name: string };
-  deleted?: boolean;
+  status: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  client: {
+    id: number;
+    name: string;
+  };
+  event: {
+    id: number;
+    name: string;
+    eventDate: string;
+    location?: string;
+  };
 }
 
 interface CalendarEvent {
   id: number;
   title: string;
   date: Date;
+  status: string;
 }
 
 export default function GoogleLikeCalendar() {
-  const [events, setEvents] = useState<EventModel[]>([]);
+  const router = useRouter();
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
 
-  // =========================
-  // FETCH EVENTS (TU FUNCIÓN REAL)
-  // =========================
-  const fetchEvents = async () => {
+  const fetchContracts = async () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/company/events", {
+      const res = await fetch("/api/company/contracts", {
         credentials: "include",
       });
 
       if (!res.ok) return;
+      const result = await res.json();
 
-      const data = await res.json();
-
-      const activeEvents = data.filter((e: EventModel) => !e.deleted);
-
-      setEvents(activeEvents);
+      setContracts(result.data);
     } catch {
-      console.error("events error");
+      console.error("contracts error");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchContracts();
   }, []);
 
-  // =========================
-  // MAP: EVENTS → CALENDAR
-  // =========================
   useEffect(() => {
-    if (!events.length) return;
+    if (!Array.isArray(contracts) || contracts.length === 0) return;
 
-    const mapped: CalendarEvent[] = events.map((event) => {
-      // combinar fecha + hora
-      const dateTime = event.eventTime
-        ? new Date(`${event.eventDate}T${event.eventTime}`)
-        : new Date(event.eventDate);
-
-      return {
-        id: event.id,
-        title: `${event.name} (${event.client?.name || "N/A"})`,
-        date: dateTime,
-      };
-    });
+    const mapped: CalendarEvent[] = contracts.map((contract) => ({
+      id: contract.id,
+      title: `${contract.event.name} (${contract.client.name})`,
+      date: new Date(contract.event.eventDate),
+      status: contract.status,
+    }));
 
     setCalendarEvents(mapped);
-  }, [events]);
+  }, [contracts]);
 
-  // =========================
-  // DATE LOGIC
-  // =========================
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -103,15 +92,24 @@ export default function GoogleLikeCalendar() {
     );
   };
 
-  // =========================
-  // NAVIGATION
-  // =========================
+  const getColor = (status: string) => {
+    switch (status) {
+      case "draft":
+        return "#6b7280";
+      case "active":
+        return "#2563eb";
+      case "cancelled":
+        return "#dc2626";
+      case "completed":
+        return "#16a34a";
+      default:
+        return "#6b7280";
+    }
+  };
+
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
 
-  // =========================
-  // RENDER
-  // =========================
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -149,7 +147,15 @@ export default function GoogleLikeCalendar() {
 
                 <div style={styles.events}>
                   {getEvents(day).map((e) => (
-                    <div key={e.id} style={styles.event}>
+                    <div
+                      key={e.id}
+                      onClick={() => router.push(`/company/contracts/${e.id}`)}
+                      style={{
+                        ...styles.event,
+                        backgroundColor: getColor(e.status),
+                        cursor: "pointer",
+                      }}
+                    >
                       {e.title}
                     </div>
                   ))}
@@ -197,6 +203,5 @@ const styles: Record<string, React.CSSProperties> = {
     color: "white",
     padding: "2px 4px",
     borderRadius: 4,
-    backgroundColor: "#4285f4",
   },
 };

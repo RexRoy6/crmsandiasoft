@@ -4,8 +4,7 @@ import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { contracts, events, clients, payments } from "@/db/schema"
 import { sql } from "drizzle-orm"
 
-import { eq, and, isNull } from "drizzle-orm"
-
+import { eq, and, isNull,like, or, desc  } from "drizzle-orm"
 import type {
   CreateContractInput,
   UpdateContractInput
@@ -14,36 +13,7 @@ import type {
 
 
 /* ---------- CREATE CONTRACT ---------- */
-// export async function createContract(data: CreateContractInput) {
 
-//   const tdb = await tenantDb()
-
-//   const event = await tdb.findFirst(
-//     events,
-//     eq(events.id, data.eventId)
-//   )
-
-//   if (!event) {
-//     throw new Error("Event not found")
-//   }
-
-//   const [result] = await tdb.insert(
-//     contracts,
-//     {
-//       eventId: data.eventId,
-//       clientId: event.clientId,   //clave
-//       status: data.status,
-//       totalAmount: data.totalAmount
-//     }
-//   )
-
-//   const insertId = result.insertId
-
-//   return tdb.findFirst(
-//     contracts,
-//     eq(contracts.id, insertId)
-//   )
-// }
 export async function createContract(data: CreateContractInput) {
   const tdb = await tenantDb()
 
@@ -88,19 +58,48 @@ export async function createContract(data: CreateContractInput) {
 
 /* ---------- GET COMPANY CONTRACTS ---------- */
 
-// export async function getCompanyContracts() {
-
-//   const tdb = await tenantDb()
-
-//   return tdb.findManyRaw(contracts)
-
-// }
-export async function getCompanyContracts() {
+export async function getCompanyContracts({
+  search,
+  page = 1,
+  limit = 10
+}: {
+  search?: string
+  page?: number
+  limit?: number
+}) {
 
   const { companyId } = await getAuthContext()
 
-  const rows = await db
+  const offset = (page - 1) * limit
 
+  /* ---------- WHERE dinámico ---------- */
+
+  const conditions: any[] = [
+    isNull(contracts.deletedAt)
+  ]
+
+  if (companyId) {
+    conditions.push(eq(contracts.companyId, companyId))
+  }
+
+  if (search) {
+    const term = `%${search}%`
+
+    conditions.push(
+      or(
+        like(contracts.status, term),
+        like(clients.name, term),
+        like(events.name, term),
+        like(events.location, term)
+      )!
+    )
+  }
+
+  const whereClause = and(...conditions)
+
+  /* ---------- QUERY PRINCIPAL ---------- */
+
+  const rows = await db
     .select({
       id: contracts.id,
       status: contracts.status,
@@ -117,31 +116,10 @@ export async function getCompanyContracts() {
       eventLocation: events.location
     })
     .from(contracts)
-
-    .leftJoin(
-      clients,
-      eq(contracts.clientId, clients.id)
-    )
-
-    .leftJoin(
-      events,
-      eq(contracts.eventId, events.id)
-    )
-
-    .leftJoin(
-      payments,
-      eq(payments.contractId, contracts.id)
-    )
-
-    .where(
-      companyId
-        ? and(
-          eq(contracts.companyId, companyId),
-          isNull(contracts.deletedAt)
-        )
-        : isNull(contracts.deletedAt)
-    )
-
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
+    .leftJoin(events, eq(contracts.eventId, events.id))
+    .leftJoin(payments, eq(payments.contractId, contracts.id))
+    .where(whereClause)
     .groupBy(
       contracts.id,
       clients.id,
@@ -149,43 +127,37 @@ export async function getCompanyContracts() {
       events.eventDate,
       events.location
     )
+    .orderBy(desc(contracts.id))
+    .limit(limit)
+    .offset(offset)
 
-  // return rows.map((row) => ({
-  //   id: row.id,
-  //   status: row.status,
-  //   totalAmount: row.totalAmount,
+  /* ---------- TOTAL ---------- */
 
-  //   client: row.clientId
-  //     ? {
-  //       id: row.clientId,
-  //       name: row.clientName
-  //     }
-  //     : null,
+  const totalResult = await db
+    .select({ id: contracts.id })
+    .from(contracts)
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
+    .leftJoin(events, eq(contracts.eventId, events.id))
+    .where(whereClause)
 
-  //   event: row.eventId
-  //     ? {
-  //       id: row.eventId,
-  //       name: row.eventName
-  //     }
-  //     : null
-  // }))
-  return rows.map((row) => {
+  const total = totalResult.length
 
-    const total = Number(row.totalAmount)
+  /* ---------- MAP ---------- */
+
+  const data = rows.map((row) => {
+
+    const totalAmount = Number(row.totalAmount)
     const paid = Number(row.paidAmount)
 
     return {
       id: row.id,
       status: row.status,
-      totalAmount: total,
+      totalAmount,
       paidAmount: paid,
-      remainingAmount: total - paid,
+      remainingAmount: totalAmount - paid,
 
       client: row.clientId
-        ? {
-          id: row.clientId,
-          name: row.clientName
-        }
+        ? { id: row.clientId, name: row.clientName }
         : null,
 
       event: row.eventId
@@ -197,8 +169,17 @@ export async function getCompanyContracts() {
         }
         : null
     }
-
   })
+
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    }
+  }
 }
 
 

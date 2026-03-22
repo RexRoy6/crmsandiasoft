@@ -8,6 +8,8 @@ import ListCard from "@/app/components/crm/ListCard";
 import type { Field } from "@/app/components/crm/CreateForm";
 import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import { useRouter } from "next/navigation";
+import SearchBar from "@/app/components/crm/SearchBar"
+import Pagination from "@/app/components/crm/Pagination"
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -23,6 +25,13 @@ export default function EventsPage() {
   );
 
   const [contracts, setContracts] = useState<any[]>([]);
+
+
+  //para buscar clientes
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState<any>(null)
+  //
 
   //es para crear un nuevo cliente
   const [showClientForm, setShowClientForm] = useState(false);
@@ -165,10 +174,12 @@ export default function EventsPage() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-
-      const res = await fetch("/api/company/events", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/company/events?search=${search}&page=${page}&limit=8`,
+        {
+          credentials: "include",
+        }
+      )
 
       if (!res.ok) {
         setError("Failed to fetch events");
@@ -176,9 +187,11 @@ export default function EventsPage() {
         return;
       }
 
-      const data = await res.json();
+      const result = await res.json();
 
-      setEvents(data);
+      setEvents(result.data);
+      setPagination(result.pagination);
+
     } catch {
       setError("Connection error");
     } finally {
@@ -193,13 +206,16 @@ export default function EventsPage() {
 
       if (!res.ok) return;
 
-      const data = await res.json();
 
+      const result = await res.json();
       /* quitar clientes eliminados */
-      const activeClients = data.filter((c: any) => !c.deletedAt);
+
+      const activeClients = result.data.filter((c: any) => !c.deletedAt);
 
       setClients(activeClients);
-    } catch {}
+
+
+    } catch { }
   };
 
   const createEvent = async () => {
@@ -296,10 +312,10 @@ export default function EventsPage() {
 
       if (!res.ok) return;
 
-      const data = await res.json();
+      const result = await res.json();
+      setContracts(result.data);
 
-      setContracts(data);
-    } catch {}
+    } catch { }
   };
   const getContractForEvent = (eventId: number) => {
     return contracts.find((c) => c.event?.id === eventId);
@@ -333,11 +349,20 @@ export default function EventsPage() {
     }
   };
 
+  // fetch inicial (clients + contracts)
   useEffect(() => {
-    fetchEvents();
     fetchClients();
     fetchContracts();
   }, []);
+
+  // fetch events con search + pagination
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchEvents()
+    }, 300)
+
+    return () => clearTimeout(timeout)
+  }, [search, page])
 
   return (
     <div>
@@ -346,6 +371,13 @@ export default function EventsPage() {
         buttonLabel="+ New Event"
         onClick={() => setShowForm(true)}
       />
+
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search events, clients or location"
+      />
+
 
       {showForm && (
         <CreateForm
@@ -414,113 +446,119 @@ export default function EventsPage() {
       {!loading && events.length === 0 && <p>No events found.</p>}
 
       {!loading && events.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          {events.map((event) => {
-            const date = new Date(event.eventDate);
-            const contract = getContractForEvent(event.id);
 
-            // return (
-            //   <ListCard
-            //     key={event.id}
-            //     title={event.name}
-            //     extra={[
-            //       `Client: ${event.client?.name}`,
-            //       `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
-            //         hour: "2-digit",
-            //         minute: "2-digit",
-            //       })}`,
-            //       `Location: ${event.location}`,
-            //       `Notes: ${event.notes} `
-            //     ]}
-            //     link={`/company/clients/${event.client?.id}/events/${event.id}`}
+        <>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {events.map((event) => {
+              const date = new Date(event.eventDate);
+              const contract = getContractForEvent(event.id);
+              //console.log("pagination:", pagination)
+              return (
+                <div
+                  key={event.id}
+                  style={{
+                    border: "1px solid var(--border-color)",
+                    borderRadius: 10,
+                    padding: 12,
+                    background: "var(--bg-primary)",
+                  }}
+                >
+                  <ListCard
+                    title={event.name}
+                    extra={[
+                      `Client: ${event.client?.name}`,
+                      `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString(
+                        [],
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}`,
+                      `Location: ${event.location}`,
+                      `Notes: ${event.notes} `,
+                    ]}
+                    link={`/company/clients/${event.client?.id}/events/${event.id}`}
+                  />
 
-            //   />
 
-            // );
-            return (
-              <div
-                key={event.id}
-                style={{
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 10,
-                  padding: 12,
-                  background: "var(--bg-primary)",
-                }}
-              >
-                <ListCard
-                  title={event.name}
-                  extra={[
-                    `Client: ${event.client?.name}`,
-                    `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString(
-                      [],
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      },
-                    )}`,
-                    `Location: ${event.location}`,
-                    `Notes: ${event.notes} `,
-                  ]}
-                  link={`/company/clients/${event.client?.id}/events/${event.id}`}
-                />
+                  {/* 👇 AQUÍ VA TU BOTÓN */}
+                  <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+                    {contract ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/company/contracts/${contract.id}/services`,
+                            )
+                          }
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: 6,
+                            border: "none",
+                            background: "#16a34a",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                        >
+                          View Contract
+                        </button>
 
-                {/* 👇 AQUÍ VA TU BOTÓN */}
-                <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-                  {contract ? (
-                    <>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "#6b7280",
+                          }}
+                        >
+                          Status: {contract.status}
+                        </span>
+                      </>
+                    ) : (
                       <button
-                        onClick={() =>
-                          router.push(
-                            `/company/contracts/${contract.id}/services`,
-                          )
-                        }
+                        onClick={() => createContractForEvent(event.id)}
                         style={{
                           padding: "6px 10px",
                           borderRadius: 6,
-                          border: "none",
-                          background: "#16a34a",
-                          color: "white",
+                          border: "1px solid var(--border-color)",
+                          background: "transparent",
                           cursor: "pointer",
                         }}
                       >
-                        View Contract
+                        Create Contract
                       </button>
-
-                      <span
-                        style={{
-                          fontSize: 12,
-                          color: "#6b7280",
-                        }}
-                      >
-                        Status: {contract.status}
-                      </span>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => createContractForEvent(event.id)}
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: 6,
-                        border: "1px solid var(--border-color)",
-                        background: "transparent",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Create Contract
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+
+
+
+          </div>
+
+
+          {/* 👇 pagination SEPARADO */}
+          {pagination && (
+            <Pagination
+              page={page}
+              totalPages={pagination.totalPages}
+              onPageChange={setPage}
+            />
+          )}
+        </>
+
+
+
+
       )}
+
+
+
     </div>
   );
 }

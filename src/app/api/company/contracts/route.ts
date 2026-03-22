@@ -53,22 +53,29 @@ export async function POST(req: Request) {
 
 /* ---------- GET (company contracts) ---------- */
 
-export async function GET() {
+export async function GET(req: Request) {
 
   try {
 
-    const contracts = await getCompanyContracts()
+    const { searchParams } = new URL(req.url)
 
-    return Response.json(contracts)
+    const search = searchParams.get("search") ?? undefined
+    const page = Number(searchParams.get("page") ?? 1)
+    const limit = Number(searchParams.get("limit") ?? 10)
+
+    const result = await getCompanyContracts({
+      search,
+      page,
+      limit
+    })
+
+    return Response.json(result)
 
   } catch (error) {
-
-    console.error(error)
 
     return Response.json(
       { error: "internal server error" },
       { status: 500 }
     )
   }
-
 }

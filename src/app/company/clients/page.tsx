@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import ErrorBox from "@/app/components/ErrorBox";
-import Link from "next/link";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
+import SearchBar from "@/app/components/crm/SearchBar"
+import Pagination from "@/app/components/crm/Pagination"
 
 export default function ClientsPage() {
 
@@ -30,32 +31,38 @@ export default function ClientsPage() {
         { name: "email", label: "Email" }
     ];
 
+
+    //campos para serach y params
+    const [search, setSearch] = useState("")
+    const [page, setPage] = useState(1)
+    const [limit] = useState(5)
+
+    const [pagination, setPagination] = useState({
+        total: 0,
+        totalPages: 1
+    })
+    //
+
+
     const fetchClients = async () => {
         try {
             setLoading(true);
 
-            const res = await fetch("/api/company/clients", {
-                credentials: "include",
-            });
+            const res = await fetch(
+                `/api/company/clients?search=${search}&page=${page}&limit=${limit}`,
+                { credentials: "include" }
+            );
 
             if (!res.ok) {
-                const data = await res.json();
-
-                console.log("Create client error:", data);
-
-                setError(
-                    data?.error?.fieldErrors
-                        ? JSON.stringify(data.error.fieldErrors)
-                        : "Failed to create client"
-                );
-
+                setError("Failed to fetch clients");
                 setErrorCode(res.status);
                 return;
             }
 
             const data = await res.json();
 
-            setClients(data);
+            setClients(data.data)
+            setPagination(data.pagination)
 
         } catch {
             setError("Connection error");
@@ -102,9 +109,19 @@ export default function ClientsPage() {
         }
     };
 
+    //  RESET PAGE cuando cambia búsqueda
     useEffect(() => {
-        fetchClients();
-    }, []);
+        setPage(1)
+    }, [search])
+
+    //  FETCH (con debounce)
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            fetchClients()
+        }, 300)
+
+        return () => clearTimeout(timeout)
+    }, [search, page])
 
     return (
         <div>
@@ -114,7 +131,14 @@ export default function ClientsPage() {
                 buttonLabel="+ New Client"
                 onClick={() => setShowForm(true)}
             />
-
+            <SearchBar
+                value={search}
+                onChange={(value) => {
+                    setPage(1) // reset page
+                    setSearch(value)
+                }}
+                placeholder="Search clients..."
+            />
             {showForm && (
                 <CreateForm
                     title="Create Client"
@@ -154,6 +178,13 @@ export default function ClientsPage() {
                             link={`/company/clients/${client.id}`}
                         />
                     ))}
+                    {/* pagination */}
+                    <Pagination
+                        page={page}
+                        totalPages={pagination.totalPages}
+                        onPageChange={setPage}
+                    />
+                    {/* pagination */}
 
                 </div>
             )}

@@ -7,6 +7,9 @@ import ListCard from "@/app/components/crm/ListCard";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import { CONTRACT_STATUS } from "@/db/schema"
+import SearchBar from "@/app/components/crm/SearchBar"
+import Pagination from "@/app/components/crm/Pagination"
+
 
 export default function ContractsPage() {
 
@@ -26,6 +29,12 @@ export default function ContractsPage() {
         // ,
         // totalAmount: "",
     });
+
+
+    //seach params y pagiantion 
+    const [search, setSearch] = useState("")
+    const [page, setPage] = useState(1)
+    const [pagination, setPagination] = useState<any>(null)
 
     const contractFields: Field[] = [
 
@@ -61,9 +70,12 @@ export default function ContractsPage() {
 
             setLoading(true);
 
-            const res = await fetch("/api/company/contracts", {
-                credentials: "include",
-            });
+            const res = await fetch(
+                `/api/company/contracts?search=${search}&page=${page}&limit=6`,
+                {
+                    credentials: "include",
+                }
+            )
 
             if (!res.ok) {
                 setError("Failed to fetch contracts");
@@ -71,9 +83,11 @@ export default function ContractsPage() {
                 return;
             }
 
-            const data = await res.json();
+            const result = await res.json();
 
-            setContracts(data);
+            setContracts(result.data);
+            setPagination(result.pagination);
+
 
         } catch {
             setError("Connection error");
@@ -107,16 +121,16 @@ export default function ContractsPage() {
 
     const createContract = async () => {
 
-          const payload = {
-    eventId: Number(form.eventId),
-    status: form.status,
-    totalAmount:  0//Number(form.totalAmount),
-  }
+        const payload = {
+            eventId: Number(form.eventId),
+            status: form.status,
+            totalAmount: 0//Number(form.totalAmount),
+        }
 
-  //console.log("Contract payload:", payload)
+        //console.log("Contract payload:", payload)
 
 
-  
+
         try {
 
             const res = await fetch("/api/company/contracts", {
@@ -155,10 +169,19 @@ export default function ContractsPage() {
         }
     };
 
+    // fetch inicial (events)
     useEffect(() => {
-        fetchContracts();
         fetchEvents();
     }, []);
+
+    // fetch contracts con search + pagination
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            fetchContracts();
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [search, page]);
 
     function getStatusColor(status: string) {
 
@@ -189,6 +212,13 @@ export default function ContractsPage() {
                 buttonLabel="+ New Contract"
                 onClick={() => setShowForm(true)}
             />
+
+            <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Search by status, client, event or location"
+            />
+
             {showForm && (
                 <CreateForm
                     title="Create Contract"
@@ -209,84 +239,83 @@ export default function ContractsPage() {
                 <p>No contracts found.</p>
             )}
 
+
             {!loading && contracts.length > 0 && (
-                <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                    }}
-                >
+                <>
+                    <div
+                        style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 10,
+                        }}
+                    >
+                        {contracts.map((contract) => {
 
-                    {contracts.map((contract) => {
+                            const progress =
+                                contract.totalAmount > 0
+                                    ? (contract.paidAmount / contract.totalAmount) * 100
+                                    : 0
 
-                        const progress =
-                            contract.totalAmount > 0
-                                ? (contract.paidAmount / contract.totalAmount) * 100
-                                : 0
+                            const statusColor = getStatusColor(contract.status)
 
-                        const statusColor = getStatusColor(contract.status)
+                            return (
+                                <div key={contract.id}>
+                                    <ListCard
+                                        title={`Contract #${contract.id}`}
+                                        extra={[
+                                            `Client: ${contract.client?.name}`,
+                                            `Event: ${contract.event?.name}`,
+                                            `Status: ${contract.status}`,
+                                            `Total: $${contract.totalAmount}`,
+                                            `Paid: $${contract.paidAmount}`,
+                                            `Remaining: $${contract.remainingAmount}`,
+                                        ]}
+                                        link={`/company/contracts/${contract.id}`}
+                                    />
 
-                        return (
-
-                            <div key={contract.id}>
-
-                                <ListCard
-                                    key={contract.id}
-                                    title={`Contract #${contract.id}`}
-                                    extra={[
-                                        `Client: ${contract.client?.name}`,
-                                        `Event: ${contract.event?.name}`,
-                                        `Status: ${contract.status}`,
-                                        `Total: $${contract.totalAmount}`,
-                                        `Paid: $${contract.paidAmount}`,
-                                        `Remaining: $${contract.remainingAmount}`,
-                                    ]}
-                                    link={`/company/contracts/${contract.id}`}
-
-                                />
-
-                                {/* Progress bar */}
-
-                                <div
-                                    style={{
-                                        background: "#e5e7eb",
-                                        borderRadius: 6,
-                                        height: 8,
-                                        marginTop: 6,
-                                        overflow: "hidden"
-                                    }}
-                                >
+                                    {/* Progress bar */}
+                                    <div
+                                        style={{
+                                            background: "#e5e7eb",
+                                            borderRadius: 6,
+                                            height: 8,
+                                            marginTop: 6,
+                                            overflow: "hidden"
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: `${progress}%`,
+                                                background: statusColor,
+                                                height: "100%",
+                                                transition: "width 0.3s ease"
+                                            }}
+                                        />
+                                    </div>
 
                                     <div
                                         style={{
-                                            width: `${progress}%`,
-                                            background: statusColor,
-                                            height: "100%",
-                                            transition: "width 0.3s ease"
+                                            fontSize: 12,
+                                            marginTop: 4,
+                                            color: "#6b7280"
                                         }}
-                                    />
-
+                                    >
+                                        {Math.round(progress)}% paid
+                                    </div>
                                 </div>
+                            )
+                        })}
+                    </div>
 
-                                <div
-                                    style={{
-                                        fontSize: 12,
-                                        marginTop: 4,
-                                        color: "#6b7280"
-                                    }}
-                                >
-                                    {Math.round(progress)}% paid
-                                </div>
-
-                            </div>
-
-
-                        )
-
-                    })}
-
-                </div>
+                    {/* 👇 PAGINATION */}
+                    {pagination && (
+                        <Pagination
+                            page={page}
+                            totalPages={pagination.totalPages}
+                            onPageChange={setPage}
+                        />
+                    )}
+                </>
             )}
 
         </div>

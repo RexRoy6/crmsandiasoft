@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Company, User } from "../types/admin";
+import { Company, User, Contract } from "../types/admin";
 import { fetchContracts } from "../services/adminService";
 
 export function useAdminCompany(companyId: string) {
@@ -63,12 +63,11 @@ export function useAdminCompany(companyId: string) {
 
     setSuspendConfirm(false);
   };
-
   const loadContracts = async () => {
     try {
-      const data = await fetchContracts();
+      const result = await fetchContracts();
 
-      setContracts(data);
+      setContracts(result.data || []); // ✅ FIX
     } catch {
       setError("Error al cargar eventos");
     }

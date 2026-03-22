@@ -8,6 +8,9 @@ import ErrorBox from "@/app/components/ErrorBox";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import SearchBar from "@/app/components/crm/SearchBar"
+import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
+import Pagination from "@/app/components/crm/Pagination"
+
 
 export default function PaymentsPage() {
 
@@ -38,6 +41,11 @@ export default function PaymentsPage() {
   const availableContracts = contracts.filter(
     (c) => c.remainingAmount > 0
   )
+
+  //esto es para el search y pagination
+  const [page, setPage] = useState(1)
+const [pagination, setPagination] = useState<any>(null)
+
 
   const paymentFields: Field[] = [
     {
@@ -71,48 +79,35 @@ export default function PaymentsPage() {
     }
   ]
 
-  const filteredPayments = payments.filter((payment) => {
 
-    const term = search.toLowerCase()
 
-    return (
-      payment.clientName?.toLowerCase().includes(term) ||
-      payment.eventName?.toLowerCase().includes(term)
+ async function fetchPayments() {
+  try {
+
+    setLoading(true)
+
+    const res = await fetch(
+      `/api/company/payments?search=${search}&page=${page}&limit=4`,
+      { credentials: "include" }
     )
 
-  })
-
-
-  async function fetchPayments() {
-
-    try {
-
-      const res = await fetch(
-        "/api/company/payments",
-        { credentials: "include" }
-      )
-
-      if (!res.ok) {
-        setError("Failed to fetch payments")
-        setErrorCode(res.status)
-        return
-      }
-
-      const data = await res.json()
-
-      setPayments(data)
-
-    } catch {
-
-      setError("Connection error")
-
-    } finally {
-
-      setLoading(false)
-
+    if (!res.ok) {
+      setError("Failed to fetch payments")
+      setErrorCode(res.status)
+      return
     }
 
+    const result = await res.json()
+
+    setPayments(result.data)
+    setPagination(result.pagination)
+
+  } catch {
+    setError("Connection error")
+  } finally {
+    setLoading(false)
   }
+}
 
   async function fetchContracts() {
 
@@ -217,14 +212,22 @@ export default function PaymentsPage() {
   }
 
   useEffect(() => {
-    fetchPayments()
-  }, [])
+    const timeout = setTimeout(() => {
+      fetchPayments()
+    }, 300)
+
+    return () => clearTimeout(timeout)
+  }, [search, page])
 
   useEffect(() => {
     if (form.contractId) {
       fetchContractItems(form.contractId)
     }
   }, [form.contractId])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
 
   return (
 
@@ -245,7 +248,7 @@ export default function PaymentsPage() {
         placeholder="Search by client or event"
       />
       <p style={{ fontSize: 12, color: "#6b7280" }}>
-        {filteredPayments.length} payments found
+        {pagination?.total ?? 0} payments found
       </p>
 
 
@@ -260,58 +263,11 @@ export default function PaymentsPage() {
       )}
 
       {showForm && contractItems.length > 0 && (
-
-        <div style={{ marginTop: 20 }}>
-
-          <h3>Allocate Payment</h3>
-
-          {contractItems.map((item, index) => {
-
-            const total =
-              item.quantity * Number(item.unitPrice)
-
-            return (
-              <div key={item.id} style={{ marginBottom: 10 }}>
-
-                <p>
-                  Service #{item.serviceId} — Total: ${total}
-                </p>
-
-                <input
-                  type="number"
-                  placeholder="Amount"
-                  value={form.items[index]?.amount || ""}
-                  onChange={(e) => {
-
-                    const value = Number(e.target.value)
-
-                    setForm(prev => {
-                      const updated = [...prev.items]
-
-                      updated[index] = {
-                        ...updated[index],
-                        amount: value
-                      }
-
-                      return {
-                        ...prev,
-                        items: updated
-                      }
-                    })
-                  }}
-                />
-
-              </div>
-            )
-          })}
-
-          {/* 🔥 TOTAL DINÁMICO */}
-          <p style={{ marginTop: 10 }}>
-            Total Payment: $
-            {form.items.reduce((sum, i) => sum + i.amount, 0)}
-          </p>
-
-        </div>
+        <PaymentAllocationCard
+          items={contractItems}
+          formItems={form.items}
+          setForm={setForm}
+        />
       )}
 
       {error && (
@@ -328,6 +284,7 @@ export default function PaymentsPage() {
       )}
 
       {!loading && payments.length > 0 && (
+        <>
 
         <div
           style={{
@@ -338,7 +295,7 @@ export default function PaymentsPage() {
         >
 
 
-          {filteredPayments.map((payment) => (
+          {payments.map((payment) => (
 
             <ListCard
               key={payment.id}
@@ -354,10 +311,15 @@ export default function PaymentsPage() {
 
                 `Status: ${payment.summary.paymentStatus}`,
                 `Method: ${payment.paymentMethod}`,
-                ...payment.items.map(
-                  (item: any) =>
-                    `• Service ${item.contractItemId}: $${item.amount}`
-                )
+                // ...payment.items.map(
+                //   (item: any) =>
+                //     `• Service ${item.contractItemId}: $${item.amount}`
+                // )
+
+                ...payment.items.flatMap((item: any) => [
+                  `• ${item.service.name}: $${item.amount}`,
+                  `  ${item.service.description}`
+                ])
               ]}
               link={'#'}
             />
@@ -365,6 +327,17 @@ export default function PaymentsPage() {
           ))}
 
         </div>
+
+            {/* 👇 pagination SEPARADO */}
+                  {pagination && (
+                    <Pagination
+                      page={page}
+                      totalPages={pagination.totalPages}
+                      onPageChange={setPage}
+                    />
+                  )}
+                </>
+        
 
       )}
 
