@@ -44,11 +44,23 @@ export async function createCompany(name: string) {
   return res.json();
 }
 
-export async function fetchContracts(): Promise<Contract[]> {
+
+type ContractsResponse = {
+  data: Contract[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
+export async function fetchContracts(): Promise<ContractsResponse> {
   const res = await fetch("/api/company/contracts", {
     method: "GET",
     credentials: "include",
   });
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
