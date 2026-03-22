@@ -71,7 +71,7 @@ export default function ContractsPage() {
             setLoading(true);
 
             const res = await fetch(
-                `/api/company/contracts?search=${search}&page=${page}&limit=10`,
+                `/api/company/contracts?search=${search}&page=${page}&limit=6`,
                 {
                     credentials: "include",
                 }
