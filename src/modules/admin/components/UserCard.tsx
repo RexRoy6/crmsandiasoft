@@ -1,7 +1,15 @@
 import { User } from "../types/admin";
 import { companyStyles } from "@/styles/companyAdmin.styles";
 
-export default function UserCard({ user, onDeactivate }: { user: User, onDeactivate: (userId: number) => void; }) {
+export default function UserCard({
+   user,
+    onDeactivate, 
+    onReactivate, }:
+   { user: User,
+     onDeactivate: (userId: number) => void;
+      onReactivate: (userId: number) => void;
+    
+    }) {
   const initials = (user.name ?? "")
     .split(" ")
     .map((n) => n[0])
@@ -33,27 +41,30 @@ export default function UserCard({ user, onDeactivate }: { user: User, onDeactiv
 
       </div>
 
-      <button
-        onClick={() => {
-          if (isInactive) return;
-
-          if (confirm("¿Desactivar este usuario?")) {
-            onDeactivate(user.id);
-          }
-        }}
-        disabled={isInactive}
-        style={{
-          background: isInactive ? "#e5e7eb" : "#fee2e2",
-          color: isInactive ? "#6b7280" : "#991b1b",
-          border: "none",
-          padding: "6px 10px",
-          borderRadius: 6,
-          cursor: isInactive ? "not-allowed" : "pointer",
-          fontSize: 12,
-        }}
-      >
-        {isInactive ? "Desactivado" : "Desactivar"}
-      </button>
+  <button
+  onClick={() => {
+    if (isInactive) {
+      if (confirm("¿Reactivar este usuario?")) {
+        onReactivate(user.id);
+      }
+    } else {
+      if (confirm("¿Desactivar este usuario?")) {
+        onDeactivate(user.id);
+      }
+    }
+  }}
+  style={{
+    background: isInactive ? "#dcfce7" : "#fee2e2",
+    color: isInactive ? "#166534" : "#991b1b",
+    border: "none",
+    padding: "6px 10px",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontSize: 12,
+  }}
+>
+  {isInactive ? "Reactivar" : "Desactivar"}
+</button>
 
     </div>
   );

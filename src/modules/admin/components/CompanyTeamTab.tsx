@@ -4,10 +4,13 @@ import UserCard from "./UserCard";
 import { useState } from "react";
 
 
-export default function CompanyTeamTab({ users,onCreateOwner,onDeactivateUser }:
+export default function CompanyTeamTab({ users,onCreateOwner,onDeactivateUser, onReactivateUser, }:
    { users: User[] ,
      onCreateOwner: (email: string, password: string) => void;
-     onDeactivateUser: (userId: number) => void;}) {
+     onDeactivateUser: (userId: number) => void;
+      onReactivateUser: (userId: number) => void;
+    
+    }) {
   const owners = users.filter((u) => u.role === "owner");
   const staff = users.filter((u) => u.role === "manager" || u.role === "staff");
 
@@ -29,7 +32,7 @@ const handleSubmit = () => {
       {owners.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {owners.map((u) => (
-            <UserCard key={u.id} user={u} onDeactivate={onDeactivateUser} />
+            <UserCard key={u.id} user={u} onDeactivate={onDeactivateUser}  onReactivate={onReactivateUser} />
           ))}
         </div>
       ) : (
@@ -43,7 +46,7 @@ const handleSubmit = () => {
       {staff.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {staff.map((u) => (
-            <UserCard key={u.id} user={u}  onDeactivate={onDeactivateUser} />
+            <UserCard key={u.id} user={u}  onDeactivate={onDeactivateUser}  onReactivate={onReactivateUser} />
           ))}
         </div>
       ) : (

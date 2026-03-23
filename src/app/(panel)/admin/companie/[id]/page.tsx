@@ -27,6 +27,7 @@ export default function AdminCompanyPage() {
     handleSuspend,
     createOwner,
     deactivateUser,
+    reactivateUser,
   } = useAdminCompany(companyId);
 
  if (loading) return <p>Cargando...</p>;
@@ -51,6 +52,7 @@ export default function AdminCompanyPage() {
         setActiveTab={setActiveTab}
         onCreateOwner={createOwner}
         onDeactivateUser={deactivateUser}
+        onReactivateUser={reactivateUser}
       />
     </>
   );

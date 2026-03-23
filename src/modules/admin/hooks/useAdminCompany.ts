@@ -133,6 +133,34 @@ export function useAdminCompany(companyId: string) {
   }
   };
 
+
+  /// reacticar user
+  const reactivateUser = async (userId: number) => {
+  try {
+    const res = await fetch(
+      `/api/admin/users/${userId}?reactivate=true`,
+      {
+        method: "PATCH",
+      }
+    );
+
+    if (res.status === 409) {
+      setActionError("El usuario ya estaba activo");
+      return;
+    }
+
+    if (!res.ok) throw new Error("Error reactivando usuario");
+
+    // refrescar lista
+    const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+    const usersData = await usersRes.json();
+    setUsers(usersData);
+
+  } catch (err: any) {
+    setActionError(err.message);
+  }
+};
+
   const clearActionError = () => setActionError(null);
 
 return {
@@ -151,5 +179,6 @@ return {
   handleSuspend,
   createOwner,
   deactivateUser,
+   reactivateUser,
 };
 }

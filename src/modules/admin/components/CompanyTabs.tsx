@@ -9,6 +9,7 @@ interface Props {
   setActiveTab: (v: "team" | "events" | "services") => void;
   onCreateOwner: (email: string, password: string) => void;
   onDeactivateUser: (userId: number) => void;
+   onReactivateUser: (userId: number) => void;
 }
 
 export default function CompanyTabs({
@@ -17,7 +18,8 @@ export default function CompanyTabs({
   activeTab,
   setActiveTab,
   onCreateOwner,
-  onDeactivateUser
+  onDeactivateUser,
+  onReactivateUser
 }: Props) {
   console.log(1, contracts);
   return (
@@ -59,7 +61,9 @@ export default function CompanyTabs({
         {activeTab === "team" && <CompanyTeamTab 
         users={users} 
         onCreateOwner={onCreateOwner}
-        onDeactivateUser={onDeactivateUser} />}
+        onDeactivateUser={onDeactivateUser}
+        onReactivateUser={onReactivateUser}
+          />}
 
         {activeTab === "events" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
