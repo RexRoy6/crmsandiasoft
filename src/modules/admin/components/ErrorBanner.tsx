@@ -1,7 +1,7 @@
 import { styles } from "@/styles/layout.styles";
 
 interface Props {
-  error: string;
+  error: string| null;
   clear: () => void;
 }
 

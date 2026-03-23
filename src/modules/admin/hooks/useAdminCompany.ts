@@ -16,6 +16,11 @@ export function useAdminCompany(companyId: string) {
   const [suspendConfirm, setSuspendConfirm] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>([]);
 
+
+  //error estates
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!companyId) return;
 
@@ -37,7 +42,7 @@ export function useAdminCompany(companyId: string) {
         setCompany(companyData);
         setUsers(usersData);
       } catch (err: any) {
-        setError(err.message);
+        setLoadError(err.message);
       } finally {
         setLoading(false);
       }
@@ -79,17 +84,101 @@ export function useAdminCompany(companyId: string) {
     }
   }, [activeTab]);
 
-  return {
-    company,
-    users,
-    contracts,
-    activeTab,
-    setActiveTab,
-    loading,
-    error,
-    suspendConfirm,
-    setSuspendConfirm,
-    handleEdit,
-    handleSuspend,
+
+
+  //crear users:
+  const createOwner = async (email: string, password: string) => {
+    try {
+      const res = await fetch(`/api/admin/companies/${companyId}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) throw new Error("Error creando usuario");
+
+      //  refrescar usuarios
+      const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+      const usersData = await usersRes.json();
+      setUsers(usersData);
+    } catch (err: any) {
+  setActionError(err.message);
+}
+
   };
+
+  //desactivar usuarios
+  const deactivateUser = async (userId: number) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+
+       if (res.status === 409) {
+      setActionError("El usuario ya estaba desactivado");
+      return;
+    }
+
+         if (!res.ok) throw new Error("Error desactivando usuario");
+
+
+      // refrescar
+      const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+      const usersData = await usersRes.json();
+      setUsers(usersData);
+    } catch (err: any) {
+    setActionError(err.message);
+  }
+  };
+
+
+  /// reacticar user
+  const reactivateUser = async (userId: number) => {
+  try {
+    const res = await fetch(
+      `/api/admin/users/${userId}?reactivate=true`,
+      {
+        method: "PATCH",
+      }
+    );
+
+    if (res.status === 409) {
+      setActionError("El usuario ya estaba activo");
+      return;
+    }
+
+    if (!res.ok) throw new Error("Error reactivando usuario");
+
+    // refrescar lista
+    const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+    const usersData = await usersRes.json();
+    setUsers(usersData);
+
+  } catch (err: any) {
+    setActionError(err.message);
+  }
+};
+
+  const clearActionError = () => setActionError(null);
+
+return {
+  company,
+  users,
+  contracts,
+  activeTab,
+  setActiveTab,
+  loading,
+  loadError,
+  actionError,
+  clearActionError,
+  suspendConfirm,
+  setSuspendConfirm,
+  handleEdit,
+  handleSuspend,
+  createOwner,
+  deactivateUser,
+   reactivateUser,
+};
 }

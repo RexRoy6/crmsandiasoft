@@ -5,6 +5,7 @@ import { useAdminCompany } from "@/modules/admin/hooks/useAdminCompany";
 
 import CompanyHeaderCard from "@/modules/admin/components/CompanyHeaderCard";
 import CompanyTabs from "@/modules/admin/components/CompanyTabs";
+import ErrorBanner from "@/modules/admin/components/ErrorBanner";
 
 export default function AdminCompanyPage() {
   const params = useParams();
@@ -15,20 +16,27 @@ export default function AdminCompanyPage() {
     users,
     contracts,
     loading,
-    error,
+    actionError,
+    clearActionError,
+    loadError,
     activeTab,
     setActiveTab,
     suspendConfirm,
     setSuspendConfirm,
     handleEdit,
     handleSuspend,
+    createOwner,
+    deactivateUser,
+    reactivateUser,
   } = useAdminCompany(companyId);
 
-  if (loading) return <p>Cargando...</p>;
-  if (error || !company) return <p>Error al cargar empresa</p>;
+ if (loading) return <p>Cargando...</p>;
+  if (loadError || !company) return <p>Error al cargar empresa</p>;
 
   return (
     <>
+      <ErrorBanner error={actionError} clear={clearActionError} />
+
       <CompanyHeaderCard
         company={company}
         suspendConfirm={suspendConfirm}
@@ -36,11 +44,15 @@ export default function AdminCompanyPage() {
         onEdit={handleEdit}
         onSuspend={handleSuspend}
       />
+
       <CompanyTabs
         users={users}
         contracts={contracts}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        onCreateOwner={createOwner}
+        onDeactivateUser={deactivateUser}
+        onReactivateUser={reactivateUser}
       />
     </>
   );
