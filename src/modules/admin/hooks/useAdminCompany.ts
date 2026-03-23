@@ -16,6 +16,11 @@ export function useAdminCompany(companyId: string) {
   const [suspendConfirm, setSuspendConfirm] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>([]);
 
+
+  //error estates
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!companyId) return;
 
@@ -37,7 +42,7 @@ export function useAdminCompany(companyId: string) {
         setCompany(companyData);
         setUsers(usersData);
       } catch (err: any) {
-        setError(err.message);
+        setLoadError(err.message);
       } finally {
         setLoading(false);
       }
@@ -99,8 +104,8 @@ export function useAdminCompany(companyId: string) {
       const usersData = await usersRes.json();
       setUsers(usersData);
     } catch (err: any) {
-      setError(err.message);
-    }
+  setActionError(err.message);
+}
 
   };
 
@@ -111,30 +116,40 @@ export function useAdminCompany(companyId: string) {
         method: "DELETE",
       });
 
-      if (!res.ok) throw new Error("Error desactivando usuario");
+       if (res.status === 409) {
+      setActionError("El usuario ya estaba desactivado");
+      return;
+    }
 
-      //  refrescar lista
+         if (!res.ok) throw new Error("Error desactivando usuario");
+
+
+      // refrescar
       const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
       const usersData = await usersRes.json();
       setUsers(usersData);
     } catch (err: any) {
-      setError(err.message);
-    }
+    setActionError(err.message);
+  }
   };
 
-  return {
-    company,
-    users,
-    contracts,
-    activeTab,
-    setActiveTab,
-    loading,
-    error,
-    suspendConfirm,
-    setSuspendConfirm,
-    handleEdit,
-    handleSuspend,
-    createOwner,
-    deactivateUser
-  };
+  const clearActionError = () => setActionError(null);
+
+return {
+  company,
+  users,
+  contracts,
+  activeTab,
+  setActiveTab,
+  loading,
+  loadError,
+  actionError,
+  clearActionError,
+  suspendConfirm,
+  setSuspendConfirm,
+  handleEdit,
+  handleSuspend,
+  createOwner,
+  deactivateUser,
+};
 }
