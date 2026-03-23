@@ -79,6 +79,30 @@ export function useAdminCompany(companyId: string) {
     }
   }, [activeTab]);
 
+
+
+  //crear users:
+  const createOwner = async (email: string, password: string) => {
+  try {
+    const res = await fetch(`/api/admin/companies/${companyId}/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!res.ok) throw new Error("Error creando usuario");
+
+    //  refrescar usuarios
+    const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+    const usersData = await usersRes.json();
+    setUsers(usersData);
+  } catch (err: any) {
+    setError(err.message);
+  }
+};
+
   return {
     company,
     users,
@@ -91,5 +115,6 @@ export function useAdminCompany(companyId: string) {
     setSuspendConfirm,
     handleEdit,
     handleSuspend,
+    createOwner,
   };
 }
