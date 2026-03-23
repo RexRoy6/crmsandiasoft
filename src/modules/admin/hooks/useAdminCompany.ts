@@ -83,25 +83,44 @@ export function useAdminCompany(companyId: string) {
 
   //crear users:
   const createOwner = async (email: string, password: string) => {
-  try {
-    const res = await fetch(`/api/admin/companies/${companyId}/users`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch(`/api/admin/companies/${companyId}/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (!res.ok) throw new Error("Error creando usuario");
+      if (!res.ok) throw new Error("Error creando usuario");
 
-    //  refrescar usuarios
-    const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
-    const usersData = await usersRes.json();
-    setUsers(usersData);
-  } catch (err: any) {
-    setError(err.message);
-  }
-};
+      //  refrescar usuarios
+      const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+      const usersData = await usersRes.json();
+      setUsers(usersData);
+    } catch (err: any) {
+      setError(err.message);
+    }
+
+  };
+
+  //desactivar usuarios
+  const deactivateUser = async (userId: number) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Error desactivando usuario");
+
+      //  refrescar lista
+      const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+      const usersData = await usersRes.json();
+      setUsers(usersData);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
   return {
     company,
@@ -116,5 +135,6 @@ export function useAdminCompany(companyId: string) {
     handleEdit,
     handleSuspend,
     createOwner,
+    deactivateUser
   };
 }

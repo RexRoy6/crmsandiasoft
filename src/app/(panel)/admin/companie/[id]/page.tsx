@@ -23,6 +23,7 @@ export default function AdminCompanyPage() {
     handleEdit,
     handleSuspend,
      createOwner,
+     deactivateUser
   } = useAdminCompany(companyId);
 
   if (loading) return <p>Cargando...</p>;
@@ -42,7 +43,8 @@ export default function AdminCompanyPage() {
         contracts={contracts}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-          onCreateOwner={createOwner}
+        onCreateOwner={createOwner}
+        onDeactivateUser={deactivateUser}
       />
     </>
   );
