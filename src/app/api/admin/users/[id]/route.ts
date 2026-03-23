@@ -116,3 +116,78 @@ export async function DELETE(
     }
 
 }
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    /* ---------- AUTH ---------- */
+    await requireAuth({ roles: ["admin"] });
+
+    /* ---------- params ---------- */
+    const { id } = await params;
+    const userId = Number(id);
+
+    if (Number.isNaN(userId)) {
+      return Response.json(
+        { error: "invalid user id" },
+        { status: 400 }
+      );
+    }
+
+    /* ---------- find user ---------- */
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!user) {
+      return Response.json(
+        { error: "user not found" },
+        { status: 404 }
+      );
+    }
+
+    /* ---------- query params ---------- */
+    const { searchParams } = new URL(req.url);
+    const reactivate = searchParams.get("reactivate");
+
+    /* ===================================================== */
+    /* 🔁 REACTIVATE USER */
+    /* ===================================================== */
+    if (reactivate === "true") {
+      if (user.deletedAt === null) {
+        return Response.json(
+          { error: "user already active" },
+          { status: 409 }
+        );
+      }
+
+      await db
+        .update(users)
+        .set({ deletedAt: null })
+        .where(eq(users.id, userId));
+
+      return Response.json({
+        message: "user reactivated",
+      });
+    }
+
+    /* ===================================================== */
+    /* ✏️ FUTURE: UPDATE USER */
+    /* ===================================================== */
+
+    return Response.json(
+      { error: "nothing to update" },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    return Response.json(
+      { error: "internal server error" },
+      { status: 500 }
+    );
+  }
+}

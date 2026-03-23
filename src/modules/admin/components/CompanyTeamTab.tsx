@@ -1,10 +1,29 @@
 import { User } from "../types/admin";
 import { companyStyles } from "@/styles/companyAdmin.styles";
 import UserCard from "./UserCard";
+import { useState } from "react";
 
-export default function CompanyTeamTab({ users }: { users: User[] }) {
+
+export default function CompanyTeamTab({ users,onCreateOwner,onDeactivateUser, onReactivateUser, }:
+   { users: User[] ,
+     onCreateOwner: (email: string, password: string) => void;
+     onDeactivateUser: (userId: number) => void;
+      onReactivateUser: (userId: number) => void;
+    
+    }) {
   const owners = users.filter((u) => u.role === "owner");
   const staff = users.filter((u) => u.role === "manager" || u.role === "staff");
+
+
+  const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+
+const handleSubmit = () => {
+  if (!email || !password) return;
+  onCreateOwner(email, password);
+  setEmail("");
+  setPassword("");
+};
 
   return (
     <>
@@ -13,7 +32,7 @@ export default function CompanyTeamTab({ users }: { users: User[] }) {
       {owners.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {owners.map((u) => (
-            <UserCard key={u.id} user={u} />
+            <UserCard key={u.id} user={u} onDeactivate={onDeactivateUser}  onReactivate={onReactivateUser} />
           ))}
         </div>
       ) : (
@@ -27,12 +46,36 @@ export default function CompanyTeamTab({ users }: { users: User[] }) {
       {staff.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {staff.map((u) => (
-            <UserCard key={u.id} user={u} />
+            <UserCard key={u.id} user={u}  onDeactivate={onDeactivateUser}  onReactivate={onReactivateUser} />
           ))}
         </div>
       ) : (
         <p style={companyStyles.emptyText}>No managers or staff</p>
       )}
+
+      <div style={{ marginBottom: 20 }}>
+  <h4>Crear Owner</h4>
+
+  <input
+    placeholder="Email"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+  />
+
+  <input
+    type="password"
+    placeholder="Password"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
+
+  <button onClick={handleSubmit}>
+    Crear
+  </button>
+</div>
+
     </>
+
+    
   );
 }
