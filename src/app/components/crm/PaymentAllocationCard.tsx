@@ -4,6 +4,8 @@ type Item = {
   id: number;
   quantity: number;
   unitPrice: number | string;
+   paidAmount?: number;
+  remainingAmount?: number;
   service: {
     name: string;
     description?: string;
@@ -34,6 +36,9 @@ export default function PaymentAllocationCard({
         const total =
           item.quantity * Number(item.unitPrice);
 
+        const paid = item.paidAmount || 0;
+        const remaining = item.remainingAmount ?? (total - paid);
+
         return (
           <div
             key={item.id}
@@ -55,11 +60,21 @@ export default function PaymentAllocationCard({
               <strong>${total}</strong>
             </p>
 
+            <p style={{ fontSize: 12, color: "#16a34a" }}>
+              Paid: ${paid}
+            </p>
+
+            <p style={{ fontSize: 12, color: "#dc2626" }}>
+              Remaining: ${remaining}
+            </p>
+
+
             <input
               type="number"
               placeholder="Amount"
               value={formItems[index]?.amount || ""}
-              max={total}
+              //max={total}
+              max={remaining}
               onChange={(e) => {
 
                 const value = Number(e.target.value);
