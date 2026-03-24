@@ -113,16 +113,17 @@ const [pagination, setPagination] = useState<any>(null)
 
     try {
 
-      const res = await fetch(
-        "/api/company/contracts",
-        { credentials: "include" }
-      )
-
+      // const res = await fetch(
+      //   "/api/company/contracts",
+        
+      //   { credentials: "include" }
+      // )
+const res = await fetch("/api/company/contracts?limit=1000", { credentials: "include" })
       if (!res.ok) return
 
       const data = await res.json()
 
-      setContracts(data)
+    setContracts(data.data)
 
     } catch { }
 

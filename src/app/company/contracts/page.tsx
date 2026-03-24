@@ -96,28 +96,25 @@ export default function ContractsPage() {
         }
     };
 
-    const fetchEvents = async () => {
+  const fetchEvents = async () => {
+  try {
+    const res = await fetch(
+      "/api/company/events?limit=100", // opcional
+      { credentials: "include" }
+    );
 
-        try {
+    if (!res.ok) return;
 
-            const res = await fetch(
-                "/api/company/events",
-                { credentials: "include" }
-            );
+    const result = await res.json();
 
-            if (!res.ok) return;
+    const activeEvents = result.data.filter(
+      (e: any) => !e.deletedAt //  mejor usar deletedAt
+    );
 
-            const data = await res.json();
+    setEvents(activeEvents);
 
-            const activeEvents = data.filter(
-                (e: any) => !e.deleted
-            );
-
-            setEvents(activeEvents);
-
-        } catch { }
-
-    };
+  } catch {}
+};
 
     const createContract = async () => {
 
