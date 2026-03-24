@@ -3,7 +3,9 @@ import { tenantDb } from "@/lib/db/tenantDb"
 import {
   contractItems,
   services,
-  contracts
+  contracts,
+    payments,
+  paymentItems
 } from "@/db/schema"
 
 import { eq, and ,isNull } from "drizzle-orm"
@@ -15,6 +17,7 @@ import type {
 
 import { db } from "@/db"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
+
 
 /* ---------- ADD SERVICE TO CONTRACT ---------- */
 
@@ -133,6 +136,8 @@ export async function getContractServices(contractId: number) {
 
   const { companyId } = await getAuthContext()
 
+  /* ---------- 1. CONTRACT ITEMS ---------- */
+
   const rows = await db
     .select({
       id: contractItems.id,
@@ -146,7 +151,6 @@ export async function getContractServices(contractId: number) {
     })
     .from(contractItems)
 
-    // 🔥 JOIN CONTRACT (para tenant)
     .innerJoin(
       contracts,
       eq(contractItems.contractId, contracts.id)
@@ -160,23 +164,69 @@ export async function getContractServices(contractId: number) {
     .where(
       and(
         eq(contractItems.contractId, contractId),
-        eq(contracts.companyId, companyId!), // ✅ AQUÍ
+        eq(contracts.companyId, companyId!),
         isNull(contractItems.deletedAt)
       )
     )
 
-  return rows.map((row: any) => ({
-    id: row.id,
-    contractId: row.contractId,
-    quantity: row.quantity,
-    unitPrice: row.unitPrice,
-    service: {
-      id: row.serviceId,
-      name: row.serviceName,
-      description: row.serviceDescription
+  /* ---------- 2. PAYMENT ITEMS (🔥 NUEVO) ---------- */
+
+  const paymentItemsRows = await db
+    .select({
+      contractItemId: paymentItems.contractItemId,
+      amount: paymentItems.amount
+    })
+    .from(paymentItems)
+    .innerJoin(
+      payments,
+      eq(paymentItems.paymentId, payments.id)
+    )
+    .where(eq(payments.contractId, contractId))
+
+  /* ---------- 3. AGRUPAR PAGOS POR ITEM (🔥 NUEVO) ---------- */
+
+  const paidByItem = new Map<number, number>()
+
+  for (const row of paymentItemsRows) {
+    const current = paidByItem.get(row.contractItemId) || 0
+
+    paidByItem.set(
+      row.contractItemId,
+      current + Number(row.amount)
+    )
+  }
+
+  /* ---------- 4. ENRIQUECER RESULTADO (🔥 NUEVO) ---------- */
+
+  return rows.map((row: any) => {
+
+    const total =
+      row.quantity * Number(row.unitPrice)
+
+    const paid =
+      paidByItem.get(row.id) || 0
+
+    const remaining =
+      total - paid
+
+    return {
+      id: row.id,
+      contractId: row.contractId,
+      quantity: row.quantity,
+      unitPrice: row.unitPrice,
+
+      paidAmount: paid,           // 🔥 NUEVO
+      remainingAmount: remaining, // 🔥 NUEVO
+
+      service: {
+        id: row.serviceId,
+        name: row.serviceName,
+        description: row.serviceDescription
+      }
     }
-  }))
+  })
 }
+
 /* ---------- GET CONTRACT SERVICES ---------- */
 
 
