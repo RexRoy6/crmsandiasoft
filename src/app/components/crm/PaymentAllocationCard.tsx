@@ -4,6 +4,8 @@ type Item = {
   id: number;
   quantity: number;
   unitPrice: number | string;
+  paidAmount?: number;
+  remainingAmount?: number;
   service: {
     name: string;
     description?: string;
@@ -34,38 +36,123 @@ export default function PaymentAllocationCard({
         const total =
           item.quantity * Number(item.unitPrice);
 
+        const paid = item.paidAmount || 0;
+        const remaining = item.remainingAmount ?? (total - paid);
+
         return (
           <div
             key={item.id}
             style={{
-              padding: 10,
+              padding: 16,
               border: "1px solid var(--border-color)",
-              borderRadius: 8,
-              marginBottom: 10,
+              borderRadius: 12,
+              marginBottom: 12,
+              background: "var(--bg-primary)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
             }}
           >
-            <strong>{item.service.name}</strong>
+            {/* HEADER */}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div>
+                <strong style={{ fontSize: 15 }}>
+                  {item.service.name}
+                </strong>
 
-            <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-              {item.service.description}
-            </p>
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    marginTop: 2,
+                  }}
+                >
+                  {item.service.description}
+                </p>
+              </div>
 
-            <p>
-              Qty: {item.quantity} × ${Number(item.unitPrice)} ={" "}
-              <strong>${total}</strong>
-            </p>
+              {/* TOTAL BADGE */}
+              <div
+                style={{
+                  background: "var(--bg-secondary)",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                ${total}
+              </div>
+            </div>
 
+            {/* DETAILS */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 13,
+              }}
+            >
+              <span>
+                Qty: {item.quantity} × ${Number(item.unitPrice)}
+              </span>
+            </div>
+
+            {/* PROGRESS BAR */}
+            <div
+              style={{
+                height: 6,
+                borderRadius: 6,
+                background: "var(--bg-secondary)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${(paid / total) * 100}%`,
+                  background: "#22c55e",
+                  height: "100%",
+                }}
+              />
+            </div>
+
+            {/* PAID / REMAINING */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12,
+              }}
+            >
+              <span style={{ color: "#16a34a" }}>
+                Paid: ${paid}
+              </span>
+
+              <span style={{ color: "#dc2626" }}>
+                Remaining: ${remaining}
+              </span>
+            </div>
+
+            {/* INPUT */}
             <input
               type="number"
-              placeholder="Amount"
+              placeholder="Enter amount"
               value={formItems[index]?.amount || ""}
-              max={total}
+              max={remaining}
+              style={{
+                marginTop: 6,
+                padding: "8px 10px",
+                borderRadius: 8,
+                border: "1px solid var(--border-color)",
+                background: "var(--bg-secondary)",
+                color: "var(--text-primary)",
+                fontSize: 13,
+                outline: "none",
+              }}
               onChange={(e) => {
-
                 const value = Number(e.target.value);
 
                 setForm((prev: any) => {
-
                   const updated = [...prev.items];
 
                   updated[index] = {
@@ -78,7 +165,6 @@ export default function PaymentAllocationCard({
                     items: updated,
                   };
                 });
-
               }}
             />
           </div>

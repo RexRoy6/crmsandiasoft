@@ -336,10 +336,13 @@ export default function EventsPage() {
         }),
       });
 
-      if (!res.ok) {
-        setError("Failed to create contract");
-        return;
-      }
+     if (!res.ok) {
+  const data = await res.json()
+
+  setError(data?.error || "Failed to create contract")
+  setErrorCode(res.status)
+  return
+}
 
       const newContract = await res.json();
 

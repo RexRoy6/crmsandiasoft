@@ -4,11 +4,13 @@ import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { contracts, events, clients, payments } from "@/db/schema"
 import { sql } from "drizzle-orm"
 
-import { eq, and, isNull,like, or, desc  } from "drizzle-orm"
+import { eq, and, isNull, like, or, desc } from "drizzle-orm"
 import type {
   CreateContractInput,
   UpdateContractInput
 } from "@/lib/validations/contractValidation"
+
+class ConflictError extends Error {}
 
 
 
@@ -31,14 +33,20 @@ export async function createContract(data: CreateContractInput) {
     contracts,
     and(
       eq(contracts.eventId, data.eventId),
-      eq(contracts.companyId, event.companyId)
+      eq(contracts.companyId, event.companyId),
+      isNull(contracts.deletedAt)
     )
   )
 
-  if (existing) {
-    return existing // o throw error si prefieres
-  }
-
+  // if (existing) {
+  //   return existing // o throw error si prefieres
+  // }
+  //   if (existing) {
+  //   throw new Error("Contract already exists for this event")
+  // }
+if (existing) {
+  throw new ConflictError("Contract already exists for this event")
+}
   const [result] = await tdb.insert(
     contracts,
     {
@@ -226,9 +234,9 @@ export async function getContract(id: number) {
     .where(
       companyId
         ? and(
-            eq(contracts.id, id),
-            eq(contracts.companyId, companyId)
-          )
+          eq(contracts.id, id),
+          eq(contracts.companyId, companyId)
+        )
         : eq(contracts.id, id)
     )
 
@@ -256,18 +264,18 @@ export async function getContract(id: number) {
 
     client: row.clientId
       ? {
-          id: row.clientId,
-          name: row.clientName
-        }
+        id: row.clientId,
+        name: row.clientName
+      }
       : null,
 
     event: row.eventId
       ? {
-          id: row.eventId,
-          name: row.eventName,
-          eventDate: row.eventDate,
-          location: row.eventLocation
-        }
+        id: row.eventId,
+        name: row.eventName,
+        eventDate: row.eventDate,
+        location: row.eventLocation
+      }
       : null
   }
 }
