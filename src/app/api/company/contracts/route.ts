@@ -34,15 +34,23 @@ export async function POST(req: Request) {
 
     console.error(error)
 
-    if (error.message === "event not found") {
+    if (error.message === "Event not found") {
       return Response.json(
-        { error: "event not found" },
+        { error: "Event not found" },
         { status: 404 }
+      )
+    }
+    
+
+    if (error.message === "Contract already exists for this event") {
+      return Response.json(
+        { error: error.message },
+        { status: 400 }
       )
     }
 
     return Response.json(
-      { error: "internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }
