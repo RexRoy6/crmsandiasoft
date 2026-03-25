@@ -8,7 +8,6 @@ import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 
 export default function CompanyDashboard() {
-
   const router = useRouter();
 
   const [user, setUser] = useState<any>(null);
@@ -20,9 +19,7 @@ export default function CompanyDashboard() {
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
-
     try {
-
       setLoading(true);
 
       const meRes = await fetch("/api/company/me", {
@@ -55,17 +52,11 @@ export default function CompanyDashboard() {
 
       const dashData = await dashRes.json();
       setStats(dashData);
-
     } catch {
-
       setError("Connection error");
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   useEffect(() => {
@@ -74,25 +65,16 @@ export default function CompanyDashboard() {
 
   return (
     <div>
-
       <PageHeader title="Dashboard" />
 
-      {error && (
-        <ErrorBox
-          message={error}
-          code={errorCode}
-        />
-      )}
+      {error && <ErrorBox message={error} code={errorCode} />}
 
       {loading && (
-        <p style={{ color: "var(--text-secondary)" }}>
-          Loading dashboard...
-        </p>
+        <p style={{ color: "var(--text-secondary)" }}>Loading dashboard...</p>
       )}
 
       {!loading && stats && (
         <>
-
           {/* ---------- METRICS ---------- */}
 
           <div
@@ -103,16 +85,9 @@ export default function CompanyDashboard() {
               marginBottom: 40,
             }}
           >
+            <DashboardCard title="Clients" value={stats.clients} />
 
-            <DashboardCard
-              title="Clients"
-              value={stats.clients}
-            />
-
-            <DashboardCard
-              title="Events"
-              value={stats.events}
-            />
+            <DashboardCard title="Events" value={stats.events} />
 
             <DashboardCard
               title="Active Contracts"
@@ -128,7 +103,6 @@ export default function CompanyDashboard() {
               title="Pending Payments"
               value={`$${stats.pendingPayments}`}
             />
-
           </div>
 
           {/* ---------- COMPANY INFO ---------- */}
@@ -146,7 +120,6 @@ export default function CompanyDashboard() {
                 gap: 8,
               }}
             >
-
               <h2
                 style={{
                   fontSize: 18,
@@ -171,13 +144,10 @@ export default function CompanyDashboard() {
               <div>
                 <strong>Company ID:</strong> {user.companyId}
               </div>
-
             </div>
           )}
-
         </>
       )}
-
     </div>
   );
 }
