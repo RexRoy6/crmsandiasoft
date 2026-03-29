@@ -6,12 +6,13 @@ import {
 import {
   createContractSchema
 } from "@/lib/validations/contractValidation"
-
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 
 /* ---------- POST (create contract) ---------- */
 
 export async function POST(req: Request) {
+  const auth = await requireAuth()
 
   try {
 
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
 /* ---------- GET (company contracts) ---------- */
 
 export async function GET(req: Request) {
+  const auth = await requireAuth()
 
   try {
 

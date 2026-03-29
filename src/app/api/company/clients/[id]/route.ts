@@ -1,11 +1,13 @@
 import { getClient, updateClient, 
   deleteClient,reactivateClient } from "@/lib/services/clientService"
 import { updateClientSchema } from "@/lib/validations/clientValidation"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 export async function GET(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth()
 
     try {
         const { id } = await params
@@ -45,6 +47,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth()
   try {
 
     const { id } = await params
@@ -118,6 +121,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth()
   try {
 
     const { id } = await params

@@ -1,8 +1,10 @@
 import {
   getCompanyPayments
 } from "@/lib/services/paymentService"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 export async function GET(req: Request) {
+   const auth = await requireAuth()
   try {
 
     const { searchParams } = new URL(req.url)

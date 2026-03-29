@@ -1,12 +1,13 @@
 import { getContractSummary }
 from "@/lib/services/contractSummaryService"
-
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
 
   try {
 

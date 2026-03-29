@@ -57,5 +57,11 @@ export const RBAC_CONFIG: RbacRoute[] = [
       PATCH: ["owner"],
       DELETE: ["owner"]
     }
+  },
+  {
+  pattern: "/api/auth/change-password",
+  methods: {
+    PATCH: ["admin", "owner", "user"]
   }
+}
 ]

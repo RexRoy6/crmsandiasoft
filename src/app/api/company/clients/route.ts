@@ -1,11 +1,10 @@
 import { getClients, createClient } from "@/lib/services/clientService"
 import { createClientSchema } from "@/lib/validations/clientValidation"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
-// export async function GET() {
-//   const data = await getClients()
-//   return Response.json(data)
-// }
+
 export async function GET(req: Request) {
+  const auth = await requireAuth()
 
   const { searchParams } = new URL(req.url)
 
@@ -23,6 +22,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+   const auth = await requireAuth()
 
   const body = await req.json()
 

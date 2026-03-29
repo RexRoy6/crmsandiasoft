@@ -1,7 +1,10 @@
 import { createService, getCompanyServices } from "@/lib/services/serviceService"
 import { createServiceSchema } from "@/lib/validations/serviceValidation"
+import { requireAuth } from "@/lib/auth/requireAuth"
+
 
 export async function GET() {
+  const auth = await requireAuth()
   try {
     const data = await getCompanyServices()
     return Response.json(data)
@@ -15,6 +18,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireAuth()
   try {
     const body = await req.json()
 

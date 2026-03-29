@@ -8,7 +8,7 @@ import {
 import {
   updateContractSchema
 } from "@/lib/validations/contractValidation"
-
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 
 /* ---------- GET (single contract) ---------- */
@@ -17,6 +17,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+   const auth = await requireAuth()
 
   try {
 
@@ -61,6 +62,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+   const auth = await requireAuth()
 
   try {
 
@@ -142,6 +144,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+   const auth = await requireAuth()
 
   try {
 

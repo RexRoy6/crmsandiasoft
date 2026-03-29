@@ -8,12 +8,14 @@ import {
     updateServiceSchema
 } from "@/lib/validations/serviceValidation"
 
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 /* ---------- GET ---------- */
 export async function GET(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth()
     try {
         const { id } = await params
         const serviceId = Number(id)
@@ -51,6 +53,7 @@ export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth()
     try {
         const { id } = await params
         const serviceId = Number(id)
@@ -131,6 +134,7 @@ export async function DELETE(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth()
     try {
         const { id } = await params
         const serviceId = Number(id)

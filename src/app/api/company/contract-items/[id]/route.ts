@@ -7,6 +7,7 @@ import {
   updateContractItemSchema
 } from "@/lib/validations/contractItemValidation"
 
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 
 /* ---------- PATCH ---------- */
@@ -15,6 +16,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
 
   try {
 
@@ -72,6 +74,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAuth()
 
   try {
 

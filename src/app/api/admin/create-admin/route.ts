@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth/requireAuth"
 import { eq } from "drizzle-orm"
 
 export async function POST(req: Request) {
+  const auth = await requireAuth()
   try {
     const { email, password } = await req.json()
 

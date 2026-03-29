@@ -6,10 +6,12 @@ import {
 import {
   createEventSchema
 } from "@/lib/validations/eventValidation"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 
 /* ---------- POST (create event) ---------- */
 export async function POST(req: Request) {
+  const auth = await requireAuth()
   try {
 
     const body = await req.json()
@@ -41,6 +43,7 @@ export async function POST(req: Request) {
 
 /* ---------- GET (company events) ---------- */
 export async function GET(req: Request) {
+  const auth = await requireAuth()
   try {
 
     const { searchParams } = new URL(req.url)
