@@ -54,18 +54,38 @@ export const companies = mysqlTable("companies", {
 
 /* ---------- USERS ---------- */
 
+// export const users = mysqlTable("users", {
+//   id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
+
+//   companyId: bigint("company_id", { mode: "number" })
+//     .references(() => companies.id, { onDelete: "cascade" }),
+
+//   // ✅ usar USER_ROLES directamente
+//   role: mysqlEnum("role", USER_ROLES).notNull(),
+
+//   email: varchar("email", { length: 255 }).notNull().unique(),
+
+//   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+
+//   ...baseColumns
+// }, (table) => ({
+//   companyIdx: index("users_company_idx").on(table.companyId),
+//   emailIdx: index("users_email_idx").on(table.email)
+// }))
 export const users = mysqlTable("users", {
   id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
   companyId: bigint("company_id", { mode: "number" })
     .references(() => companies.id, { onDelete: "cascade" }),
 
-  // ✅ usar USER_ROLES directamente
   role: mysqlEnum("role", USER_ROLES).notNull(),
 
   email: varchar("email", { length: 255 }).notNull().unique(),
 
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+
+  // NUEVO
+  passwordChangedAt: timestamp("password_changed_at"),
 
   ...baseColumns
 }, (table) => ({
