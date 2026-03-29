@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken } from "@/lib/auth/jwt"
+import { verifyTokenEdge } from "@/lib/auth/verifyTokenEdge"
 import { checkPermission } from "@/lib/auth/checkPermission"
 import { RBAC_CONFIG } from "@/lib/auth/rbacConfig"
 
@@ -47,7 +48,10 @@ export async function middleware(req: NextRequest) {
 
     let payload
     try {
-      payload = await verifyToken(token)
+     // payload = await verifyToken(token)
+     //verifyTokenEdge
+     payload = await verifyTokenEdge(token)
+
     } catch {
       return NextResponse.json({ error: "invalid token" }, { status: 401 })
     }
