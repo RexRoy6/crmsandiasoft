@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth/requireAuth";
 
 /* ---------- GET: solo activas ---------- */
 export async function GET() {
+  const auth = await requireAuth()
   try {
     /* ---------- AUTH ---------- */
     let auth;
@@ -26,7 +27,7 @@ export async function GET() {
 /* ---------- POST: crear ---------- */
 export async function POST(req: Request) {
   let body;
-
+const auth = await requireAuth()
   // Check if valid JSON body exists
   try {
     /* ---------- AUTH ---------- */

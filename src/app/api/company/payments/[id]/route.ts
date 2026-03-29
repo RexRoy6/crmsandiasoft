@@ -4,11 +4,13 @@ import {
   deletePayment,
   reactivatePayment
 } from "@/lib/services/paymentService"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+   const auth = await requireAuth()
 
   const { id } = await params
   const paymentId = Number(id)
@@ -36,6 +38,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+   const auth = await requireAuth()
 
   const { id } = await params
   const paymentId = Number(id)
@@ -75,6 +78,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+   const auth = await requireAuth()
 
   const { id } = await params
   const paymentId = Number(id)
