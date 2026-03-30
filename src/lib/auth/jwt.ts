@@ -24,7 +24,7 @@ export interface AuthTokenPayload extends JWTPayload {
 export async function signToken(payload: AuthTokenPayload) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
+    .setExpirationTime("1d")//era 7
     .sign(secret)
 }
 

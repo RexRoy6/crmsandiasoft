@@ -10,6 +10,8 @@ import {
   FileText,
   CreditCard,
   Briefcase,
+  AlarmClock,
+  Settings
 } from "lucide-react";
 
 const menu = [
@@ -31,7 +33,7 @@ const menu = [
   {
     label: "Events",
     href: "/company/events",
-    icon: Calendar,
+    icon: AlarmClock,
   },
   {
     label: "Contracts",
@@ -47,6 +49,11 @@ const menu = [
     label: "Calendar",
     href: "/company/calendar",
     icon: Calendar,
+  },
+   {
+    label: "Settings",
+    href: "/company/settings",
+    icon: Settings,
   },
 ];
 
