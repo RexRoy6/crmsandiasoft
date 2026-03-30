@@ -12,20 +12,50 @@ export default function ChangePasswordForm({
     const [form, setForm] = useState({
         currentPassword: "",
         newPassword: "",
+        confirmPassword: "",
     });
+
+    const [showPasswords, setShowPasswords] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [errorCode, setErrorCode] = useState<number | undefined>();
     const [success, setSuccess] = useState("");
 
+    // 🔒 reglas de seguridad
+    const validations = {
+        minLength: form.newPassword.length >= 6,
+        hasUppercase: /[A-Z]/.test(form.newPassword),
+        hasNumber: /[0-9]/.test(form.newPassword),
+    };
+
+    const passwordsMatch =
+        form.newPassword &&
+        form.confirmPassword &&
+        form.newPassword === form.confirmPassword;
+
+    const isValidPassword =
+        validations.minLength &&
+        validations.hasUppercase &&
+        validations.hasNumber;
+
     const handleSubmit = async () => {
         try {
             setError("");
             setSuccess("");
 
-            if (!form.currentPassword || !form.newPassword) {
+            if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
                 setError("All fields are required");
+                return;
+            }
+
+            if (!passwordsMatch) {
+                setError("Passwords do not match");
+                return;
+            }
+
+            if (!isValidPassword) {
+                setError("Password does not meet requirements");
                 return;
             }
 
@@ -37,7 +67,10 @@ export default function ChangePasswordForm({
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(form),
+                body: JSON.stringify({
+                    currentPassword: form.currentPassword,
+                    newPassword: form.newPassword,
+                }),
             });
 
             const data = await res.json();
@@ -52,13 +85,12 @@ export default function ChangePasswordForm({
 
             setSuccess(message);
 
-            // reset form
             setForm({
                 currentPassword: "",
                 newPassword: "",
+                confirmPassword: "",
             });
 
-            // callback opcional
             onSuccess?.(message);
 
         } catch {
@@ -67,6 +99,12 @@ export default function ChangePasswordForm({
             setLoading(false);
         }
     };
+
+    const renderValidation = (valid: boolean, label: string) => (
+        <div style={{ color: valid ? "green" : "#999", fontSize: 13 }}>
+            {valid ? "✓" : "•"} {label}
+        </div>
+    );
 
     return (
         <div
@@ -94,8 +132,23 @@ export default function ChangePasswordForm({
                 </div>
             )}
 
+            {/* toggle show/hide */}
+            <button
+                type="button"
+                onClick={() => setShowPasswords(!showPasswords)}
+                style={{
+                    alignSelf: "flex-end",
+                    fontSize: 12,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                }}
+            >
+                {showPasswords ? "Hide passwords" : "Show passwords"}
+            </button>
+
             <input
-                type="password"
+                type={showPasswords ? "text" : "password"}
                 placeholder="Current password"
                 value={form.currentPassword}
                 onChange={(e) =>
@@ -104,13 +157,43 @@ export default function ChangePasswordForm({
             />
 
             <input
-                type="password"
+                type={showPasswords ? "text" : "password"}
                 placeholder="New password"
                 value={form.newPassword}
                 onChange={(e) =>
                     setForm({ ...form, newPassword: e.target.value })
                 }
             />
+
+            {/* 🔒 Validaciones visuales */}
+            <div style={{ marginBottom: 5 }}>
+                {renderValidation(validations.minLength, "At least 6 characters")}
+                {renderValidation(validations.hasUppercase, "One uppercase letter")}
+                {renderValidation(validations.hasNumber, "One number")}
+            </div>
+
+            <input
+                type={showPasswords ? "text" : "password"}
+                placeholder="Confirm new password"
+                value={form.confirmPassword}
+                onChange={(e) =>
+                    setForm({ ...form, confirmPassword: e.target.value })
+                }
+            />
+
+            {/* match indicator */}
+            {form.confirmPassword && (
+                <div
+                    style={{
+                        fontSize: 13,
+                        color: passwordsMatch ? "green" : "#b00020",
+                    }}
+                >
+                    {passwordsMatch
+                        ? "✓ Passwords match"
+                        : "Passwords do not match"}
+                </div>
+            )}
 
             <button
                 onClick={handleSubmit}
@@ -122,6 +205,7 @@ export default function ChangePasswordForm({
                     background: "#111",
                     color: "#fff",
                     cursor: "pointer",
+                    opacity: loading ? 0.7 : 1,
                 }}
             >
                 {loading ? "Updating..." : "Update Password"}
