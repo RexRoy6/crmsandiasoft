@@ -1,40 +1,44 @@
+"use client";
+
+import { useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
 import Topbar from "@/app/components/Topbar";
+
+const TOPBAR_HEIGHT = 60;
+const SIDEBAR_WIDTH = 220;
+const SIDEBAR_COLLAPSED_WIDTH = 70;
 
 export default function CompanyLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
+
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        background: "var(--bg-primary)",
-      }}
-    >
-      <Sidebar />
+    <>
+      <Topbar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Sidebar collapsed={collapsed} />
 
       <div
         style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
+          marginTop: TOPBAR_HEIGHT,
+          marginLeft: sidebarWidth,
+          minHeight: "100vh",
+          background: "var(--bg-secondary)",
+          transition: "margin-left 0.2s ease",
         }}
       >
-        <Topbar />
-
         <main
           style={{
-            flex: 1,
             padding: 40,
-            background: "var(--bg-secondary)",
           }}
         >
           {children}
         </main>
       </div>
-    </div>
+    </>
   );
 }
