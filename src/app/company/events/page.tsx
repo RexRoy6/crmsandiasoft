@@ -8,8 +8,8 @@ import ListCard from "@/app/components/crm/ListCard";
 import type { Field } from "@/app/components/crm/CreateForm";
 import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import { useRouter } from "next/navigation";
-import SearchBar from "@/app/components/crm/SearchBar"
-import Pagination from "@/app/components/crm/Pagination"
+import SearchBar from "@/app/components/crm/SearchBar";
+import Pagination from "@/app/components/crm/Pagination";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -26,11 +26,10 @@ export default function EventsPage() {
 
   const [contracts, setContracts] = useState<any[]>([]);
 
-
   //para buscar clientes
-  const [search, setSearch] = useState("")
-  const [page, setPage] = useState(1)
-  const [pagination, setPagination] = useState<any>(null)
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<any>(null);
   //
 
   //es para crear un nuevo cliente
@@ -179,8 +178,8 @@ export default function EventsPage() {
         `/api/company/events?search=${search}&page=${page}&limit=8`,
         {
           credentials: "include",
-        }
-      )
+        },
+      );
 
       if (!res.ok) {
         setError("Failed to fetch events");
@@ -192,7 +191,6 @@ export default function EventsPage() {
 
       setEvents(result.data);
       setPagination(result.pagination);
-
     } catch {
       setError("Connection error");
     } finally {
@@ -207,16 +205,13 @@ export default function EventsPage() {
 
       if (!res.ok) return;
 
-
       const result = await res.json();
       /* quitar clientes eliminados */
 
       const activeClients = result.data.filter((c: any) => !c.deletedAt);
 
       setClients(activeClients);
-
-
-    } catch { }
+    } catch {}
   };
 
   const createEvent = async () => {
@@ -315,8 +310,7 @@ export default function EventsPage() {
 
       const result = await res.json();
       setContracts(result.data);
-
-    } catch { }
+    } catch {}
   };
   const getContractForEvent = (eventId: number) => {
     return contracts.find((c) => c.event?.id === eventId);
@@ -337,13 +331,13 @@ export default function EventsPage() {
         }),
       });
 
-     if (!res.ok) {
-  const data = await res.json()
+      if (!res.ok) {
+        const data = await res.json();
 
-  setError(data?.error || "Failed to create contract")
-  setErrorCode(res.status)
-  return
-}
+        setError(data?.error || "Failed to create contract");
+        setErrorCode(res.status);
+        return;
+      }
 
       const newContract = await res.json();
 
@@ -362,11 +356,11 @@ export default function EventsPage() {
   // fetch events con search + pagination
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchEvents()
-    }, 300)
+      fetchEvents();
+    }, 300);
 
-    return () => clearTimeout(timeout)
-  }, [search, page])
+    return () => clearTimeout(timeout);
+  }, [search, page]);
 
   return (
     <div>
@@ -381,7 +375,6 @@ export default function EventsPage() {
         onChange={setSearch}
         placeholder="Search events, clients or location"
       />
-
 
       {showForm && (
         <CreateForm
@@ -450,7 +443,6 @@ export default function EventsPage() {
       {!loading && events.length === 0 && <p>No events found.</p>}
 
       {!loading && events.length > 0 && (
-
         <>
           <div
             style={{
@@ -464,87 +456,111 @@ export default function EventsPage() {
               const contract = getContractForEvent(event.id);
               //console.log("pagination:", pagination)
               return (
-                <div
+                <ListCard
                   key={event.id}
-                  style={{
-                    border: "1px solid var(--border-color)",
-                    borderRadius: 10,
-                    padding: 12,
-                    background: "var(--bg-primary)",
-                  }}
-                >
-                  <ListCard
-                    title={event.name}
-                    extra={[
-                      `Client: ${event.client?.name}`,
-                      `Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString(
-                        [],
-                        {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )}`,
-                      `Location: ${event.location}`,
-                      `Notes: ${event.notes} `,
-                    ]}
-                    link={`/company/clients/${event.client?.id}/events/${event.id}`}
-                  />
-
-
-                  {/* 👇 AQUÍ VA TU BOTÓN */}
-                  <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-                    {contract ? (
-                      <>
-                        <button
-                          onClick={() =>
-                            router.push(
-                              `/company/contracts/${contract.id}/services`,
-                            )
-                          }
-                          style={{
-                            padding: "6px 10px",
-                            borderRadius: 6,
-                            border: "none",
-                            background: "#16a34a",
-                            color: "white",
-                            cursor: "pointer",
-                          }}
-                        >
-                          View Contract
-                        </button>
-
-                        <span
-                          style={{
-                            fontSize: 12,
-                            color: "#6b7280",
-                          }}
-                        >
-                          Status: {contract.status}
-                        </span>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => createContractForEvent(event.id)}
+                  title={event.name}
+                  subtitle={event.client?.name}
+                  content={
+                    <>
+                      <div
                         style={{
-                          padding: "6px 10px",
-                          borderRadius: 6,
-                          border: "1px solid var(--border-color)",
-                          background: "transparent",
-                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6,
+                          marginTop: 6,
                         }}
                       >
-                        Create Contract
-                      </button>
-                    )}
-                  </div>
-                </div>
+                        {/* Date */}
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <span style={{ fontSize: 12, color: "#64748b" }}>
+                            Date
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: "#0f172a",
+                            }}
+                          >
+                            {date.toLocaleDateString()} ·{" "}
+                            {date.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+
+                        {/* Location */}
+                        {event.location && (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <span style={{ fontSize: 12, color: "#64748b" }}>
+                              Location
+                            </span>
+                            <span style={{ fontSize: 13, color: "#1e293b" }}>
+                              {event.location}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Notes */}
+                        {event.notes && (
+                          <div
+                            style={{
+                              marginTop: 4,
+                              padding: "8px 10px",
+                              background: "#f8fafc",
+                              borderRadius: 8,
+                              border: "1px solid #e2e8f0",
+                              fontSize: 12,
+                              color: "#475569",
+                            }}
+                          >
+                            {event.notes}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  }
+                  actions={[
+                    ...(contract
+                      ? [
+                          {
+                            label: "View Contract",
+                            onClick: () =>
+                              router.push(
+                                `/company/contracts/${contract.id}/services`,
+                              ),
+                          },
+                        ]
+                      : [
+                          {
+                            label: "Create Contract",
+                            onClick: () => createContractForEvent(event.id),
+                          },
+                        ]),
+
+                    {
+                      label: "Manage →",
+                      onClick: () =>
+                        router.push(
+                          `/company/clients/${event.client?.id}/events/${event.id}`,
+                        ),
+                    },
+                  ]}
+                />
               );
             })}
-
-
-
           </div>
-
 
           {/* 👇 pagination SEPARADO */}
           {pagination && (
@@ -555,14 +571,7 @@ export default function EventsPage() {
             />
           )}
         </>
-
-
-
-
       )}
-
-
-
     </div>
   );
 }

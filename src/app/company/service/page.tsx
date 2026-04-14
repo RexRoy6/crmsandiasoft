@@ -30,65 +30,64 @@ export default function ServicesPage() {
 
 
 
-    const fetchServices = async () => {
-        try {
-            setLoading(true);
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
 
-            const res = await fetch("/api/company/services", {
-                credentials: "include",
-            });
+      const res = await fetch("/api/company/services", {
+        credentials: "include",
+      });
 
-            if (!res.ok) {
-                setError("Failed to fetch services");
-                setErrorCode(res.status);
-                return;
-            }
+      if (!res.ok) {
+        setError("Failed to fetch services");
+        setErrorCode(res.status);
+        return;
+      }
 
-            const data = await res.json();
+      const data = await res.json();
 
-            setServices(data);
-        } catch {
-            setError("Connection error");
-        } finally {
-            setLoading(false);
-        }
-    };
+      setServices(data);
+    } catch {
+      setError("Connection error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const createService = async () => {
-        try {
-            setError("");
-            setErrorCode(undefined);
+  const createService = async () => {
+    try {
+      setError("");
+      setErrorCode(undefined);
 
-            const res = await fetch("/api/company/services", {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(form),
-            });
+      const res = await fetch("/api/company/services", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
 
-            if (!res.ok) {
-                setError("Failed to create service");
-                setErrorCode(res.status);
-                return;
-            }
+      if (!res.ok) {
+        setError("Failed to create service");
+        setErrorCode(res.status);
+        return;
+      }
 
-            setShowForm(false);
+      setShowForm(false);
 
-            setForm({
-                name: "",
-                description: "",
-                stockTotal: 1,
-                priceBase: "",
-            });
+      setForm({
+        name: "",
+        description: "",
+        stockTotal: 1,
+        priceBase: "",
+      });
 
-            fetchServices(); // refresh list
-        } catch {
-            setError("Connection error");
-        }
-    };
-
+      fetchServices(); // refresh list
+    } catch {
+      setError("Connection error");
+    }
+  };
 
     useEffect(() => {
         fetchServices();
@@ -115,39 +114,50 @@ export default function ServicesPage() {
             )}
 
 
-            {error && <ErrorBox message={error} code={errorCode} />}
+      {error && <ErrorBox message={error} code={errorCode} />}
 
-            {loading && <p>Loading services...</p>}
+      {loading && <p>Loading services...</p>}
 
-            {!loading && services.length === 0 && <p>No services found.</p>}
+      {!loading && services.length === 0 && <p>No services found.</p>}
 
-            {!loading && services.length > 0 && (
+      {!loading && services.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          {services.map((service) => (
+            <ListCard
+              key={service.id}
+              title={service.name}
+              subtitle={service.description}
+              content={
                 <div
-                    style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                    }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    marginTop: 6,
+                    fontSize: 13,
+                    color: "#334155",
+                  }}
                 >
-                    {services.map((service) => {
-                        const isActive = !service.deletedAt;
+                  <span>
+                    <strong>Stock:</strong> {service.stockTotal}
+                  </span>
 
-                        return (
-                            <ListCard
-                                key={service.id}
-                                title={service.name}
-                                description={service.description}
-                                extra={[
-                                    `Stock: ${service.stockTotal}`,
-                                    `Price: $${service.priceBase}`,
-                                ]}
-                                link={`/company/service/${service.id}`}
-                                isActive={isActive} // 👈 pasar prop
-                            />
-                        );
-                    })}
+                  <span>
+                    <strong>Price:</strong> ${service.priceBase}
+                  </span>
                 </div>
-            )}
+              }
+              link={`/company/service/${service.id}`}
+            />
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 }
