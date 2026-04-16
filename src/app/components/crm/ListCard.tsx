@@ -7,6 +7,7 @@ type Props = {
   description?: string;
   extra?: string[];
   link: string;
+  isActive?: boolean;
 };
 
 export default function ListCard({
@@ -14,6 +15,7 @@ export default function ListCard({
   description,
   extra,
   link,
+  isActive = true,
 }: Props) {
   return (
     <div
@@ -21,11 +23,14 @@ export default function ListCard({
         background: "var(--bg-primary)",
         padding: 20,
         borderRadius: 12,
-        border: "1px solid var(--border-color)",
+        border: isActive
+          ? "1px solid var(--border-color)"
+          : "1px solid #ff4d4f", //inactive
         display: "flex",
         flexDirection: "column",
         gap: 8,
         transition: "all 0.15s ease",
+        opacity: isActive ? 1 : 0.6, //se ve "apagado"
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
@@ -39,14 +44,30 @@ export default function ListCard({
     >
       {/* TITLE */}
 
-      <strong
-        style={{
-          fontSize: 16,
-          color: "var(--text-primary)",
-        }}
-      >
-        {title}
-      </strong>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <strong
+          style={{
+            fontSize: 16,
+            color: "var(--text-primary)",
+          }}
+        >
+          {title}
+        </strong>
+
+        {!isActive && (
+          <span
+            style={{
+              background: "#ff4d4f",
+              color: "white",
+              fontSize: 12,
+              padding: "2px 6px",
+              borderRadius: 6,
+            }}
+          >
+            Inactive
+          </span>
+        )}
+      </div>
 
       {/* DESCRIPTION */}
 

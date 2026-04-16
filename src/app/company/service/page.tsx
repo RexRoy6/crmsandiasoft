@@ -19,6 +19,7 @@ export default function ServicesPage() {
         stockTotal: 1,
         priceBase: "",
     });
+
     //campos para formulario de servicios
     const serviceFields: Field[] = [
         { name: "name", label: "Name" },
@@ -93,10 +94,10 @@ export default function ServicesPage() {
         fetchServices();
     }, []);
 
+
+
     return (
         <div>
-
-
             <PageHeader
                 title="Services"
                 buttonLabel="+ New Service"
@@ -128,18 +129,23 @@ export default function ServicesPage() {
                         gap: 10,
                     }}
                 >
-                    {services.map((service) => (
-                        <ListCard
-                            key={service.id}
-                            title={service.name}
-                            description={service.description}
-                            extra={[
-                                `Stock: ${service.stockTotal}`,
-                                `Price: $${service.priceBase}`,
-                            ]}
-                            link={`/company/service/${service.id}`}
-                        />
-                    ))}
+                    {services.map((service) => {
+                        const isActive = !service.deletedAt;
+
+                        return (
+                            <ListCard
+                                key={service.id}
+                                title={service.name}
+                                description={service.description}
+                                extra={[
+                                    `Stock: ${service.stockTotal}`,
+                                    `Price: $${service.priceBase}`,
+                                ]}
+                                link={`/company/service/${service.id}`}
+                                isActive={isActive} // 👈 pasar prop
+                            />
+                        );
+                    })}
                 </div>
             )}
         </div>
