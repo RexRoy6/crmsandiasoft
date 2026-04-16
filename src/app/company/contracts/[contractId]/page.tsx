@@ -37,6 +37,7 @@ export default function ContractDetailPage() {
     { name: "eventName", label: "Event" },
     { name: "eventDate", label: "Event Date" },
     { name: "eventLocation", label: "Location" },
+    { name: "eventNote", label: "Note" },
   ];
 
   /* ---------- FETCH ---------- */
@@ -192,6 +193,7 @@ export default function ContractDetailPage() {
       eventName: contract.event?.name,
       eventDate: contract.event?.eventDate,
       eventLocation: contract.event?.location,
+      eventNote: contract.event?.notes,
     }
     : null
 

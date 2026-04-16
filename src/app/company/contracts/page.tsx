@@ -262,6 +262,8 @@ export default function ContractsPage() {
                                         extra={[
                                             `Client: ${contract.client?.name}`,
                                             `Event: ${contract.event?.name}`,
+                                            `Location: ${contract.event?.location}`,
+                                            `Notes: ${contract.event?.notes}`,
                                             `Status: ${contract.status}`,
                                             `Total: $${contract.totalAmount}`,
                                             `Paid: $${contract.paidAmount}`,
