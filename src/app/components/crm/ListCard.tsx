@@ -32,6 +32,7 @@ type ListCardProps = {
   onClick?: () => void;
 
   children?: React.ReactNode;
+  isActive?: boolean;
 };
 
 export default function ListCard({
@@ -44,6 +45,7 @@ export default function ListCard({
   link,
   onClick,
   children,
+  isActive = true,
 }: ListCardProps) {
   const router = useRouter();
 
@@ -57,25 +59,22 @@ export default function ListCard({
   };
 
   const getBadgeStyles = () => {
-    return (
-      badgeStyles[badge?.label || ""] || {
-        background: "#e2e8f0",
-        color: "#334155",
-      }
-    );
+    const label = badge?.label || "";
+    const baseStyle = badgeStyles[label];
+
+    if (!isActive) {
+      return {
+        background: "#ff4d4f",
+        color: "white",
+      };
+    }
+    if (baseStyle) return baseStyle;
+
+    return {
+      background: "#e2e8f0",
+      color: "#334155",
+    };
   };
-  // const getBadgeStyles = () => {
-  //   switch (badge?.label) {
-  //     case "paid" :
-  //       return { background: "#dcfce7", color: "#166534" };
-  //     case "pending":
-  //       return { background: "#fef3c7", color: "#92400e" };
-  //     case "cancel":
-  //       return { background: "#fee2e2", color: "#991b1b" };
-  //     default:
-  //       return { background: "#e5e7eb", color: "#374151" };
-  //   }
-  // };
 
   const handleClick = () => {
     if (onClick) return onClick();
@@ -86,18 +85,23 @@ export default function ListCard({
     <div
       onClick={handleClick}
       style={{
-        border: "1px solid #e5e7eb",
+        background: "var(--bg-primary)",
+        padding: 20,
         borderRadius: 12,
-        padding: 16,
-        background: "#fff",
+        border: isActive
+          ? "1px solid var(--border-color)"
+          : "1px solid #ff4d4f",
         cursor: link || onClick ? "pointer" : "default",
         transition: "all 0.2s ease",
         marginBottom: 12,
+        opacity: isActive ? 1 : 0.6,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
       }}
       onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
@@ -118,7 +122,7 @@ export default function ListCard({
               </h3>
             )}
 
-            {badge && (
+            {(badge || !isActive) && (
               <span
                 style={{
                   ...getBadgeStyles(),
@@ -128,7 +132,7 @@ export default function ListCard({
                   fontWeight: 500,
                 }}
               >
-                {badge.label}
+                {badge?.label || "Inactive"}
               </span>
             )}
           </div>
@@ -146,7 +150,8 @@ export default function ListCard({
                     padding: "6px 12px",
                     borderRadius: 6,
                     border: "none",
-                    background: action.color || "#e5e7eb",
+                    background: "var(--text-primary)",
+                    color: "var(--bg-primary)",
                     cursor: "pointer",
                     fontSize: 12,
                     fontWeight: 500,
@@ -177,11 +182,11 @@ export default function ListCard({
       {content && (
         <div
           style={{
-            background: "#f9fafb",
+            background: "var(--bg-secondary)",
             padding: 10,
             borderRadius: 8,
             fontSize: 13,
-            color: "#374151",
+            color: "var(--text-primary)",
             marginBottom: 10,
           }}
         >

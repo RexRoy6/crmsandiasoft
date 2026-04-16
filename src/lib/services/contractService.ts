@@ -121,7 +121,8 @@ export async function getCompanyContracts({
       eventId: events.id,
       eventName: events.name,
       eventDate: events.eventDate,
-      eventLocation: events.location
+      eventLocation: events.location,
+      eventNote: events.notes
     })
     .from(contracts)
     .leftJoin(clients, eq(contracts.clientId, clients.id))
@@ -173,7 +174,8 @@ export async function getCompanyContracts({
           id: row.eventId,
           name: row.eventName,
           eventDate: row.eventDate,
-          location: row.eventLocation
+          location: row.eventLocation,
+          notes: row.eventNote
         }
         : null
     }
@@ -212,7 +214,8 @@ export async function getContract(id: number) {
       eventId: events.id,
       eventName: events.name,
       eventDate: events.eventDate,
-      eventLocation: events.location
+      eventLocation: events.location,
+      eventNote: events.notes
     })
     .from(contracts)
 
@@ -274,7 +277,8 @@ export async function getContract(id: number) {
         id: row.eventId,
         name: row.eventName,
         eventDate: row.eventDate,
-        location: row.eventLocation
+        location: row.eventLocation,
+        notes: row.eventNote
       }
       : null
   }

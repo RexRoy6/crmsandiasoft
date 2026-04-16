@@ -240,7 +240,7 @@ export default function ContractsPage() {
                   title={`Contract #${contract.id} (${contract.event?.name})`}
                   subtitle={`Client: ${contract.client?.name}`}
                   badge={{ label: contract.status }}
-                  // link={`/company/contracts/${contract.id}`}
+                  link={`/company/contracts/${contract.id}`}
                   actions={[
                     {
                       label: "Manage →",
@@ -258,10 +258,10 @@ export default function ContractsPage() {
                   >
                     <div
                       style={{
-                        background: "#f8fafc",
+                        background: "var(--bg-primary)",
                         padding: "10px 12px",
                         borderRadius: 10,
-                        border: "1px solid #e2e8f0",
+                        border: "1px solid var(--bg-secondary)",
                       }}
                     >
                       <div
@@ -280,8 +280,15 @@ export default function ContractsPage() {
                             fontSize: 13,
                           }}
                         >
-                          <span style={{ color: "#64748b" }}>Amount</span>
-                          <span style={{ color: "#64748b", fontWeight: 600 }}>
+                          <span style={{ color: "var(--text-secondary)" }}>
+                            Amount
+                          </span>
+                          <span
+                            style={{
+                              color: "var(--text-primary)",
+                              fontWeight: 600,
+                            }}
+                          >
                             ${contract.paidAmount}
                           </span>
                         </div>
@@ -294,8 +301,15 @@ export default function ContractsPage() {
                             fontSize: 13,
                           }}
                         >
-                          <span style={{ color: "#64748b" }}>Total</span>
-                          <span style={{ color: "#64748b", fontWeight: 600 }}>
+                          <span style={{ color: "var(--text-secondary)" }}>
+                            Total
+                          </span>
+                          <span
+                            style={{
+                              color: "var(--text-primary)",
+                              fontWeight: 600,
+                            }}
+                          >
                             ${contract.totalAmount}
                           </span>
                         </div>
@@ -307,11 +321,18 @@ export default function ContractsPage() {
                             justifyContent: "space-between",
                             fontSize: 13,
                             paddingTop: 6,
-                            borderTop: "1px solid #e2e8f0",
+                            borderTop: "1px solid var(--bg-secondary)",
                           }}
                         >
-                          <span style={{ color: "#64748b" }}>Remaining</span>
-                          <span style={{ color: "#64748b", fontWeight: 600 }}>
+                          <span style={{ color: "var(--text-secondary)" }}>
+                            Remaining
+                          </span>
+                          <span
+                            style={{
+                              color: "var(--text-primary)",
+                              fontWeight: 600,
+                            }}
+                          >
                             ${contract.remainingAmount}
                           </span>
                         </div>
@@ -321,7 +342,7 @@ export default function ContractsPage() {
                   {/* footer / children */}
                   <div
                     style={{
-                      background: "#e5e7eb",
+                      background: "#ebe5e5",
                       borderRadius: 6,
                       height: 8,
                       marginTop: 8,
@@ -349,7 +370,7 @@ export default function ContractsPage() {
                   </div>
                 </ListCard>
               );
-            })}{" "}
+            })}
           </div>
 
           {/* 👇 PAGINATION */}

@@ -11,7 +11,6 @@ import ListCard from "@/app/components/crm/ListCard";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
 
 export default function ContractServicesPage() {
-
   const params = useParams();
   const contractId = Number(params.contractId);
 
@@ -21,12 +20,10 @@ export default function ContractServicesPage() {
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [contract, setContract] = useState<any>(null);
 
-
   const [editForm, setEditForm] = useState({
     serviceId: "",
     quantity: "",
   });
-
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,18 +41,15 @@ export default function ContractServicesPage() {
   const handleServiceChange = (serviceId: string) => {
     //setError("");
 
-    const service = companyServices.find(
-      (s) => String(s.id) === serviceId
-    );
+    const service = companyServices.find((s) => String(s.id) === serviceId);
 
     if (!service) return;
 
     setForm((prev) => ({
       ...prev,
       serviceId,
-      unitPrice: String(service.priceBase)//price
+      unitPrice: String(service.priceBase), //price
     }));
-
   };
   const fields: Field[] = [
     {
@@ -83,17 +77,12 @@ export default function ContractServicesPage() {
   /* ---------- FETCH SERVICES ---------- */
 
   const fetchServices = async () => {
-
     try {
-
       setLoading(true);
 
-      const res = await fetch(
-        `/api/company/contracts/${contractId}/services`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/company/contracts/${contractId}/services`, {
+        credentials: "include",
+      });
 
       if (!res.ok) {
         setError("Failed to fetch services");
@@ -104,7 +93,6 @@ export default function ContractServicesPage() {
       const data = await res.json();
 
       setServices(data);
-
     } catch {
       setError("Connection error");
     } finally {
@@ -113,24 +101,19 @@ export default function ContractServicesPage() {
   };
 
   const fetchCompanyServices = async () => {
-
     try {
-
-      const res = await fetch(
-        "/api/company/services",
-        { credentials: "include" }
-      );
+      const res = await fetch("/api/company/services", {
+        credentials: "include",
+      });
 
       if (!res.ok) return;
 
       const data = await res.json();
 
       setCompanyServices(data);
-
     } catch (error) {
       console.error("Failed to load services");
     }
-
   };
 
   /* ---------- CREATE SERVICE ---------- */
@@ -138,22 +121,18 @@ export default function ContractServicesPage() {
   const createService = async () => {
     setError("");
     try {
-
-      const res = await fetch(
-        `/api/company/contracts/${contractId}/services`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            serviceId: Number(form.serviceId),
-            quantity: Number(form.quantity),
-            unitPrice: Number(form.unitPrice),
-          }),
-        }
-      );
+      const res = await fetch(`/api/company/contracts/${contractId}/services`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: Number(form.serviceId),
+          quantity: Number(form.quantity),
+          unitPrice: Number(form.unitPrice),
+        }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -164,19 +143,16 @@ export default function ContractServicesPage() {
             .join(", ");
 
           setError(messages);
-
         } else if (data?.error) {
-
           if (data.available !== undefined) {
             setError(`${data.error}. Only ${data.available} left.`);
-            setForm(prev => ({
+            setForm((prev) => ({
               ...prev,
-              quantity: String(data.available) // renderiza en el ux la cantidad disponible
+              quantity: String(data.available), // renderiza en el ux la cantidad disponible
             }));
           } else {
             setError(data.error);
           }
-
         } else {
           setError("Failed to add service");
         }
@@ -193,12 +169,10 @@ export default function ContractServicesPage() {
       });
 
       fetchServices();
-
     } catch {
       setError("Connection error");
     }
   };
-
 
   const fetchContract = async () => {
     try {
@@ -210,28 +184,20 @@ export default function ContractServicesPage() {
 
       const data = await res.json();
       setContract(data);
-
-    } catch { }
+    } catch {}
   };
-
-
 
   const deleteItem = async (itemId: number) => {
     setError("");
     if (!confirm("Remove this service from contract?")) return;
 
     try {
-
-      const res = await fetch(
-        `/api/company/contract-items/${itemId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/company/contract-items/${itemId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       if (!res.ok) {
-
         const data = await res.json();
 
         setError(data?.error || "Failed to delete service");
@@ -240,7 +206,6 @@ export default function ContractServicesPage() {
       }
 
       fetchServices();
-
     } catch {
       setError("Connection error");
     }
@@ -249,21 +214,17 @@ export default function ContractServicesPage() {
   const updateItem = async (itemId: number) => {
     setError("");
     try {
-
-      const res = await fetch(
-        `/api/company/contract-items/${itemId}`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            serviceId: Number(editForm.serviceId),
-            quantity: Number(editForm.quantity),
-          }),
-        }
-      );
+      const res = await fetch(`/api/company/contract-items/${itemId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: Number(editForm.serviceId),
+          quantity: Number(editForm.quantity),
+        }),
+      });
 
       if (!res.ok) {
         setError("Failed to update item");
@@ -273,7 +234,6 @@ export default function ContractServicesPage() {
       setEditingItemId(null);
 
       fetchServices();
-
     } catch {
       setError("Connection error");
     }
@@ -286,31 +246,20 @@ export default function ContractServicesPage() {
   }, []);
 
   const contractTotal = services.reduce((sum, item) => {
-
-    return sum +
-      Number(item.quantity) *
-      Number(item.unitPrice);
-
+    return sum + Number(item.quantity) * Number(item.unitPrice);
   }, 0);
-
 
   return (
     <div>
-
-
-      {contract?.eventId && (
-        <EventInfoCard eventId={contract.eventId} />
-      )}
-
+      {contract?.eventId && <EventInfoCard eventId={contract.eventId} />}
 
       <PageHeader
         title={`Contract ${contractId} Services`}
         buttonLabel="+ Add Service"
         onClick={() => {
           setError("");
-          setShowForm(true)
-        }
-        }
+          setShowForm(true);
+        }}
       />
 
       <p
@@ -323,10 +272,7 @@ export default function ContractServicesPage() {
         Contract Total: ${contractTotal}
       </p>
 
-
-
       {showForm && (
-
         <CreateForm
           title="Add Service to Contract"
           fields={fields}
@@ -336,44 +282,36 @@ export default function ContractServicesPage() {
           onCancel={() => setShowForm(false)}
           clearError={() => setError("")}
         />
-
-
-
       )}
 
-      {form.serviceId && (() => {
+      {form.serviceId &&
+        (() => {
+          const service = companyServices.find(
+            (s) => String(s.id) === form.serviceId,
+          );
 
-        const service = companyServices.find(
-          s => String(s.id) === form.serviceId
-        );
+          if (!service) return null;
 
-        if (!service) return null;
+          return (
+            <div>
+              <p>Stock available: {service.stockTotal}</p>
 
-        return (
-          <div>
-            <p>Stock available: {service.stockTotal}</p>
-
-            {form.quantity && form.unitPrice && (
-              <p>
-                Subtotal: $
-                {Number(form.quantity) * Number(form.unitPrice)}
-              </p>
-            )}
-          </div>
-        );
-
-      })()}
+              {form.quantity && form.unitPrice && (
+                <p>
+                  Subtotal: ${Number(form.quantity) * Number(form.unitPrice)}
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
       {error && <ErrorBox message={error} code={errorCode} />}
 
       {loading && <p>Loading services...</p>}
 
-      {!loading && services.length === 0 && (
-        <p>No services added yet.</p>
-      )}
+      {!loading && services.length === 0 && <p>No services added yet.</p>}
 
       {!loading && services.length > 0 && (
-
         <div
           style={{
             display: "flex",
@@ -381,27 +319,19 @@ export default function ContractServicesPage() {
             gap: 10,
           }}
         >
-
           {services.map((item) => {
-
             const service = item.service;
 
-            const subtotal =
-              Number(item.quantity) *
-              Number(item.unitPrice);
+            const subtotal = Number(item.quantity) * Number(item.unitPrice);
 
             return (
-
               <div
                 key={item.id}
                 style={{
-                  border: "1px solid #ccc",
                   padding: 12,
                 }}
               >
-
                 {editingItemId === item.id ? (
-
                   <>
                     <p>Edit Service</p>
 
@@ -423,65 +353,57 @@ export default function ContractServicesPage() {
                       }
                     />
 
-                    <button onClick={() => updateItem(item.id)}>
-                      Save
-                    </button>
+                    <button onClick={() => updateItem(item.id)}>Save</button>
 
                     <button onClick={() => setEditingItemId(null)}>
                       Cancel
                     </button>
                   </>
-
                 ) : (
-
                   <>
-
                     <ListCard
-                      title={service?.name || "Service"}
-                      extra={[
-                        service?.description || "",
-                        `Quantity: ${item.quantity}`,
-                        `Unit Price: $${item.unitPrice}`,
-                        `Subtotal: $${subtotal}`,
+                      title={service.name}
+                      content={
+                        <>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 6,
+                              marginTop: 6,
+                            }}
+                          >
+                            <span>{service.description}</span>
+                            <span>Quantity: {item.quantity}</span>
+                            <span>Unit Price: ${item.unitPrice}</span>
+                            <span>Subtotal: ${subtotal}</span>
+                          </div>
+                        </>
+                      }
+                      actions={[
+                        {
+                          label: "Edit",
+                          onClick: () => {
+                            setEditingItemId(item.id);
+                            setEditForm({
+                              serviceId: String(item.service?.id),
+                              quantity: String(item.quantity),
+                            });
+                          },
+                        },
+                        {
+                          label: "Remove",
+                          onClick: () => deleteItem(item.id),
+                        },
                       ]}
-                      link="#"
                     />
-
-                    <div style={{ marginTop: 8 }}>
-
-                      <button
-                        onClick={() => {
-                          setEditingItemId(item.id);
-                          setEditForm({
-                            serviceId: String(item.service?.id),
-                            quantity: String(item.quantity),
-                          });
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        style={{ marginLeft: 10 }}
-                      >
-                        Remove
-                      </button>
-
-                    </div>
                   </>
-
                 )}
-
               </div>
-
             );
           })}
-
         </div>
-
       )}
-
     </div>
   );
 }

@@ -273,7 +273,7 @@ export default function PaymentsPage() {
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          background: "#f8fafc",
+                          background: "var(--bg-secondary)",
                           borderRadius: 10,
                         }}
                       >
@@ -285,7 +285,7 @@ export default function PaymentsPage() {
                             style={{
                               fontSize: 13,
                               fontWeight: 500,
-                              color: "#1e293b",
+                              color: "var(--text-secondary)",
                             }}
                           >
                             {item.service.name}
@@ -295,7 +295,7 @@ export default function PaymentsPage() {
                             <span
                               style={{
                                 fontSize: 12,
-                                color: "#64748b",
+                                color: "var(--text-primary)",
                               }}
                             >
                               {item.service.description}
@@ -308,7 +308,7 @@ export default function PaymentsPage() {
                           style={{
                             fontSize: 13,
                             fontWeight: 600,
-                            color: "#0f172a",
+                            color: "var(--text-primary)",
                           }}
                         >
                           ${item.amount}
@@ -328,10 +328,10 @@ export default function PaymentsPage() {
                 >
                   <div
                     style={{
-                      background: "#f8fafc",
+                      background: "var(--bg-primary)",
                       padding: "10px 12px",
                       borderRadius: 10,
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid var(--bg-secundary)",
                     }}
                   >
                     <div
@@ -365,8 +365,15 @@ export default function PaymentsPage() {
                           fontSize: 13,
                         }}
                       >
-                        <span style={{ color: "#64748b" }}>Amount</span>
-                        <span style={{ color: "#16a34a", fontWeight: 600 }}>
+                        <span style={{ color: "var(--text-secondary)" }}>
+                          Amount
+                        </span>
+                        <span
+                          style={{
+                            color: "var(--text-primary)",
+                            fontWeight: 600,
+                          }}
+                        >
                           ${payment.amount}
                         </span>
                       </div>
@@ -379,8 +386,15 @@ export default function PaymentsPage() {
                           fontSize: 13,
                         }}
                       >
-                        <span style={{ color: "#64748b" }}>Contract Total</span>
-                        <span style={{ color: "#1200de", fontWeight: 600 }}>
+                        <span style={{ color: "var(--text-secondary)" }}>
+                          Contract Total
+                        </span>
+                        <span
+                          style={{
+                            color: "var(--text-primary)",
+                            fontWeight: 600,
+                          }}
+                        >
                           ${payment.contract.total}
                         </span>
                       </div>
@@ -395,8 +409,15 @@ export default function PaymentsPage() {
                           borderTop: "1px solid #e2e8f0",
                         }}
                       >
-                        <span style={{ color: "#64748b" }}>Remaining</span>
-                        <span style={{ color: "#d71600", fontWeight: 600 }}>
+                        <span style={{ color: "var(--text-secondary)" }}>
+                          Remaining
+                        </span>
+                        <span
+                          style={{
+                            color: "var(--text-primary)",
+                            fontWeight: 600,
+                          }}
+                        >
                           ${payment.summary.remainingAmount}
                         </span>
                       </div>

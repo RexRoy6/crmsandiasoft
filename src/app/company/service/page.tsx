@@ -122,34 +122,38 @@ export default function ServicesPage() {
             gap: 10,
           }}
         >
-          {services.map((service) => (
-            <ListCard
-              key={service.id}
-              title={service.name}
-              subtitle={service.description}
-              content={
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                    marginTop: 6,
-                    fontSize: 13,
-                    color: "#334155",
-                  }}
-                >
-                  <span>
-                    <strong>Stock:</strong> {service.stockTotal}
-                  </span>
+          {services.map((service) => {
+            const isActive = !service.deletedAt;
+            return (
+              <ListCard
+                key={service.id}
+                title={service.name}
+                subtitle={service.description}
+                content={
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      marginTop: 6,
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    <span>
+                      <strong>Stock:</strong> {service.stockTotal}
+                    </span>
 
-                  <span>
-                    <strong>Price:</strong> ${service.priceBase}
-                  </span>
-                </div>
-              }
-              link={`/company/service/${service.id}`}
-            />
-          ))}
+                    <span>
+                      <strong>Price:</strong> ${service.priceBase}
+                    </span>
+                  </div>
+                }
+                link={`/company/service/${service.id}`}
+                isActive={isActive}
+              />
+            );
+          })}
         </div>
       )}
     </div>

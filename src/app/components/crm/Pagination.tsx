@@ -38,7 +38,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
           display: "flex",
           alignItems: "center",
           gap: 6,
-          background: "#ffffff",
+          background: "var(--bg-primary)",
           padding: 8,
           borderRadius: 12,
           border: "1px solid #e2e8f0",
@@ -52,7 +52,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
             padding: "6px 10px",
             borderRadius: 8,
             border: "none",
-            background: page === 1 ? "#f1f5f9" : "#e2e8f0",
+            background: page === 1 ? "#a0a0a0" : "#e2e8f0",
             color: "#334155",
             cursor: page === 1 ? "not-allowed" : "pointer",
           }}
@@ -94,7 +94,7 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
             padding: "6px 10px",
             borderRadius: 8,
             border: "none",
-            background: page === totalPages ? "#f1f5f9" : "#e2e8f0",
+            background: page === totalPages ? "#a0a0a0" : "#e2e8f0",
             color: "#334155",
             cursor: page === totalPages ? "not-allowed" : "pointer",
           }}
@@ -128,7 +128,7 @@ function PageButton({
         fontSize: 13,
         fontWeight: isActive ? 600 : 500,
         background: isActive ? "#2563eb" : "transparent",
-        color: isActive ? "#ffffff" : "#334155",
+        color: isActive ? "#ffffff" : "var(--text-prymary)",
         cursor: "pointer",
       }}
     >

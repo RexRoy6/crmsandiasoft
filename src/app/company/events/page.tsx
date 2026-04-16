@@ -476,14 +476,19 @@ export default function EventsPage() {
                             justifyContent: "space-between",
                           }}
                         >
-                          <span style={{ fontSize: 12, color: "#64748b" }}>
+                          <span
+                            style={{
+                              fontSize: 12,
+                              color: "var(--text-secondary)",
+                            }}
+                          >
                             Date
                           </span>
                           <span
                             style={{
                               fontSize: 13,
                               fontWeight: 500,
-                              color: "#0f172a",
+                              color: "var(--text-primary)",
                             }}
                           >
                             {date.toLocaleDateString()} ·{" "}
@@ -502,10 +507,20 @@ export default function EventsPage() {
                               justifyContent: "space-between",
                             }}
                           >
-                            <span style={{ fontSize: 12, color: "#64748b" }}>
+                            <span
+                              style={{
+                                fontSize: 12,
+                                color: "var(--text-secondary)",
+                              }}
+                            >
                               Location
                             </span>
-                            <span style={{ fontSize: 13, color: "#1e293b" }}>
+                            <span
+                              style={{
+                                fontSize: 13,
+                                color: "var(--text-primary)",
+                              }}
+                            >
                               {event.location}
                             </span>
                           </div>
@@ -517,11 +532,11 @@ export default function EventsPage() {
                             style={{
                               marginTop: 4,
                               padding: "8px 10px",
-                              background: "#f8fafc",
+                              background: "var(--bg-secondary)",
                               borderRadius: 8,
-                              border: "1px solid #e2e8f0",
+                              border: "1px solid var(--bg-secondary)",
                               fontSize: 12,
-                              color: "#475569",
+                              color: "var(--text-primary)",
                             }}
                           >
                             {event.notes}
