@@ -40,6 +40,7 @@ export default function ContractServicesPage() {
     serviceId: "",
     quantity: "",
     unitPrice: "",
+    serviceNotes: "",
   });
   const handleServiceChange = (serviceId: string) => {
     //setError("");
@@ -77,6 +78,11 @@ export default function ContractServicesPage() {
       name: "unitPrice",
       label: "Unit Price",
       type: "number",
+    },
+    {
+      name: "serviceNotes",
+      label: "Notes",
+      type: "textarea",
     },
   ];
 
@@ -151,6 +157,7 @@ export default function ContractServicesPage() {
             serviceId: Number(form.serviceId),
             quantity: Number(form.quantity),
             unitPrice: Number(form.unitPrice),
+            serviceNotes: form.serviceNotes || undefined
           }),
         }
       );
@@ -190,6 +197,7 @@ export default function ContractServicesPage() {
         serviceId: "",
         quantity: "",
         unitPrice: "",
+        serviceNotes: ""
       });
 
       fetchServices();
@@ -443,6 +451,9 @@ export default function ContractServicesPage() {
                         `Quantity: ${item.quantity}`,
                         `Unit Price: $${item.unitPrice}`,
                         `Subtotal: $${subtotal}`,
+                        item.serviceNotes
+                          ? `Notes:\n${item.serviceNotes}`
+                          : ""
                       ]}
                       link="#"
                     />

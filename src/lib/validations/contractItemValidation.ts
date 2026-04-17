@@ -17,7 +17,9 @@ export const createContractItemSchema = z.object({
   unitPrice: z
     .number().
     positive().
-    optional()
+    optional(),
+
+  serviceNotes: z.string().optional()
 
 })
 
