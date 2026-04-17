@@ -74,25 +74,49 @@ export default function DetailCard({
               gap: 8,
             }}
           >
-            {fields.map((field) => (
-              <div
-                key={field.name}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  borderBottom: "1px solid var(--border-color)",
-                  paddingBottom: 6,
-                }}
-              >
-                <span style={{ color: "var(--text-secondary)" }}>
-                  {field.label}
-                </span>
+            {fields.map((field) => {
+              if (field.name === "notes") {
+                return (
+                  <div key={field.name}>
+                    <span style={{ color: "var(--text-secondary)" }}>
+                      {field.label}
+                    </span>
 
-                <strong style={{ color: "var(--text-primary)" }}>
-                  {data[field.name]}
-                </strong>
-              </div>
-            ))}
+                    <div
+                      style={{
+                        marginTop: 6,
+                        padding: 10,
+                        borderRadius: 8,
+                        background: "var(--bg-secondary)",
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {data[field.name]}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={field.name}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderBottom: "1px solid var(--border-color)",
+                    paddingBottom: 6,
+                  }}
+                >
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    {field.label}
+                  </span>
+
+                  <strong style={{ color: "var(--text-primary)" }}>
+                    {data[field.name]}
+                  </strong>
+                </div>
+              );
+            })}
           </div>
 
           <div
@@ -192,26 +216,47 @@ export default function DetailCard({
                 {field.label}
               </label>
 
-              <input
-                type={field.type || "text"}
-                value={form[field.name] || ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    [field.name]:
-                      field.type === "number"
-                        ? Number(e.target.value)
-                        : e.target.value,
-                  })
-                }
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: "var(--bg-secondary)",
-                  color: "var(--text-primary)",
-                }}
-              />
+              {field.name === "notes" ? (
+                <textarea
+                  value={form[field.name] || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      [field.name]: e.target.value,
+                    })
+                  }
+                  rows={4}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-color)",
+                    background: "var(--bg-secondary)",
+                    color: "var(--text-primary)",
+                    resize: "vertical",
+                  }}
+                />
+              ) : (
+                <input
+                  type={field.type || "text"}
+                  value={form[field.name] || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      [field.name]:
+                        field.type === "number"
+                          ? Number(e.target.value)
+                          : e.target.value,
+                    })
+                  }
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-color)",
+                    background: "var(--bg-secondary)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              )}
             </div>
           ))}
 
