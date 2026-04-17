@@ -10,7 +10,7 @@ import { db } from "@/db"
 export async function createClient(data: {
   name: string
   phone: string
-  email: string
+  email?: string
 }) {
   const tdb = await tenantDb()
 
