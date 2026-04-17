@@ -84,7 +84,9 @@ export async function addServiceToContract(
 
     await tdb.update(
       contractItems,
-      { quantity: newQuantity },
+      { quantity: newQuantity,
+        ...(data.serviceNotes && { serviceNotes: data.serviceNotes })
+       },
       eq(contractItems.id, existingItem.id)
     )
 
@@ -103,7 +105,8 @@ export async function addServiceToContract(
     contractId,
     serviceId: data.serviceId,
     quantity: data.quantity,
-    unitPrice: data.unitPrice ?? service.priceBase
+    unitPrice: data.unitPrice ?? service.priceBase,
+    serviceNotes: data.serviceNotes ?? null
   })
 
   const insertId = result.insertId
