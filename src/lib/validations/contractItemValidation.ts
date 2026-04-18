@@ -25,13 +25,11 @@ export const createContractItemSchema = z.object({
 
 /* ---------- UPDATE CONTRACT ITEM ---------- */
 
+
 export const updateContractItemSchema = z.object({
-
-  quantity: z
-    .number()
-    .int()
-    .positive()
-
+  serviceId: z.number().optional(),
+  quantity: z.number().int().positive().optional(),
+  serviceNotes: z.string().optional()
 })
 
 /* ---------- TYPES ---------- */
