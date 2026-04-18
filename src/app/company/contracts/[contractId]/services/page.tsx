@@ -9,6 +9,7 @@ import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
+import ContractItemCard from "@/app/components/crm/ContractItemCard";
 
 export default function ContractServicesPage() {
 
@@ -390,104 +391,38 @@ export default function ContractServicesPage() {
           }}
         >
 
-          {services.map((item) => {
+          {services.map((item) => (
+            <ContractItemCard
+              key={item.id}
+              item={item}
+              onDelete={deleteItem}
+              onUpdate={async (id, data) => {
+                try {
+                  const res = await fetch(
+                    `/api/company/contract-items/${id}`,
+                    {
+                      method: "PATCH",
+                      credentials: "include",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(data),
+                    }
+                  );
 
-            const service = item.service;
+                  if (!res.ok) {
+                    setError("Failed to update item");
+                    return;
+                  }
 
-            const subtotal =
-              Number(item.quantity) *
-              Number(item.unitPrice);
+                  fetchServices();
 
-            return (
-
-              <div
-                key={item.id}
-                style={{
-                  border: "1px solid #ccc",
-                  padding: 12,
-                }}
-              >
-
-                {editingItemId === item.id ? (
-
-                  <>
-                    <p>Edit Service</p>
-
-                    <input
-                      type="number"
-                      placeholder="Service ID"
-                      value={editForm.serviceId}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, serviceId: e.target.value })
-                      }
-                    />
-
-                    <input
-                      type="number"
-                      placeholder="Quantity"
-                      value={editForm.quantity}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, quantity: e.target.value })
-                      }
-                    />
-
-                    <button onClick={() => updateItem(item.id)}>
-                      Save
-                    </button>
-
-                    <button onClick={() => setEditingItemId(null)}>
-                      Cancel
-                    </button>
-                  </>
-
-                ) : (
-
-                  <>
-
-                    <ListCard
-                      title={service?.name || "Service"}
-                      extra={[
-                        service?.description || "",
-                        `Quantity: ${item.quantity}`,
-                        `Unit Price: $${item.unitPrice}`,
-                        `Subtotal: $${subtotal}`,
-                        item.serviceNotes
-                          ? `Notes:\n${item.serviceNotes}`
-                          : ""
-                      ]}
-                      link="#"
-                    />
-
-                    <div style={{ marginTop: 8 }}>
-
-                      <button
-                        onClick={() => {
-                          setEditingItemId(item.id);
-                          setEditForm({
-                            serviceId: String(item.service?.id),
-                            quantity: String(item.quantity),
-                          });
-                        }}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        style={{ marginLeft: 10 }}
-                      >
-                        Remove
-                      </button>
-
-                    </div>
-                  </>
-
-                )}
-
-              </div>
-
-            );
-          })}
+                } catch {
+                  setError("Connection error");
+                }
+              }}
+            />
+          ))}
 
         </div>
 

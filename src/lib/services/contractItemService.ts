@@ -220,8 +220,8 @@ export async function getContractServices(contractId: number) {
       unitPrice: row.unitPrice,
       serviceNotes:row.serviceNotes,
 
-      paidAmount: paid,           // 🔥 NUEVO
-      remainingAmount: remaining, // 🔥 NUEVO
+      paidAmount: paid,          
+      remainingAmount: remaining, 
 
       service: {
         id: row.serviceId,
@@ -251,11 +251,22 @@ export async function updateContractItem(
 
   if (!existing) return null
 
+  // await tdb.update(
+  //   contractItems,
+  //   data,
+  //   eq(contractItems.id, id)
+  // )
   await tdb.update(
-    contractItems,
-    data,
-    eq(contractItems.id, id)
-  )
+  contractItems,
+  {
+    ...(data.serviceId && { serviceId: data.serviceId }),
+    ...(data.quantity && { quantity: data.quantity }),
+    ...(data.serviceNotes !== undefined && {
+      serviceNotes: data.serviceNotes
+    })
+  },
+  eq(contractItems.id, id)
+)
 
   await recalculateContractTotal(existing.contractId)
 
