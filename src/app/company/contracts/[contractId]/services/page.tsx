@@ -420,6 +420,23 @@ export default function ContractServicesPage() {
               onDelete={deleteItem}
               onUpdate={async (id, data) => {
                 try {
+
+                  //convierte las horas 
+                  const toISO = (value?: any) => {
+                    if (!value) return undefined;
+
+                    // si ya es string ISO válido → no tocar
+                    if (typeof value === "string" && value.includes("T") && value.includes("Z")) {
+                      return value;
+                    }
+
+                    const date = new Date(value);
+
+                    if (isNaN(date.getTime())) return undefined;
+
+                    return date.toISOString();
+                  };
+
                   const res = await fetch(
                     `/api/company/contract-items/${id}`,
                     {
@@ -428,7 +445,11 @@ export default function ContractServicesPage() {
                       headers: {
                         "Content-Type": "application/json",
                       },
-                      body: JSON.stringify(data),
+                      body: JSON.stringify({
+                        ...data,
+                        operationStart: toISO(data.operationStart),
+                        operationEnd: toISO(data.operationEnd),
+                      }),
                     }
                   );
 
