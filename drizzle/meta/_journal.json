@@ -85,6 +85,13 @@
       "when": 1776450901386,
       "tag": "0011_giant_human_fly",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1776628448422,
+      "tag": "0012_icy_felicia_hardy",
+      "breakpoints": true
     }
   ]
 }
