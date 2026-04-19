@@ -22,15 +22,15 @@ export default function ContractItemCard({
     return new Date(iso).toISOString().slice(0, 16);
   };
 
-const toLocalInput = (iso?: string) => {
-  if (!iso) return "";
-  const date = new Date(iso);
+  const toLocalInput = (iso?: string) => {
+    if (!iso) return "";
+    const date = new Date(iso);
 
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60000);
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60000);
 
-  return local.toISOString().slice(0, 16);
-};
+    return local.toISOString().slice(0, 16);
+  };
 
 
   const [form, setForm] = useState({
@@ -90,66 +90,103 @@ const toLocalInput = (iso?: string) => {
           </div>
         </>
       ) : (
-        <>
-          <p style={{ fontWeight: "bold" }}>
-            Edit Service
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* Header */}
+          <div>
+            <h4 style={{ margin: 0 }}>
+              {service?.name}
+            </h4>
+            <p style={{
+              margin: 0,
+              color: "var(--text-secondary)",
+              fontSize: 13
+            }}>
+              {service?.description}
+            </p>
+          </div>
+
+          {/* Row */}
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label>Quantity</label>
+              <input
+                type="number"
+                value={form.quantity}
+                onChange={(e) =>
+                  setForm({ ...form, quantity: e.target.value })
+                }
+              />
+            </div>
+
+
+          </div>
+
+          {/* Subtotal dinámico */}
+          <p style={{ fontSize: 13 }}>
+            Subtotal: $
+            {Number(form.quantity || 0) * Number(item.unitPrice)}
           </p>
 
-          <input
-            type="number"
-            placeholder="Service ID"
-            value={form.serviceId}
-            onChange={(e) =>
-              setForm({ ...form, serviceId: e.target.value })
-            }
-          />
+          {/* Notes */}
+          <div>
+            <label>Notes</label>
+            <textarea
+              value={form.serviceNotes}
+              onChange={(e) =>
+                setForm({ ...form, serviceNotes: e.target.value })
+              }
+              rows={3}
+            />
+          </div>
 
-          <input
-            type="number"
-            placeholder="Quantity"
-            value={form.quantity}
-            onChange={(e) =>
-              setForm({ ...form, quantity: e.target.value })
-            }
-          />
+          {/* Schedule */}
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label>Start</label>
+              <input
+                type="datetime-local"
+                value={form.operationStart || ""}
+                onChange={(e) =>
+                  setForm({ ...form, operationStart: e.target.value })
+                }
+              />
+            </div>
 
-          <textarea
-            placeholder="Notes"
-            value={form.serviceNotes}
-            onChange={(e) =>
-              setForm({ ...form, serviceNotes: e.target.value })
-            }
-            rows={3}
-            style={{
-              marginTop: 6,
-              padding: 8,
-              borderRadius: 6,
-              border: "1px solid var(--border-color)",
-              resize: "vertical",
-            }}
-          />
+            <div style={{ flex: 1 }}>
+              <label>End</label>
+              <input
+                type="datetime-local"
+                value={form.operationEnd || ""}
+                onChange={(e) =>
+                  setForm({ ...form, operationEnd: e.target.value })
+                }
+              />
+            </div>
+          </div>
 
-          <input
-            type="datetime-local"
-            value={form.operationStart || ""}
-            onChange={(e) =>
-              setForm({ ...form, operationStart: e.target.value })
-            }
-          />
+          {/* Preview horario */}
+          {form.operationStart && form.operationEnd && (
+            <p style={{
+              fontSize: 13,
+              color: "var(--text-secondary)"
+            }}>
+              🕒 {new Date(form.operationStart).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })} - {new Date(form.operationEnd).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          )}
 
-          <input
-            type="datetime-local"
-            value={form.operationEnd || ""}
-            onChange={(e) =>
-              setForm({ ...form, operationEnd: e.target.value })
-            }
-          />
-
-          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => {
                 onUpdate(item.id, {
-                  serviceId: Number(form.serviceId),
+                  //  serviceId: Number(form.serviceId),
                   quantity: Number(form.quantity),
                   serviceNotes: form.serviceNotes,
                   operationEnd: form.operationEnd,
@@ -165,7 +202,8 @@ const toLocalInput = (iso?: string) => {
               Cancel
             </button>
           </div>
-        </>
+
+        </div>
       )}
 
     </div>
