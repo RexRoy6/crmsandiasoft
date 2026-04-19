@@ -50,6 +50,10 @@ export default function ContractItemCard({
               `Subtotal: $${subtotal}`,
               item.serviceNotes
                 ? `Notes:\n${item.serviceNotes}`
+                : "",
+
+              item.operationStart && item.operationEnd
+                ? `Schedule: ${new Date(item.operationStart).toLocaleTimeString()} - ${new Date(item.operationEnd).toLocaleTimeString()}`
                 : ""
             ]}
             link="#"

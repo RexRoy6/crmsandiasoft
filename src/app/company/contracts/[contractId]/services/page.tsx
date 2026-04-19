@@ -7,7 +7,6 @@ import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
-import ListCard from "@/app/components/crm/ListCard";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
 import ContractItemCard from "@/app/components/crm/ContractItemCard";
 
@@ -42,6 +41,9 @@ export default function ContractServicesPage() {
     quantity: "",
     unitPrice: "",
     serviceNotes: "",
+    operationStart: "",
+    operationEnd: ""
+
   });
   const handleServiceChange = (serviceId: string) => {
     //setError("");
@@ -84,6 +86,16 @@ export default function ContractServicesPage() {
       name: "serviceNotes",
       label: "Notes",
       type: "textarea",
+    },
+    {
+      name: "operationStart",
+      label: "Start Time",
+      type: "datetime-local",
+    },
+    {
+      name: "operationEnd",
+      label: "End Time",
+      type: "datetime-local",
     },
   ];
 
@@ -146,6 +158,11 @@ export default function ContractServicesPage() {
     setError("");
     try {
 
+      const toISO = (value?: string) => {
+        if (!value) return undefined;
+        return new Date(value).toISOString();
+      };
+
       const res = await fetch(
         `/api/company/contracts/${contractId}/services`,
         {
@@ -158,7 +175,10 @@ export default function ContractServicesPage() {
             serviceId: Number(form.serviceId),
             quantity: Number(form.quantity),
             unitPrice: Number(form.unitPrice),
-            serviceNotes: form.serviceNotes || undefined
+            serviceNotes: form.serviceNotes || undefined,
+
+            operationStart: toISO(form.operationStart),
+            operationEnd: toISO(form.operationEnd),
           }),
         }
       );
@@ -198,7 +218,9 @@ export default function ContractServicesPage() {
         serviceId: "",
         quantity: "",
         unitPrice: "",
-        serviceNotes: ""
+        serviceNotes: "",
+        operationStart: "",
+        operationEnd: ""
       });
 
       fetchServices();

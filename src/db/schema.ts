@@ -239,6 +239,8 @@ export const contractItems = mysqlTable("contract_items", {
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   serviceNotes: varchar("service_notes", { length: 1000 }),
+  operationStart: datetime("operation_start"),
+  operationEnd: datetime("operation_end"),
 
   ...baseColumns
 })
