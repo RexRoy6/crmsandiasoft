@@ -276,10 +276,14 @@ export async function updateContractItem(
       }),
       ...(data.operationStart !== undefined && {
         operationStart: data.operationStart
+          ? new Date(data.operationStart)
+          : null
       }),
       ...(data.operationEnd !== undefined && {
         operationEnd: data.operationEnd
-      })
+          ? new Date(data.operationEnd)
+          : null
+      }),
     },
     eq(contractItems.id, id)
   )

@@ -420,9 +420,21 @@ export default function ContractServicesPage() {
               onDelete={deleteItem}
               onUpdate={async (id, data) => {
                 try {
-                  const toISO = (value?: string) => {
+
+                  //convierte las horas 
+                  const toISO = (value?: any) => {
                     if (!value) return undefined;
-                    return new Date(value).toISOString();
+
+                    // si ya es string ISO válido → no tocar
+                    if (typeof value === "string" && value.includes("T") && value.includes("Z")) {
+                      return value;
+                    }
+
+                    const date = new Date(value);
+
+                    if (isNaN(date.getTime())) return undefined;
+
+                    return date.toISOString();
                   };
 
                   const res = await fetch(

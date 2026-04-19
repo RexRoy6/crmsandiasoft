@@ -22,13 +22,19 @@ export default function ContractItemCard({
     return new Date(iso).toISOString().slice(0, 16);
   };
 
+  const toLocalInput = (value?: string) => {
+    if (!value) return "";
+    return new Date(value).toISOString().slice(0, 16);
+  };
+
 
   const [form, setForm] = useState({
     serviceId: String(item.service?.id),
     quantity: String(item.quantity),
     serviceNotes: item.serviceNotes || "",
-    operationStart: toLocal(item.operationStart),
-    operationEnd: toLocal(item.operationEnd),
+
+    operationStart: toLocalInput(item.operationStart),
+    operationEnd: toLocalInput(item.operationEnd),
   });
 
   const service = item.service;
