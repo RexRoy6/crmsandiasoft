@@ -106,7 +106,17 @@ export async function addServiceToContract(
     serviceId: data.serviceId,
     quantity: data.quantity,
     unitPrice: data.unitPrice ?? service.priceBase,
-    serviceNotes: data.serviceNotes ?? null
+    serviceNotes: data.serviceNotes ?? null,
+
+    operationStart: data.operationStart
+    ? new Date(data.operationStart)
+    : null,
+
+  operationEnd: data.operationEnd
+    ? new Date(data.operationEnd)
+    : null,
+
+
   })
 
   const insertId = result.insertId
@@ -148,6 +158,8 @@ export async function getContractServices(contractId: number) {
       quantity: contractItems.quantity,
       unitPrice: contractItems.unitPrice,
       serviceNotes:contractItems.serviceNotes,
+      operationStart:contractItems.operationStart,
+      operationEnd:contractItems.operationEnd,
 
       serviceId: services.id,
       serviceName: services.name,
@@ -219,6 +231,8 @@ export async function getContractServices(contractId: number) {
       quantity: row.quantity,
       unitPrice: row.unitPrice,
       serviceNotes:row.serviceNotes,
+      operationStart:row.operationStart,
+      operationEnd:row.operationEnd,
 
       paidAmount: paid,          
       remainingAmount: remaining, 
