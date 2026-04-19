@@ -4,11 +4,11 @@ import {
   contractItems,
   services,
   contracts,
-    payments,
+  payments,
   paymentItems
 } from "@/db/schema"
 
-import { eq, and ,isNull } from "drizzle-orm"
+import { eq, and, isNull } from "drizzle-orm"
 
 import type {
   CreateContractItemInput,
@@ -84,9 +84,10 @@ export async function addServiceToContract(
 
     await tdb.update(
       contractItems,
-      { quantity: newQuantity,
+      {
+        quantity: newQuantity,
         ...(data.serviceNotes && { serviceNotes: data.serviceNotes })
-       },
+      },
       eq(contractItems.id, existingItem.id)
     )
 
@@ -109,12 +110,12 @@ export async function addServiceToContract(
     serviceNotes: data.serviceNotes ?? null,
 
     operationStart: data.operationStart
-    ? new Date(data.operationStart)
-    : null,
+      ? new Date(data.operationStart)
+      : null,
 
-  operationEnd: data.operationEnd
-    ? new Date(data.operationEnd)
-    : null,
+    operationEnd: data.operationEnd
+      ? new Date(data.operationEnd)
+      : null,
 
 
   })
@@ -157,9 +158,9 @@ export async function getContractServices(contractId: number) {
       contractId: contractItems.contractId,
       quantity: contractItems.quantity,
       unitPrice: contractItems.unitPrice,
-      serviceNotes:contractItems.serviceNotes,
-      operationStart:contractItems.operationStart,
-      operationEnd:contractItems.operationEnd,
+      serviceNotes: contractItems.serviceNotes,
+      operationStart: contractItems.operationStart,
+      operationEnd: contractItems.operationEnd,
 
       serviceId: services.id,
       serviceName: services.name,
@@ -230,12 +231,12 @@ export async function getContractServices(contractId: number) {
       contractId: row.contractId,
       quantity: row.quantity,
       unitPrice: row.unitPrice,
-      serviceNotes:row.serviceNotes,
-      operationStart:row.operationStart,
-      operationEnd:row.operationEnd,
+      serviceNotes: row.serviceNotes,
+      operationStart: row.operationStart,
+      operationEnd: row.operationEnd,
 
-      paidAmount: paid,          
-      remainingAmount: remaining, 
+      paidAmount: paid,
+      remainingAmount: remaining,
 
       service: {
         id: row.serviceId,
@@ -265,22 +266,23 @@ export async function updateContractItem(
 
   if (!existing) return null
 
-  // await tdb.update(
-  //   contractItems,
-  //   data,
-  //   eq(contractItems.id, id)
-  // )
   await tdb.update(
-  contractItems,
-  {
-    ...(data.serviceId && { serviceId: data.serviceId }),
-    ...(data.quantity && { quantity: data.quantity }),
-    ...(data.serviceNotes !== undefined && {
-      serviceNotes: data.serviceNotes
-    })
-  },
-  eq(contractItems.id, id)
-)
+    contractItems,
+    {
+      ...(data.serviceId && { serviceId: data.serviceId }),
+      ...(data.quantity && { quantity: data.quantity }),
+      ...(data.serviceNotes !== undefined && {
+        serviceNotes: data.serviceNotes
+      }),
+      ...(data.operationStart !== undefined && {
+        operationStart: data.operationStart
+      }),
+      ...(data.operationEnd !== undefined && {
+        operationEnd: data.operationEnd
+      })
+    },
+    eq(contractItems.id, id)
+  )
 
   await recalculateContractTotal(existing.contractId)
 

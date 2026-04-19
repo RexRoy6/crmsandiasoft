@@ -17,10 +17,18 @@ export default function ContractItemCard({
 
   const [editing, setEditing] = useState(false);
 
+  const toLocal = (iso?: string) => {
+    if (!iso) return "";
+    return new Date(iso).toISOString().slice(0, 16);
+  };
+
+
   const [form, setForm] = useState({
     serviceId: String(item.service?.id),
     quantity: String(item.quantity),
     serviceNotes: item.serviceNotes || "",
+    operationStart: toLocal(item.operationStart),
+    operationEnd: toLocal(item.operationEnd),
   });
 
   const service = item.service;
@@ -53,7 +61,8 @@ export default function ContractItemCard({
                 : "",
 
               item.operationStart && item.operationEnd
-                ? `Schedule: ${new Date(item.operationStart).toLocaleTimeString()} - ${new Date(item.operationEnd).toLocaleTimeString()}`
+                //? `Schedule: ${new Date(item.operationStart).toLocaleTimeString()} - ${new Date(item.operationEnd).toLocaleTimeString()}`
+                ? `🕒 ${new Date(item.operationStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(item.operationEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                 : ""
             ]}
             link="#"
@@ -109,6 +118,22 @@ export default function ContractItemCard({
             }}
           />
 
+          <input
+            type="datetime-local"
+            value={form.operationStart || ""}
+            onChange={(e) =>
+              setForm({ ...form, operationStart: e.target.value })
+            }
+          />
+
+          <input
+            type="datetime-local"
+            value={form.operationEnd || ""}
+            onChange={(e) =>
+              setForm({ ...form, operationEnd: e.target.value })
+            }
+          />
+
           <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
             <button
               onClick={() => {
@@ -116,6 +141,8 @@ export default function ContractItemCard({
                   serviceId: Number(form.serviceId),
                   quantity: Number(form.quantity),
                   serviceNotes: form.serviceNotes,
+                  operationEnd: form.operationEnd,
+                  operationStart: form.operationStart
                 });
                 setEditing(false);
               }}

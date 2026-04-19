@@ -420,6 +420,11 @@ export default function ContractServicesPage() {
               onDelete={deleteItem}
               onUpdate={async (id, data) => {
                 try {
+                  const toISO = (value?: string) => {
+                    if (!value) return undefined;
+                    return new Date(value).toISOString();
+                  };
+
                   const res = await fetch(
                     `/api/company/contract-items/${id}`,
                     {
@@ -428,7 +433,11 @@ export default function ContractServicesPage() {
                       headers: {
                         "Content-Type": "application/json",
                       },
-                      body: JSON.stringify(data),
+                      body: JSON.stringify({
+                        ...data,
+                        operationStart: toISO(data.operationStart),
+                        operationEnd: toISO(data.operationEnd),
+                      }),
                     }
                   );
 

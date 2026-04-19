@@ -29,7 +29,9 @@ export const createContractItemSchema = z.object({
 export const updateContractItemSchema = z.object({
   serviceId: z.number().optional(),
   quantity: z.number().int().positive().optional(),
-  serviceNotes: z.string().optional()
+  serviceNotes: z.string().optional(),
+  operationStart: z.string().datetime().optional(),
+  operationEnd: z.string().datetime().optional(),
 })
 
 /* ---------- TYPES ---------- */
