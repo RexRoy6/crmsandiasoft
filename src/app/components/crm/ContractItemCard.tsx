@@ -98,6 +98,9 @@ export default function ContractItemCard({
             background: "var(--bg-secondary)",
             padding: 16,
             borderRadius: 10,
+
+            /* ✨ animación */
+            animation: "fadeIn 0.2s ease",
           }}
         >
           {/* Header */}
@@ -148,7 +151,7 @@ export default function ContractItemCard({
             }}
           >
             <span style={{ color: "var(--text-secondary)" }}>
-              Subtotal
+              💰 Subtotal
             </span>
             <strong>
               ${Number(form.quantity || 0) * Number(item.unitPrice)}
@@ -158,7 +161,7 @@ export default function ContractItemCard({
           {/* Notes */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Notes
+              📝 Notes
             </label>
             <textarea
               value={form.serviceNotes}
@@ -178,10 +181,16 @@ export default function ContractItemCard({
           </div>
 
           {/* Schedule */}
-          <div style={{ display: "flex", gap: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
               <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                Start
+                🕒 Start
               </label>
               <input
                 type="datetime-local"
@@ -201,7 +210,7 @@ export default function ContractItemCard({
 
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
               <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                End
+                🕒 End
               </label>
               <input
                 type="datetime-local"
@@ -244,7 +253,13 @@ export default function ContractItemCard({
           )}
 
           {/* Actions */}
-          <div style={{ display: "flex", gap: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
             <button
               onClick={() => {
                 onUpdate(item.id, {
@@ -262,7 +277,10 @@ export default function ContractItemCard({
                 background: "#2563eb",
                 color: "white",
                 cursor: "pointer",
+                transition: "0.2s",
               }}
+              onMouseOver={(e) => (e.currentTarget.style.opacity = "0.85")}
+              onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
             >
               Save
             </button>
@@ -274,8 +292,12 @@ export default function ContractItemCard({
                 borderRadius: 8,
                 border: "1px solid var(--border-color)",
                 background: "transparent",
+                color: "white",
                 cursor: "pointer",
+                transition: "0.2s",
               }}
+              onMouseOver={(e) => (e.currentTarget.style.opacity = "0.85")}
+              onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
             >
               Cancel
             </button>
