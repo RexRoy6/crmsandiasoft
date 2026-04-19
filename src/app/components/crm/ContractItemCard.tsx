@@ -22,10 +22,15 @@ export default function ContractItemCard({
     return new Date(iso).toISOString().slice(0, 16);
   };
 
-  const toLocalInput = (value?: string) => {
-    if (!value) return "";
-    return new Date(value).toISOString().slice(0, 16);
-  };
+const toLocalInput = (iso?: string) => {
+  if (!iso) return "";
+  const date = new Date(iso);
+
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60000);
+
+  return local.toISOString().slice(0, 16);
+};
 
 
   const [form, setForm] = useState({
