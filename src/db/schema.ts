@@ -107,7 +107,7 @@ export const clients = mysqlTable("clients", {
 
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 50 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).unique(),
 
   ...baseColumns
 }, (table) => ({
