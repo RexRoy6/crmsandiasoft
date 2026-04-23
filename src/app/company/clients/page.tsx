@@ -72,7 +72,8 @@ export default function ClientsPage() {
 
   const createClient = async () => {
     try {
-      if (!form.name || !form.phone || !form.email) {
+      // if (!form.name || !form.phone || !form.email) {
+      if (!form.name || !form.phone) {
         setError("All fields are required");
         return;
       }

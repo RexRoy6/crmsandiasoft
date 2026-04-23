@@ -107,7 +107,7 @@ export const clients = mysqlTable("clients", {
 
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 50 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).unique(),
 
   ...baseColumns
 }, (table) => ({
@@ -238,6 +238,9 @@ export const contractItems = mysqlTable("contract_items", {
 
   quantity: int("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  serviceNotes: varchar("service_notes", { length: 1000 }),
+  operationStart: datetime("operation_start"),
+  operationEnd: datetime("operation_end"),
 
   ...baseColumns
 })

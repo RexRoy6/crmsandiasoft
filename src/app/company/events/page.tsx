@@ -57,7 +57,8 @@ export default function EventsPage() {
 
   const createClientInline = async () => {
     try {
-      if (!clientForm.name || !clientForm.phone || !clientForm.email) {
+      //if (!clientForm.name || !clientForm.phone || !clientForm.email) {
+        if (!clientForm.name || !clientForm.phone ) {
         setClientError("All client fields are required");
         return;
       }

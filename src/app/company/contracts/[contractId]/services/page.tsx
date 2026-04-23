@@ -7,8 +7,8 @@ import ErrorBox from "@/app/components/ErrorBox";
 import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
-import ListCard from "@/app/components/crm/ListCard";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
+import ContractItemCard from "@/app/components/crm/ContractItemCard";
 
 export default function ContractServicesPage() {
   const params = useParams();
@@ -37,6 +37,9 @@ export default function ContractServicesPage() {
     serviceId: "",
     quantity: "",
     unitPrice: "",
+    serviceNotes: "",
+    operationStart: "",
+    operationEnd: "",
   });
   const handleServiceChange = (serviceId: string) => {
     //setError("");
@@ -71,6 +74,21 @@ export default function ContractServicesPage() {
       name: "unitPrice",
       label: "Unit Price",
       type: "number",
+    },
+    {
+      name: "serviceNotes",
+      label: "Notes",
+      type: "textarea",
+    },
+    {
+      name: "operationStart",
+      label: "Start Time",
+      type: "datetime-local",
+    },
+    {
+      name: "operationEnd",
+      label: "End Time",
+      type: "datetime-local",
     },
   ];
 
@@ -121,6 +139,11 @@ export default function ContractServicesPage() {
   const createService = async () => {
     setError("");
     try {
+      const toISO = (value?: string) => {
+        if (!value) return undefined;
+        return new Date(value).toISOString();
+      };
+
       const res = await fetch(`/api/company/contracts/${contractId}/services`, {
         method: "POST",
         credentials: "include",
@@ -131,6 +154,10 @@ export default function ContractServicesPage() {
           serviceId: Number(form.serviceId),
           quantity: Number(form.quantity),
           unitPrice: Number(form.unitPrice),
+          serviceNotes: form.serviceNotes || undefined,
+
+          operationStart: toISO(form.operationStart),
+          operationEnd: toISO(form.operationEnd),
         }),
       });
 
@@ -166,6 +193,9 @@ export default function ContractServicesPage() {
         serviceId: "",
         quantity: "",
         unitPrice: "",
+        serviceNotes: "",
+        operationStart: "",
+        operationEnd: "",
       });
 
       fetchServices();
@@ -319,89 +349,58 @@ export default function ContractServicesPage() {
             gap: 10,
           }}
         >
-          {services.map((item) => {
-            const service = item.service;
+          {services.map((item) => (
+            <ContractItemCard
+              key={item.id}
+              item={item}
+              onDelete={deleteItem}
+              onUpdate={async (id, data) => {
+                try {
+                  //convierte las horas
+                  const toISO = (value?: any) => {
+                    if (!value) return undefined;
 
-            const subtotal = Number(item.quantity) * Number(item.unitPrice);
+                    // si ya es string ISO válido → no tocar
+                    if (
+                      typeof value === "string" &&
+                      value.includes("T") &&
+                      value.includes("Z")
+                    ) {
+                      return value;
+                    }
 
-            return (
-              <div
-                key={item.id}
-                style={{
-                  padding: 12,
-                }}
-              >
-                {editingItemId === item.id ? (
-                  <>
-                    <p>Edit Service</p>
+                    const date = new Date(value);
 
-                    <input
-                      type="number"
-                      placeholder="Service ID"
-                      value={editForm.serviceId}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, serviceId: e.target.value })
-                      }
-                    />
+                    if (isNaN(date.getTime())) return undefined;
 
-                    <input
-                      type="number"
-                      placeholder="Quantity"
-                      value={editForm.quantity}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, quantity: e.target.value })
-                      }
-                    />
+                    return date.toISOString();
+                  };
 
-                    <button onClick={() => updateItem(item.id)}>Save</button>
+                  const res = await fetch(`/api/company/contract-items/${id}`, {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      ...data,
+                      operationStart: toISO(data.operationStart),
+                      operationEnd: toISO(data.operationEnd),
+                    }),
+                  });
 
-                    <button onClick={() => setEditingItemId(null)}>
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <ListCard
-                      title={service.name}
-                      content={
-                        <>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 6,
-                              marginTop: 6,
-                            }}
-                          >
-                            <span>{service.description}</span>
-                            <span>Quantity: {item.quantity}</span>
-                            <span>Unit Price: ${item.unitPrice}</span>
-                            <span>Subtotal: ${subtotal}</span>
-                          </div>
-                        </>
-                      }
-                      actions={[
-                        {
-                          label: "Edit",
-                          onClick: () => {
-                            setEditingItemId(item.id);
-                            setEditForm({
-                              serviceId: String(item.service?.id),
-                              quantity: String(item.quantity),
-                            });
-                          },
-                        },
-                        {
-                          label: "Remove",
-                          onClick: () => deleteItem(item.id),
-                        },
-                      ]}
-                    />
-                  </>
-                )}
-              </div>
-            );
-          })}
+                  if (!res.ok) {
+                    setError("Failed to update item");
+                    return;
+                  }
+
+                  fetchServices();
+                } catch {
+                  setError("Connection error");
+                }
+              }}
+            />
+          ))}
         </div>
       )}
     </div>

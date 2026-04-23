@@ -3,7 +3,15 @@ import { ReactNode } from "react"
 export type Field = {
   name: string;
   label: string;
-  type?: "text" | "number" | "select" | "date" | "time" | "textarea";
+  // type?: "text" | "number" | "select" | "date" | "time" | "textarea";
+  type?: 
+  | "text"
+  | "number"
+  | "select"
+  | "date"
+  | "time"
+  | "datetime-local"
+  | "textarea";
   options?: { value: string; label: string }[];
   onChange?: (value: string) => void;
   readOnly?: boolean;

@@ -3,7 +3,13 @@ import { z } from "zod"
 export const createClientSchema = z.object({
   name: z.string().min(2),
   phone: z.string().min(7),
-  email: z.string().email()
+  //email: z.string().email()
+  email: z
+    .string()
+    .email()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => (val === "" ? undefined : val)),
 })
 
 export const updateClientSchema =
