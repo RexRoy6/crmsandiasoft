@@ -11,7 +11,6 @@ import EventInfoCard from "@/app/components/crm/EventInfoCard";
 import ContractItemCard from "@/app/components/crm/ContractItemCard";
 
 export default function ContractServicesPage() {
-
   const params = useParams();
   const contractId = Number(params.contractId);
 
@@ -21,12 +20,10 @@ export default function ContractServicesPage() {
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [contract, setContract] = useState<any>(null);
 
-
   const [editForm, setEditForm] = useState({
     serviceId: "",
     quantity: "",
   });
-
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -42,24 +39,20 @@ export default function ContractServicesPage() {
     unitPrice: "",
     serviceNotes: "",
     operationStart: "",
-    operationEnd: ""
-
+    operationEnd: "",
   });
   const handleServiceChange = (serviceId: string) => {
     //setError("");
 
-    const service = companyServices.find(
-      (s) => String(s.id) === serviceId
-    );
+    const service = companyServices.find((s) => String(s.id) === serviceId);
 
     if (!service) return;
 
     setForm((prev) => ({
       ...prev,
       serviceId,
-      unitPrice: String(service.priceBase)//price
+      unitPrice: String(service.priceBase), //price
     }));
-
   };
   const fields: Field[] = [
     {
@@ -102,17 +95,12 @@ export default function ContractServicesPage() {
   /* ---------- FETCH SERVICES ---------- */
 
   const fetchServices = async () => {
-
     try {
-
       setLoading(true);
 
-      const res = await fetch(
-        `/api/company/contracts/${contractId}/services`,
-        {
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/company/contracts/${contractId}/services`, {
+        credentials: "include",
+      });
 
       if (!res.ok) {
         setError("Failed to fetch services");
@@ -123,7 +111,6 @@ export default function ContractServicesPage() {
       const data = await res.json();
 
       setServices(data);
-
     } catch {
       setError("Connection error");
     } finally {
@@ -132,24 +119,19 @@ export default function ContractServicesPage() {
   };
 
   const fetchCompanyServices = async () => {
-
     try {
-
-      const res = await fetch(
-        "/api/company/services",
-        { credentials: "include" }
-      );
+      const res = await fetch("/api/company/services", {
+        credentials: "include",
+      });
 
       if (!res.ok) return;
 
       const data = await res.json();
 
       setCompanyServices(data);
-
     } catch (error) {
       console.error("Failed to load services");
     }
-
   };
 
   /* ---------- CREATE SERVICE ---------- */
@@ -157,31 +139,27 @@ export default function ContractServicesPage() {
   const createService = async () => {
     setError("");
     try {
-
       const toISO = (value?: string) => {
         if (!value) return undefined;
         return new Date(value).toISOString();
       };
 
-      const res = await fetch(
-        `/api/company/contracts/${contractId}/services`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            serviceId: Number(form.serviceId),
-            quantity: Number(form.quantity),
-            unitPrice: Number(form.unitPrice),
-            serviceNotes: form.serviceNotes || undefined,
+      const res = await fetch(`/api/company/contracts/${contractId}/services`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: Number(form.serviceId),
+          quantity: Number(form.quantity),
+          unitPrice: Number(form.unitPrice),
+          serviceNotes: form.serviceNotes || undefined,
 
-            operationStart: toISO(form.operationStart),
-            operationEnd: toISO(form.operationEnd),
-          }),
-        }
-      );
+          operationStart: toISO(form.operationStart),
+          operationEnd: toISO(form.operationEnd),
+        }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -192,19 +170,16 @@ export default function ContractServicesPage() {
             .join(", ");
 
           setError(messages);
-
         } else if (data?.error) {
-
           if (data.available !== undefined) {
             setError(`${data.error}. Only ${data.available} left.`);
-            setForm(prev => ({
+            setForm((prev) => ({
               ...prev,
-              quantity: String(data.available) // renderiza en el ux la cantidad disponible
+              quantity: String(data.available), // renderiza en el ux la cantidad disponible
             }));
           } else {
             setError(data.error);
           }
-
         } else {
           setError("Failed to add service");
         }
@@ -220,16 +195,14 @@ export default function ContractServicesPage() {
         unitPrice: "",
         serviceNotes: "",
         operationStart: "",
-        operationEnd: ""
+        operationEnd: "",
       });
 
       fetchServices();
-
     } catch {
       setError("Connection error");
     }
   };
-
 
   const fetchContract = async () => {
     try {
@@ -241,28 +214,20 @@ export default function ContractServicesPage() {
 
       const data = await res.json();
       setContract(data);
-
-    } catch { }
+    } catch {}
   };
-
-
 
   const deleteItem = async (itemId: number) => {
     setError("");
     if (!confirm("Remove this service from contract?")) return;
 
     try {
-
-      const res = await fetch(
-        `/api/company/contract-items/${itemId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`/api/company/contract-items/${itemId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       if (!res.ok) {
-
         const data = await res.json();
 
         setError(data?.error || "Failed to delete service");
@@ -271,7 +236,6 @@ export default function ContractServicesPage() {
       }
 
       fetchServices();
-
     } catch {
       setError("Connection error");
     }
@@ -280,21 +244,17 @@ export default function ContractServicesPage() {
   const updateItem = async (itemId: number) => {
     setError("");
     try {
-
-      const res = await fetch(
-        `/api/company/contract-items/${itemId}`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            serviceId: Number(editForm.serviceId),
-            quantity: Number(editForm.quantity),
-          }),
-        }
-      );
+      const res = await fetch(`/api/company/contract-items/${itemId}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: Number(editForm.serviceId),
+          quantity: Number(editForm.quantity),
+        }),
+      });
 
       if (!res.ok) {
         setError("Failed to update item");
@@ -304,7 +264,6 @@ export default function ContractServicesPage() {
       setEditingItemId(null);
 
       fetchServices();
-
     } catch {
       setError("Connection error");
     }
@@ -317,31 +276,20 @@ export default function ContractServicesPage() {
   }, []);
 
   const contractTotal = services.reduce((sum, item) => {
-
-    return sum +
-      Number(item.quantity) *
-      Number(item.unitPrice);
-
+    return sum + Number(item.quantity) * Number(item.unitPrice);
   }, 0);
-
 
   return (
     <div>
-
-
-      {contract?.eventId && (
-        <EventInfoCard eventId={contract.eventId} />
-      )}
-
+      {contract?.eventId && <EventInfoCard eventId={contract.eventId} />}
 
       <PageHeader
         title={`Contract ${contractId} Services`}
         buttonLabel="+ Add Service"
         onClick={() => {
           setError("");
-          setShowForm(true)
-        }
-        }
+          setShowForm(true);
+        }}
       />
 
       <p
@@ -354,10 +302,7 @@ export default function ContractServicesPage() {
         Contract Total: ${contractTotal}
       </p>
 
-
-
       {showForm && (
-
         <CreateForm
           title="Add Service to Contract"
           fields={fields}
@@ -367,44 +312,36 @@ export default function ContractServicesPage() {
           onCancel={() => setShowForm(false)}
           clearError={() => setError("")}
         />
-
-
-
       )}
 
-      {form.serviceId && (() => {
+      {form.serviceId &&
+        (() => {
+          const service = companyServices.find(
+            (s) => String(s.id) === form.serviceId,
+          );
 
-        const service = companyServices.find(
-          s => String(s.id) === form.serviceId
-        );
+          if (!service) return null;
 
-        if (!service) return null;
+          return (
+            <div>
+              <p>Stock available: {service.stockTotal}</p>
 
-        return (
-          <div>
-            <p>Stock available: {service.stockTotal}</p>
-
-            {form.quantity && form.unitPrice && (
-              <p>
-                Subtotal: $
-                {Number(form.quantity) * Number(form.unitPrice)}
-              </p>
-            )}
-          </div>
-        );
-
-      })()}
+              {form.quantity && form.unitPrice && (
+                <p>
+                  Subtotal: ${Number(form.quantity) * Number(form.unitPrice)}
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
       {error && <ErrorBox message={error} code={errorCode} />}
 
       {loading && <p>Loading services...</p>}
 
-      {!loading && services.length === 0 && (
-        <p>No services added yet.</p>
-      )}
+      {!loading && services.length === 0 && <p>No services added yet.</p>}
 
       {!loading && services.length > 0 && (
-
         <div
           style={{
             display: "flex",
@@ -412,7 +349,6 @@ export default function ContractServicesPage() {
             gap: 10,
           }}
         >
-
           {services.map((item) => (
             <ContractItemCard
               key={item.id}
@@ -420,13 +356,16 @@ export default function ContractServicesPage() {
               onDelete={deleteItem}
               onUpdate={async (id, data) => {
                 try {
-
-                  //convierte las horas 
+                  //convierte las horas
                   const toISO = (value?: any) => {
                     if (!value) return undefined;
 
                     // si ya es string ISO válido → no tocar
-                    if (typeof value === "string" && value.includes("T") && value.includes("Z")) {
+                    if (
+                      typeof value === "string" &&
+                      value.includes("T") &&
+                      value.includes("Z")
+                    ) {
                       return value;
                     }
 
@@ -437,21 +376,18 @@ export default function ContractServicesPage() {
                     return date.toISOString();
                   };
 
-                  const res = await fetch(
-                    `/api/company/contract-items/${id}`,
-                    {
-                      method: "PATCH",
-                      credentials: "include",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        ...data,
-                        operationStart: toISO(data.operationStart),
-                        operationEnd: toISO(data.operationEnd),
-                      }),
-                    }
-                  );
+                  const res = await fetch(`/api/company/contract-items/${id}`, {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      ...data,
+                      operationStart: toISO(data.operationStart),
+                      operationEnd: toISO(data.operationEnd),
+                    }),
+                  });
 
                   if (!res.ok) {
                     setError("Failed to update item");
@@ -459,18 +395,14 @@ export default function ContractServicesPage() {
                   }
 
                   fetchServices();
-
                 } catch {
                   setError("Connection error");
                 }
               }}
             />
           ))}
-
         </div>
-
       )}
-
     </div>
   );
 }

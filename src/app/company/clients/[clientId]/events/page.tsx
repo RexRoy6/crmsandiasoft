@@ -9,7 +9,6 @@ import ErrorBox from "@/app/components/ErrorBox";
 import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function ClientEventsPage() {
-
   const params = useParams();
   const clientId = params.clientId;
 
@@ -27,7 +26,7 @@ export default function ClientEventsPage() {
     notes: "",
   });
 
-  const eventFields : Field[] = [
+  const eventFields: Field[] = [
     { name: "name", label: "Event name" },
     { name: "eventDate", label: "Event date", type: "date" },
     { name: "location", label: "Location" },
@@ -36,10 +35,9 @@ export default function ClientEventsPage() {
 
   const fetchEvents = async () => {
     try {
-
       setLoading(true);
 
-      const res = await fetch(`/api/company/events/?clientId=${clientId}`, {
+      const res = await fetch(`/api/company/events?clientId=${clientId}`, {
         method: "GET",
         credentials: "include",
       });
@@ -53,7 +51,6 @@ export default function ClientEventsPage() {
       const data = await res.json();
 
       setEvents(data);
-
     } catch {
       setError("Connection error");
     } finally {
@@ -63,7 +60,6 @@ export default function ClientEventsPage() {
 
   const createEvent = async () => {
     try {
-
       const payload = {
         ...form,
         clientId: Number(clientId),
@@ -94,7 +90,6 @@ export default function ClientEventsPage() {
       });
 
       fetchEvents();
-
     } catch {
       setError("Connection error");
     }
@@ -106,13 +101,11 @@ export default function ClientEventsPage() {
 
   return (
     <div>
-
       <PageHeader
         title="Events"
         buttonLabel="+ New Event"
         onClick={() => setShowForm(true)}
       />
-
       {showForm && (
         <CreateForm
           title="Create Event"
@@ -123,31 +116,22 @@ export default function ClientEventsPage() {
           onCancel={() => setShowForm(false)}
         />
       )}
-
       {error && <ErrorBox message={error} code={errorCode} />}
-
       {loading && <p>Loading events...</p>}
-
-      {!loading && events.length === 0 && (
-        <p>No events yet.</p>
-      )}
-
+      {!loading && events.length === 0 && <p>No events yet.</p>}
       {!loading && events.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {events.map((event) => (
             <ListCard
               key={event.id}
               title={event.name}
-              extra={[
-                `Date: ${event.eventDate}`,
-                `Location: ${event.location}`,
-              ]}
+              subtitle={`Date: ${event.eventDate}`}
+              content={[`Location: ${event.location}`]}
               link={`/company/clients/${clientId}/events/${event.id}`}
             />
           ))}
         </div>
       )}
-
     </div>
   );
 }

@@ -7,28 +7,25 @@ import ListCard from "@/app/components/crm/ListCard";
 import type { Field } from "@/app/components/crm/CreateForm";
 
 export default function ServicesPage() {
-    const [services, setServices] = useState<any[]>([]);
-    const [error, setError] = useState("");
-    const [errorCode, setErrorCode] = useState<number | undefined>();
-    const [loading, setLoading] = useState(true);
-    //para crear servicios
-    const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({
-        name: "",
-        description: "",
-        stockTotal: 1,
-        priceBase: "",
-    });
-
-    //campos para formulario de servicios
-    const serviceFields: Field[] = [
-        { name: "name", label: "Name" },
-        { name: "description", label: "Description" },
-        { name: "stockTotal", label: "Stock", type: "number" },
-        { name: "priceBase", label: "Base Price" },
-    ];
-
-
+  const [services, setServices] = useState<any[]>([]);
+  const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<number | undefined>();
+  const [loading, setLoading] = useState(true);
+  //para crear servicios
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    stockTotal: 1,
+    priceBase: "",
+  });
+  //campos para formulario de servicios
+  const serviceFields: Field[] = [
+    { name: "name", label: "Name" },
+    { name: "description", label: "Description" },
+    { name: "stockTotal", label: "Stock", type: "number" },
+    { name: "priceBase", label: "Base Price" },
+  ];
 
   const fetchServices = async () => {
     try {
@@ -89,30 +86,27 @@ export default function ServicesPage() {
     }
   };
 
-    useEffect(() => {
-        fetchServices();
-    }, []);
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
-
-
-    return (
-        <div>
-            <PageHeader
-                title="Services"
-                buttonLabel="+ New Service"
-                onClick={() => setShowForm(true)}
-            />
-            {showForm && (
-                <CreateForm
-                    title="Create Service"
-                    fields={serviceFields}
-                    form={form}
-                    setForm={setForm}
-                    onSubmit={createService}
-                    onCancel={() => setShowForm(false)}
-                />
-            )}
-
+  return (
+    <div>
+      <PageHeader
+        title="Services"
+        buttonLabel="+ New Service"
+        onClick={() => setShowForm(true)}
+      />
+      {showForm && (
+        <CreateForm
+          title="Create Service"
+          fields={serviceFields}
+          form={form}
+          setForm={setForm}
+          onSubmit={createService}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
 
       {error && <ErrorBox message={error} code={errorCode} />}
 
@@ -128,34 +122,38 @@ export default function ServicesPage() {
             gap: 10,
           }}
         >
-          {services.map((service) => (
-            <ListCard
-              key={service.id}
-              title={service.name}
-              subtitle={service.description}
-              content={
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 4,
-                    marginTop: 6,
-                    fontSize: 13,
-                    color: "#334155",
-                  }}
-                >
-                  <span>
-                    <strong>Stock:</strong> {service.stockTotal}
-                  </span>
+          {services.map((service) => {
+            const isActive = !service.deletedAt;
+            return (
+              <ListCard
+                key={service.id}
+                title={service.name}
+                subtitle={service.description}
+                content={
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      marginTop: 6,
+                      fontSize: 13,
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    <span>
+                      <strong>Stock:</strong> {service.stockTotal}
+                    </span>
 
-                  <span>
-                    <strong>Price:</strong> ${service.priceBase}
-                  </span>
-                </div>
-              }
-              link={`/company/service/${service.id}`}
-            />
-          ))}
+                    <span>
+                      <strong>Price:</strong> ${service.priceBase}
+                    </span>
+                  </div>
+                }
+                link={`/company/service/${service.id}`}
+                isActive={isActive}
+              />
+            );
+          })}
         </div>
       )}
     </div>

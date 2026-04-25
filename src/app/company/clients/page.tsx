@@ -70,14 +70,13 @@ export default function ClientsPage() {
     }
   };
 
-    const createClient = async () => {
-        try {
-
-            // if (!form.name || !form.phone || !form.email) {
-            if (!form.name || !form.phone) {
-                setError("All fields are required");
-                return;
-            }
+  const createClient = async () => {
+    try {
+      // if (!form.name || !form.phone || !form.email) {
+      if (!form.name || !form.phone) {
+        setError("All fields are required");
+        return;
+      }
 
       const res = await fetch("/api/company/clients", {
         method: "POST",
@@ -181,14 +180,16 @@ export default function ClientsPage() {
                         display: "flex",
                       }}
                     >
-                      <span style={{ fontSize: 13, color: "#64748b" }}>
+                      <span
+                        style={{ fontSize: 13, color: "var(--text-secondary)" }}
+                      >
                         Email:
                       </span>
                       <span
                         style={{
                           fontSize: 13,
                           fontWeight: 500,
-                          color: "#0f172a",
+                          color: "var(--text-primary)",
                         }}
                       >
                         {client.email}
@@ -199,14 +200,16 @@ export default function ClientsPage() {
                         display: "flex",
                       }}
                     >
-                      <span style={{ fontSize: 13, color: "#64748b" }}>
+                      <span
+                        style={{ fontSize: 13, color: "var(--text-secondary)" }}
+                      >
                         Phone:
                       </span>
                       <span
                         style={{
                           fontSize: 13,
                           fontWeight: 500,
-                          color: "#0f172a",
+                          color: "var(--text-primary)",
                         }}
                       >
                         {client.phone}
