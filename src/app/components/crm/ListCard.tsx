@@ -1,123 +1,232 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React from "react";
 
-type Props = {
-  title: string;
-  description?: string;
-  extra?: string[];
-  link: string;
+type Badge = {
+  label: string;
+};
+
+type Action = {
+  label: string;
+  onClick?: () => void;
+  color?: string;
+};
+
+type MetaItem = {
+  icon?: React.ReactNode;
+  label: string;
+};
+
+type ListCardProps = {
+  title?: string;
+  subtitle?: string;
+  content?: React.ReactNode;
+
+  meta?: MetaItem[];
+  badge?: Badge;
+
+  actions?: Action[];
+
+  link?: string;
+  onClick?: () => void;
+
+  children?: React.ReactNode;
   isActive?: boolean;
 };
 
 export default function ListCard({
   title,
-  description,
-  extra,
+  subtitle,
+  content,
+  meta = [],
+  badge,
+  actions = [],
   link,
+  onClick,
+  children,
   isActive = true,
-}: Props) {
+}: ListCardProps) {
+  const router = useRouter();
+
+  const badgeStyles: Record<string, { background: string; color: string }> = {
+    paid: { background: "#dcfce7", color: "#166534" },
+    completed: { background: "#dcfce7", color: "#166534" },
+    active: { background: "#8eb4ff", color: "#0e4685" },
+    pending: { background: "#fef9c3", color: "#854d0e" },
+    partial: { background: "#fef9c3", color: "#854d0e" },
+    cancelled: { background: "#fee2e2", color: "#991b1b" },
+  };
+
+  const getBadgeStyles = () => {
+    const label = badge?.label || "";
+    const baseStyle = badgeStyles[label];
+
+    if (!isActive) {
+      return {
+        background: "#ff4d4f",
+        color: "white",
+      };
+    }
+    if (baseStyle) return baseStyle;
+
+    return {
+      background: "#e2e8f0",
+      color: "#334155",
+    };
+  };
+
+  const handleClick = () => {
+    if (onClick) return onClick();
+    if (link) return router.push(link);
+  };
+
   return (
     <div
+      onClick={handleClick}
       style={{
         background: "var(--bg-primary)",
         padding: 20,
         borderRadius: 12,
         border: isActive
           ? "1px solid var(--border-color)"
-          : "1px solid #ff4d4f", //inactive
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        transition: "all 0.15s ease",
-        opacity: isActive ? 1 : 0.6, //se ve "apagado"
+          : "1px solid #ff4d4f",
+        cursor: link || onClick ? "pointer" : "default",
+        transition: "all 0.2s ease",
+        marginBottom: 12,
+        opacity: isActive ? 1 : 0.6,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow =
-          "0 8px 20px rgba(0,0,0,0.08)";
+        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
     >
-      {/* TITLE */}
-
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <strong
-          style={{
-            fontSize: 16,
-            color: "var(--text-primary)",
-          }}
-        >
-          {title}
-        </strong>
-
-        {!isActive && (
-          <span
-            style={{
-              background: "#ff4d4f",
-              color: "white",
-              fontSize: 12,
-              padding: "2px 6px",
-              borderRadius: 6,
-            }}
-          >
-            Inactive
-          </span>
-        )}
-      </div>
-
-      {/* DESCRIPTION */}
-
-      {description && (
-        <p
-          style={{
-            color: "var(--text-secondary)",
-            fontSize: 14,
-          }}
-        >
-          {description}
-        </p>
-      )}
-
-      {/* EXTRA INFO */}
-
-      {extra && (
+      {/* HEADER */}
+      {(title || actions.length > 0) && (
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            fontSize: 14,
-            color: "var(--text-secondary)",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
           }}
         >
-          {extra.map((item, i) => (
-            <span key={i}>{item}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {title && (
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+                {title}
+              </h3>
+            )}
+
+            {(badge || !isActive) && (
+              <span
+                style={{
+                  ...getBadgeStyles(),
+                  fontSize: 12,
+                  padding: "2px 8px",
+                  borderRadius: 999,
+                  fontWeight: 500,
+                }}
+              >
+                {badge?.label || "Inactive"}
+              </span>
+            )}
+          </div>
+
+          {actions.length > 0 && (
+            <div style={{ display: "flex", gap: 8 }}>
+              {actions.map((action, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    action.onClick?.();
+                  }}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 6,
+                    border: "none",
+                    background: "var(--text-primary)",
+                    color: "var(--bg-primary)",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 500,
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUBTITLE */}
+      {subtitle && (
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: 13,
+            color: "#6b7280",
+          }}
+        >
+          {subtitle}
+        </p>
+      )}
+
+      {/* CONTENT */}
+      {content && (
+        <div
+          style={{
+            background: "var(--bg-secondary)",
+            padding: 10,
+            borderRadius: 8,
+            fontSize: 13,
+            color: "var(--text-primary)",
+            marginBottom: 10,
+          }}
+        >
+          {content}
+        </div>
+      )}
+
+      {/* META */}
+      {meta.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            flexWrap: "wrap",
+            marginTop: 8,
+          }}
+        >
+          {meta.map((item, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                color: "#6b7280",
+                background: "#f3f4f6",
+                padding: "4px 8px",
+                borderRadius: 6,
+              }}
+            >
+              {item.icon}
+              {item.label}
+            </div>
           ))}
         </div>
       )}
 
-      {/* ACTION */}
-
-      <div style={{ marginTop: 10 }}>
-        <Link href={link}>
-          <button
-            style={{
-              padding: "6px 12px",
-              fontSize: 13,
-              borderRadius: 6,
-              border: "1px solid var(--border-color)",
-              background: "var(--bg-secondary)",
-              cursor: "pointer",
-            }}
-          >
-            Manage →
-          </button>
-        </Link>
-      </div>
+      {/* CHILDREN (extensión libre) */}
+      {children && <div style={{ marginTop: 12 }}>{children}</div>}
     </div>
   );
 }

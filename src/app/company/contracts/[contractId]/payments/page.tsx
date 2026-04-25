@@ -8,9 +8,9 @@ import ListCard from "@/app/components/crm/ListCard";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import ErrorBox from "@/app/components/ErrorBox";
 import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
+import { useRouter } from "next/navigation";
 
 export default function ContractPaymentsPage() {
-
   const params = useParams();
   const contractId = params.contractId;
 
@@ -26,6 +26,7 @@ export default function ContractPaymentsPage() {
   const [errorCode, setErrorCode] = useState<number>();
 
   const [showForm, setShowForm] = useState(false);
+  const router = useRouter();
 
   const [form, setForm] = useState({
     currency: "MXN",
@@ -33,10 +34,9 @@ export default function ContractPaymentsPage() {
     items: [] as {
       contractItemId: number;
       amount: number;
-    }[]
+    }[],
   });
-  const [contractItems, setContractItems] = useState<any[]>([])
-
+  const [contractItems, setContractItems] = useState<any[]>([]);
 
   const fields: Field[] = [
     {
@@ -61,15 +61,12 @@ export default function ContractPaymentsPage() {
   ];
 
   async function fetchPayments() {
-
     try {
-
       setLoading(true);
 
-      const res = await fetch(
-        `/api/company/contracts/${contractId}/payments`,
-        { credentials: "include" }
-      );
+      const res = await fetch(`/api/company/contracts/${contractId}/payments`, {
+        credentials: "include",
+      });
 
       if (!res.ok) {
         setError("Failed to fetch payments");
@@ -83,80 +80,60 @@ export default function ContractPaymentsPage() {
       setContractTotal(data.contractTotal);
       setPaidAmount(data.paidAmount);
       setRemainingAmount(data.remainingAmount);
-
     } catch {
-
       setError("Connection error");
-
     } finally {
-
       setLoading(false);
-
     }
-
   }
   async function fetchContractItems() {
-    const res = await fetch(
-      `/api/company/contracts/${contractId}/services`,
-      { credentials: "include" }
-    )
+    const res = await fetch(`/api/company/contracts/${contractId}/services`, {
+      credentials: "include",
+    });
 
-    const data = await res.json()
+    const data = await res.json();
 
-    setContractItems(data)
+    setContractItems(data);
 
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       items: data.map((item: any) => ({
         contractItemId: item.id,
-        amount: 0
-      }))
-    }))
+        amount: 0,
+      })),
+    }));
   }
 
   async function createPayment() {
-
     try {
-
-      const total = form.items.reduce(
-        (sum, i) => sum + i.amount,
-        0
-      )
+      const total = form.items.reduce((sum, i) => sum + i.amount, 0);
 
       if (total <= 0) {
-        setError("Enter at least one amount")
-        return
+        setError("Enter at least one amount");
+        return;
       }
 
-      const res = await fetch(
-        `/api/company/contracts/${contractId}/payments`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            currency: form.currency,
-            paymentMethod: form.paymentMethod,
-            items: form.items.filter(i => i.amount > 0)
-          }),
-        }
-      );
+      const res = await fetch(`/api/company/contracts/${contractId}/payments`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currency: form.currency,
+          paymentMethod: form.paymentMethod,
+          items: form.items.filter((i) => i.amount > 0),
+        }),
+      });
 
       if (!res.ok) {
-
         const data = await res.json();
 
-        setError(
-          JSON.stringify(data.error) ||
-          "Failed to create payment"
-        );
+        setError(JSON.stringify(data.error) || "Failed to create payment");
 
         setErrorCode(res.status);
 
         return;
-
       }
 
       setShowForm(false);
@@ -164,42 +141,32 @@ export default function ContractPaymentsPage() {
       setForm({
         currency: "MXN",
         paymentMethod: "cash",
-        items: []
-      })
+        items: [],
+      });
 
-      setContractItems([])
+      setContractItems([]);
 
       fetchPayments();
-
     } catch {
-
       setError("Connection error");
-
     }
-
   }
 
   useEffect(() => {
     fetchPayments();
   }, []);
 
-  const progress =
-    contractTotal > 0
-      ? (paidAmount / contractTotal) * 100
-      : 0;
+  const progress = contractTotal > 0 ? (paidAmount / contractTotal) * 100 : 0;
 
   return (
-
     <div>
-
       <PageHeader
         title={`Contract ${contractId} Payments`}
         buttonLabel="+ Add Payment"
         onClick={() => {
-          setShowForm(true)
-          fetchContractItems() // importante
+          setShowForm(true);
+          fetchContractItems(); // importante
         }}
-
       />
 
       {/* ---------- CONTRACT SUMMARY ---------- */}
@@ -217,28 +184,21 @@ export default function ContractPaymentsPage() {
           maxWidth: 500,
         }}
       >
-
         <strong>Contract Summary</strong>
 
         <div>
-          <span style={{ color: "var(--text-secondary)" }}>
-            Total:
-          </span>{" "}
-          ${contractTotal}
+          <span style={{ color: "var(--text-secondary)" }}>Total:</span> $
+          {contractTotal}
         </div>
 
         <div>
-          <span style={{ color: "var(--text-secondary)" }}>
-            Paid:
-          </span>{" "}
-          ${paidAmount}
+          <span style={{ color: "var(--text-secondary)" }}>Paid:</span> $
+          {paidAmount}
         </div>
 
         <div>
-          <span style={{ color: "var(--text-secondary)" }}>
-            Remaining:
-          </span>{" "}
-          ${remainingAmount}
+          <span style={{ color: "var(--text-secondary)" }}>Remaining:</span> $
+          {remainingAmount}
         </div>
 
         {/* ---------- PAYMENT PROGRESS ---------- */}
@@ -269,7 +229,6 @@ export default function ContractPaymentsPage() {
         >
           {progress.toFixed(0)}% paid
         </span>
-
       </div>
 
       {showForm && (
@@ -289,27 +248,17 @@ export default function ContractPaymentsPage() {
           setForm={setForm}
         />
       )}
-      {error && (
-        <ErrorBox
-          message={error}
-          code={errorCode}
-        />
-      )}
+      {error && <ErrorBox message={error} code={errorCode} />}
 
       {loading && (
-        <p style={{ color: "var(--text-secondary)" }}>
-          Loading payments...
-        </p>
+        <p style={{ color: "var(--text-secondary)" }}>Loading payments...</p>
       )}
 
       {!loading && payments.length === 0 && (
-        <p style={{ color: "var(--text-secondary)" }}>
-          No payments yet.
-        </p>
+        <p style={{ color: "var(--text-secondary)" }}>No payments yet.</p>
       )}
 
       {!loading && payments.length > 0 && (
-
         <div
           style={{
             display: "flex",
@@ -317,32 +266,83 @@ export default function ContractPaymentsPage() {
             gap: 10,
           }}
         >
-
           {payments.map((payment) => (
-
             <ListCard
               key={payment.id}
               title={`Payment #${payment.id}`}
-              extra={[
-                `Amount: $${payment.amount}`,
-                `Currency: ${payment.currency}`,
-                `Method: ${payment.paymentMethod}`,
-                `Date: ${new Date(payment.createdAt).toLocaleDateString()}`,
-                ...payment.items.flatMap((item: any) => [
-                  `• ${item.service.name}: $${item.amount}`,
-                  `  ${item.service.description}`
-                ])
-              ]}
+              content={
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {payment.items.map((item: any) => (
+                    <div
+                      key={`p${payment.id}-c${payment.contractId}-i${item.contractItemId}`}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        background: "var(--bg-secondary)",
+                        padding: "8px 10px",
+                        borderRadius: 8,
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>
+                          {item.service.name}
+                          {item.service.description && (
+                            <span
+                              style={{
+                                fontSize: 12,
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {item.service.description}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>
+                        ${item.amount}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              }
+              // actions={[
+              //   {
+              //     label: "Manage →",
+              //     onClick: () => router.push(``),
+              //   },
+              // ]}
               link="#"
-            />
-
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                  marginTop: 8,
+                  fontSize: 13,
+                  color: "var(--text-primary)",
+                }}
+              >
+                <span>
+                  <strong>Currency:</strong> ${payment.currency}
+                </span>
+                <span>
+                  <strong>Amount:</strong> ${payment.amount}
+                </span>
+                <span>
+                  <strong>Method:</strong> {payment.paymentMethod}
+                </span>
+                <span>
+                  <strong>Date:</strong>{" "}
+                  {new Date(payment.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </ListCard>
           ))}
-
         </div>
-
       )}
-
     </div>
-
   );
 }
