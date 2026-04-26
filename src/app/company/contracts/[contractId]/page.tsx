@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBox from "@/app/components/ErrorBox";
 import DetailCard from "@/app/components/crm/DetailCard";
+import { formatDate, formatTime } from "@/lib/utils/date";
 
 export default function ContractDetailPage() {
 
@@ -27,17 +28,18 @@ export default function ContractDetailPage() {
   const [loading, setLoading] = useState(true);
 
   const contractFields = [
-    { name: "status", label: "Status" },
-    { name: "totalAmount", label: "Total Amount", type: "number" },
+    { name: "status", label: "📌 Status" },
+    { name: "totalAmount", label: "💰 Total Amount", type: "number" },
 
-    { name: "paidAmount", label: "Paid Amount" },
-    { name: "remainingAmount", label: "Remaining Amount" },
+    { name: "paidAmount", label: "💵 Paid Amount" },
+    { name: "remainingAmount", label: "🧾 Remaining Amount" },
 
-    { name: "clientName", label: "Client" },
-    { name: "eventName", label: "Event" },
-    { name: "eventDate", label: "Event Date" },
-    { name: "eventLocation", label: "Location" },
-    { name: "eventNote", label: "Note" },
+    { name: "clientName", label: "👤 Client" },
+    { name: "eventName", label: "🎉 Event" },
+    { name: "eventDate", label: "📅 Date" },
+    { name: "eventTime", label: "🕒 Time" },
+    { name: "eventLocation", label: "📍 Location" },
+    { name: "eventNote", label: "📝 Note" },
   ];
 
   /* ---------- FETCH ---------- */
@@ -64,7 +66,7 @@ export default function ContractDetailPage() {
 
       setForm({
         status: data.status ?? "",
-        totalAmount: data.totalAmount ?? "",
+        totalAmount: data.totalAmount ?? 0,
       });
 
     } catch {
@@ -178,8 +180,10 @@ export default function ContractDetailPage() {
     fetchContract();
   }, []);
 
-  const formatMoney = (value: number) =>
-    `$${value.toLocaleString()}`
+  const formatMoney = (value: number = 0) =>
+    `$${value.toLocaleString("es-MX", {
+      minimumFractionDigits: 2,
+    })}`;
 
 
   const formattedContract = contract
@@ -191,7 +195,8 @@ export default function ContractDetailPage() {
 
       clientName: contract.client?.name,
       eventName: contract.event?.name,
-      eventDate: contract.event?.eventDate,
+      eventDate: formatDate(contract.event?.eventDate),
+      eventTime: formatTime(contract.event?.eventDate),
       eventLocation: contract.event?.location,
       eventNote: contract.event?.notes,
     }
