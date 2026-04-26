@@ -83,12 +83,12 @@ export default function ContractServicesPage() {
     {
       name: "operationStart",
       label: "Start Time",
-      type: "datetime-local",
+      type: "time",//datetime-local
     },
     {
       name: "operationEnd",
       label: "End Time",
-      type: "datetime-local",
+      type: "time",//datetime-local
     },
   ];
 
@@ -139,10 +139,25 @@ export default function ContractServicesPage() {
   const createService = async () => {
     setError("");
     try {
-      const toISO = (value?: string) => {
-        if (!value) return undefined;
-        return new Date(value).toISOString();
+      // const toISO = (value?: string) => {
+      //   if (!value) return undefined;
+      //   return new Date(value).toISOString();
+      // };
+
+      const combineDateTime = (time?: string) => {
+        if (!time || !contract?.event?.eventDate) return undefined;
+
+        const date = new Date(contract.event.eventDate);
+
+        const [hours, minutes] = time.split(":");
+
+        date.setHours(Number(hours));
+        date.setMinutes(Number(minutes));
+        date.setSeconds(0);
+
+        return date.toISOString();
       };
+
 
       const res = await fetch(`/api/company/contracts/${contractId}/services`, {
         method: "POST",
@@ -156,8 +171,8 @@ export default function ContractServicesPage() {
           unitPrice: Number(form.unitPrice),
           serviceNotes: form.serviceNotes || undefined,
 
-          operationStart: toISO(form.operationStart),
-          operationEnd: toISO(form.operationEnd),
+          operationStart: combineDateTime(form.operationStart),//era toIso
+          operationEnd: combineDateTime(form.operationEnd),
         }),
       });
 
@@ -214,7 +229,7 @@ export default function ContractServicesPage() {
 
       const data = await res.json();
       setContract(data);
-    } catch {}
+    } catch { }
   };
 
   const deleteItem = async (itemId: number) => {
@@ -324,6 +339,11 @@ export default function ContractServicesPage() {
 
           return (
             <div>
+
+              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                📅 Event date: {new Date(contract?.event?.eventDate).toLocaleDateString()}
+              </p>
+
               <p>Stock available: {service.stockTotal}</p>
 
               {form.quantity && form.unitPrice && (
