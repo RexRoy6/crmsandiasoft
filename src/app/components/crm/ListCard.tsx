@@ -85,7 +85,7 @@ export default function ListCard({
     <div
       onClick={handleClick}
       style={{
-        border: "1px solid #e5e7eb",
+        // border: "1px solid #e5e7eb",
         borderRadius: 12,
         border: isActive
           ? "1px solid var(--border-color)"
