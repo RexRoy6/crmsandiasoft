@@ -199,11 +199,14 @@ export default function CreateForm({
                 });
               }}
               style={{
-                padding: "10px 12px",
+                padding: "8px 10px",
+                fontSize: 12,
                 borderRadius: 8,
                 border: "1px solid var(--border-color)",
-                background: "var(--bg-secondary)",
-                color: "var(--text-primary)",
+                background: field.readOnly
+                  ? "var(--bg-primary)"
+                  : "var(--bg-secondary)",
+                color: "var(--text-secondary)",
               }}
             />
 
