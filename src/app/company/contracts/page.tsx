@@ -11,6 +11,7 @@ import SearchBar from "@/app/components/crm/SearchBar";
 import Pagination from "@/app/components/crm/Pagination";
 import { useRouter } from "next/navigation";
 import EventSearch from "@/app/components/crm/EventSearch";
+import { formatDate } from "@/lib/utils/date";
 
 export default function ContractsPage() {
   const router = useRouter();
@@ -23,13 +24,22 @@ export default function ContractsPage() {
 
   /* create contract */
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
+  type ContractForm = {
+    eventId: string;
+    status: string;
+    event?: {
+      name: string;
+      clientName: string;
+      date: string;
+      location: string;
+    };
+  };
+
+  const [form, setForm] = useState<ContractForm>({
     eventId: "",
     status: "draft",
-    // ,
-    // totalAmount: "",
+    event: undefined,
   });
-
   //seach params y pagiantion
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -42,9 +52,34 @@ export default function ContractsPage() {
       readOnly: true,
       after: (
         <>
-          {form.eventId && (
-            <div style={{ fontSize: 12 }}>
-              ✅ Selected event ID: {form.eventId}
+          {form.event && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: 10,
+                borderRadius: 10,
+                background: "var(--bg-secondary)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
+                ✅ {form.event.name} ({form.event.clientName})
+              </div>
+
+              <div
+                style={{
+                  fontSize: 13,
+                  marginTop: 4,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                📅 {formatDate(form.event.date)} · 📍 {form.event.location}
+              </div>
             </div>
           )}
 
@@ -53,9 +88,17 @@ export default function ContractsPage() {
               setForm((prev: any) => ({
                 ...prev,
                 eventId: String(event.id),
+                event: {
+                  name: event.name,
+                  clientName: event.client?.name,
+                  date: event.eventDate,
+                  location: event.location,
+                },
               }));
             }}
           />
+
+
         </>
       ),
     },
@@ -222,7 +265,13 @@ export default function ContractsPage() {
           form={form}
           setForm={setForm}
           onSubmit={createContract}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            setShowForm(false);
+            setForm({
+              eventId: "",
+              status: "draft",
+            });
+          }}
         />
       )}
 
