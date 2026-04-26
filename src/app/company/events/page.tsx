@@ -10,6 +10,7 @@ import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import { useRouter } from "next/navigation";
 import SearchBar from "@/app/components/crm/SearchBar";
 import Pagination from "@/app/components/crm/Pagination";
+import { formatDate, formatTime } from "@/lib/utils/date";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -58,7 +59,7 @@ export default function EventsPage() {
   const createClientInline = async () => {
     try {
       //if (!clientForm.name || !clientForm.phone || !clientForm.email) {
-        if (!clientForm.name || !clientForm.phone ) {
+      if (!clientForm.name || !clientForm.phone) {
         setClientError("All client fields are required");
         return;
       }
@@ -211,7 +212,7 @@ export default function EventsPage() {
       const activeClients = result.data.filter((c: any) => !c.deletedAt);
 
       setClients(activeClients);
-    } catch {}
+    } catch { }
   };
 
   const createEvent = async () => {
@@ -310,7 +311,7 @@ export default function EventsPage() {
 
       const result = await res.json();
       setContracts(result.data);
-    } catch {}
+    } catch { }
   };
   const getContractForEvent = (eventId: number) => {
     return contracts.find((c) => c.event?.id === eventId);
@@ -492,11 +493,7 @@ export default function EventsPage() {
                               color: "var(--text-primary)",
                             }}
                           >
-                            {date.toLocaleDateString()} ·{" "}
-                            {date.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatDate(event.eventDate)} · {formatTime(event.eventDate)}
                           </span>
                         </div>
 
@@ -549,20 +546,20 @@ export default function EventsPage() {
                   actions={[
                     ...(contract
                       ? [
-                          {
-                            label: "View Contract",
-                            onClick: () =>
-                              router.push(
-                                `/company/contracts/${contract.id}/services`,
-                              ),
-                          },
-                        ]
+                        {
+                          label: "View Contract",
+                          onClick: () =>
+                            router.push(
+                              `/company/contracts/${contract.id}/services`,
+                            ),
+                        },
+                      ]
                       : [
-                          {
-                            label: "Create Contract",
-                            onClick: () => createContractForEvent(event.id),
-                          },
-                        ]),
+                        {
+                          label: "Create Contract",
+                          onClick: () => createContractForEvent(event.id),
+                        },
+                      ]),
 
                     {
                       label: "Manage →",
