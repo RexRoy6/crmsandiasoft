@@ -10,6 +10,7 @@ import { CONTRACT_STATUS } from "@/db/schema";
 import SearchBar from "@/app/components/crm/SearchBar";
 import Pagination from "@/app/components/crm/Pagination";
 import { useRouter } from "next/navigation";
+import EventSearch from "@/app/components/crm/EventSearch";
 
 export default function ContractsPage() {
   const router = useRouter();
@@ -38,11 +39,25 @@ export default function ContractsPage() {
     {
       name: "eventId",
       label: "Event",
-      type: "select",
-      options: events.map((event) => ({
-        value: event.id,
-        label: `${event.name} (${event.client?.name})`,
-      })),
+      readOnly: true,
+      after: (
+        <>
+          {form.eventId && (
+            <div style={{ fontSize: 12 }}>
+              ✅ Selected event ID: {form.eventId}
+            </div>
+          )}
+
+          <EventSearch
+            onSelect={(event: any) => {
+              setForm((prev: any) => ({
+                ...prev,
+                eventId: String(event.id),
+              }));
+            }}
+          />
+        </>
+      ),
     },
 
     {
@@ -106,7 +121,7 @@ export default function ContractsPage() {
       );
 
       setEvents(activeEvents);
-    } catch {}
+    } catch { }
   };
 
   const createContract = async () => {
