@@ -10,7 +10,7 @@ import type {
   UpdateContractInput
 } from "@/lib/validations/contractValidation"
 
-class ConflictError extends Error {}
+class ConflictError extends Error { }
 
 
 
@@ -44,9 +44,9 @@ export async function createContract(data: CreateContractInput) {
   //   if (existing) {
   //   throw new Error("Contract already exists for this event")
   // }
-if (existing) {
-  throw new ConflictError("Contract already exists for this event")
-}
+  if (existing) {
+    throw new ConflictError("Contract already exists for this event")
+  }
   const [result] = await tdb.insert(
     contracts,
     {
@@ -69,11 +69,13 @@ if (existing) {
 export async function getCompanyContracts({
   search,
   page = 1,
-  limit = 10
+  limit = 10,
+  eventId
 }: {
   search?: string
   page?: number
   limit?: number
+  eventId?: number
 }) {
 
   const { companyId } = await getAuthContext()
@@ -88,6 +90,9 @@ export async function getCompanyContracts({
 
   if (companyId) {
     conditions.push(eq(contracts.companyId, companyId))
+  }
+  if (eventId) {
+    conditions.push(eq(contracts.eventId, eventId))
   }
 
   if (search) {

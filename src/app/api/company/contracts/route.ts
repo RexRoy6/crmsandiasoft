@@ -70,13 +70,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
 
     const search = searchParams.get("search") ?? undefined
+    const eventId = searchParams.get("eventId")
     const page = Number(searchParams.get("page") ?? 1)
     const limit = Number(searchParams.get("limit") ?? 10)
 
     const result = await getCompanyContracts({
       search,
       page,
-      limit
+      limit,
+      eventId: eventId ? Number(eventId) : undefined,
     })
 
     return Response.json(result)

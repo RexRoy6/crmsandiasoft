@@ -43,6 +43,22 @@ export default function EventDetailPage() {
         { name: "location", label: "📍 Location" },
         { name: "notes", label: "📝 Notes" }
     ];
+    const [contract, setContract] = useState<any>(null);
+    const fetchContract = async () => {
+        try {
+            const res = await fetch(
+                `/api/company/contracts?eventId=${eventId}`,
+                { credentials: "include" }
+            );
+
+            if (!res.ok) return;
+
+            const result = await res.json();
+
+            setContract(result.data[0] || null);
+        } catch { }
+    };
+
 
     const fetchEvent = async () => {
         try {
@@ -189,6 +205,7 @@ export default function EventDetailPage() {
 
     useEffect(() => {
         fetchEvent();
+        fetchContract();
     }, []);
 
 
@@ -211,6 +228,83 @@ export default function EventDetailPage() {
                     <strong>Client:</strong> {event.client.name}
                 </p>
             )}
+
+            {contract ? (
+                <div
+                    style={{
+                        marginTop: 10,
+                        padding: 10,
+                        borderRadius: 8,
+                        background: "var(--bg-secondary)",
+                        border: "1px solid var(--border-color)",
+                    }}
+                >
+                    <strong>📄 Contract:</strong> #{contract.id} ({contract.status})
+
+                    <div style={{ marginTop: 6 }}>
+                        <button
+                            onClick={() =>
+                                router.push(`/company/contracts/${contract.id}`)
+                            }
+                            style={{
+                                padding: "6px 10px",
+                                borderRadius: 6,
+                                border: "none",
+                                background: "#2563eb",
+                                color: "white",
+                                cursor: "pointer",
+                            }}
+                        >
+                            View Contract
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div style={{ marginTop: 10 }}>
+                    <button
+                        onClick={async () => {
+                            try {
+                                const res = await fetch("/api/company/contracts", {
+                                    method: "POST",
+                                    credentials: "include",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        eventId: Number(eventId),
+                                        status: "draft",
+                                        totalAmount: 0,
+                                    }),
+                                });
+
+                                if (!res.ok) {
+                                    setError("Failed to create contract");
+                                    return;
+                                }
+
+                                const newContract = await res.json();
+
+                                // 🔥 redirección inmediata
+                                router.push(`/company/contracts/${newContract.id}`);
+
+                            } catch {
+                                setError("Connection error");
+                            }
+                        }}
+                        style={{
+                            padding: "8px 12px",
+                            borderRadius: 6,
+                            border: "none",
+                            background: "#16a34a",
+                            color: "white",
+                            cursor: "pointer",
+                        }}
+                    >
+                        ➕ Create Contract
+                    </button>
+                </div>
+            )}
+
 
             {error && <ErrorBox message={error} />}
 
