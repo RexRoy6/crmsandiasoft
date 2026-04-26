@@ -324,7 +324,18 @@ export default function ContractServicesPage() {
           form={form}
           setForm={setForm}
           onSubmit={createService}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            setShowForm(false);
+
+            setForm({
+              serviceId: "",
+              quantity: "",
+              unitPrice: "",
+              serviceNotes: "",
+              operationStart: "",
+              operationEnd: "",
+            });
+          }}
           clearError={() => setError("")}
         />
       )}
