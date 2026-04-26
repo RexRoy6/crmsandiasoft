@@ -31,15 +31,14 @@ export default function ContractDetailPage() {
     { name: "status", label: "📌 Status" },
     { name: "totalAmount", label: "💰 Total Amount", type: "number" },
 
-    { name: "paidAmount", label: "💵 Paid Amount" },
-    { name: "remainingAmount", label: "🧾 Remaining Amount" },
+    { name: "paidAmount", label: "💵 Paid Amount", readOnly: true },
+    { name: "remainingAmount", label: "🧾 Remaining Amount", readOnly: true },
 
-    { name: "clientName", label: "👤 Client" },
-    { name: "eventName", label: "🎉 Event" },
-    { name: "eventDate", label: "📅 Date" },
-    { name: "eventTime", label: "🕒 Time" },
-    { name: "eventLocation", label: "📍 Location" },
-    { name: "eventNote", label: "📝 Note" },
+    { name: "clientName", label: "👤 Client", readOnly: true },
+    { name: "eventName", label: "🎉 Event", readOnly: true },
+    { name: "eventDate", label: "📅 Date", readOnly: true },
+    { name: "eventLocation", label: "📍 Location", readOnly: true },
+    { name: "eventNote", label: "📝 Note", readOnly: true },
   ];
 
   /* ---------- FETCH ---------- */

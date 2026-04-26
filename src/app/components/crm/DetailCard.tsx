@@ -6,6 +6,7 @@ type Field = {
   name: string;
   label: string;
   type?: string;
+  readOnly?: boolean;
 };
 
 type Action = {
@@ -198,67 +199,112 @@ export default function DetailCard({
       {/* EDIT MODE */}
       {editing && (
         <>
-          {fields.map((field) => (
-            <div
-              key={field.name}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <label
+          {fields.some(f => f.readOnly) && (
+            <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-secondary)" }}>
+              Event Info
+            </div>
+          )}
+
+          {fields.map((field) => {
+            // 🔥 SI ES READONLY → mostrar como texto, NO input
+            if (field.readOnly) {
+              return (
+                <div
+                  key={field.name}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <label
+                    style={{
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {field.label}
+                  </label>
+
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border-color)",
+                      background: "var(--bg-secondary)",
+                      color: "var(--text-primary)",
+                      opacity: 0.7, // 👈 look disabled
+                    }}
+                  >
+                    {data[field.name]}
+                  </div>
+                </div>
+              );
+            }
+
+            // 🔥 CAMPOS EDITABLES (igual que antes)
+            return (
+              <div
+                key={field.name}
                 style={{
-                  fontSize: 13,
-                  color: "var(--text-secondary)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
                 }}
               >
-                {field.label}
-              </label>
+                <label
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {field.label}
+                </label>
 
-              {field.name === "notes" ? (
-                <textarea
-                  value={form[field.name] || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      [field.name]: e.target.value,
-                    })
-                  }
-                  rows={4}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border-color)",
-                    background: "var(--bg-secondary)",
-                    color: "var(--text-primary)",
-                    resize: "vertical",
-                  }}
-                />
-              ) : (
-                <input
-                  type={field.type || "text"}
-                  value={form[field.name] || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      [field.name]:
-                        field.type === "number"
-                          ? Number(e.target.value)
-                          : e.target.value,
-                    })
-                  }
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border-color)",
-                    background: "var(--bg-secondary)",
-                    color: "var(--text-primary)",
-                  }}
-                />
-              )}
-            </div>
-          ))}
+                {field.name === "notes" ? (
+                  <textarea
+                    value={form[field.name] || ""}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        [field.name]: e.target.value,
+                      })
+                    }
+                    rows={4}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border-color)",
+                      background: "var(--bg-secondary)",
+                      color: "var(--text-primary)",
+                      resize: "vertical",
+                    }}
+                  />
+                ) : (
+                  <input
+                    type={field.type || "text"}
+                    value={form[field.name] || ""}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        [field.name]:
+                          field.type === "number"
+                            ? Number(e.target.value)
+                            : e.target.value,
+                      })
+                    }
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--border-color)",
+                      background: "var(--bg-secondary)",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
 
           <div
             style={{
