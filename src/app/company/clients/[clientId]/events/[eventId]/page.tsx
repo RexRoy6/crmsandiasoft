@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import DetailCard from "@/app/components/crm/DetailCard";
 import ErrorBox from "@/app/components/ErrorBox";
 import type { Field } from "@/app/components/crm/CreateForm";
+import { formatDate, formatTime } from "@/lib/utils/date";
 
 export default function EventDetailPage() {
 
@@ -35,10 +36,12 @@ export default function EventDetailPage() {
 
     const eventFields: Field[] = [
         { name: "name", label: "Name" },
-        { name: "eventDate", label: "Event Date", type: "date" },
-        { name: "eventTime", label: "Event Time", type: "time" },
-        { name: "location", label: "Location" },
-        { name: "notes", label: "Notes" }
+
+        { name: "eventDate", label: "📅 Event Date", type: "date" },
+        { name: "eventTime", label: "🕒 Event Time", type: "time" },
+
+        { name: "location", label: "📍 Location" },
+        { name: "notes", label: "📝 Notes" }
     ];
 
     const fetchEvent = async () => {
@@ -63,10 +66,10 @@ export default function EventDetailPage() {
                 clientName: data.client?.name
             });
 
-            const date = new Date(data.eventDate);
+            const iso = new Date(data.eventDate);
 
-            const datePart = date.toISOString().split("T")[0]; // YYYY-MM-DD
-            const timePart = date.toTimeString().slice(0, 5); // HH:mm
+            const datePart = iso.toISOString().slice(0, 10);
+            const timePart = iso.toISOString().slice(11, 16);
 
             setForm({
                 name: data.name ?? "",
@@ -193,11 +196,8 @@ export default function EventDetailPage() {
     const formattedEvent = event
         ? {
             ...event,
-            eventDate: new Date(event.eventDate).toLocaleDateString(),
-            eventTime: new Date(event.eventDate).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
+            eventDate: formatDate(event.eventDate),
+            eventTime: formatTime(event.eventDate),
         }
         : null;
     //
