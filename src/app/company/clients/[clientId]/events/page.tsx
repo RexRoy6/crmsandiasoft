@@ -7,7 +7,7 @@ import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import ErrorBox from "@/app/components/ErrorBox";
 import type { Field } from "@/app/components/crm/CreateForm";
-
+import { formatDate, formatTime } from "@/lib/utils/date";
 export default function ClientEventsPage() {
   const params = useParams();
   const clientId = params.clientId;
@@ -48,9 +48,9 @@ export default function ClientEventsPage() {
         return;
       }
 
-      const data = await res.json();
+      const result = await res.json();
 
-      setEvents(data);
+      setEvents(result.data);
     } catch {
       setError("Connection error");
     } finally {
@@ -125,8 +125,13 @@ export default function ClientEventsPage() {
             <ListCard
               key={event.id}
               title={event.name}
-              subtitle={`Date: ${event.eventDate}`}
-              content={[`Location: ${event.location}`]}
+              subtitle={`📅 ${formatDate(event.eventDate)} · ${formatTime(event.eventDate)}`}
+              content={
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <span>📍 {event.location}</span>
+                  {event.notes && <span>📝 {event.notes}</span>}
+                </div>
+              }
               link={`/company/clients/${clientId}/events/${event.id}`}
             />
           ))}
