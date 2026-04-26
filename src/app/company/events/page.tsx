@@ -166,7 +166,25 @@ export default function EventsPage() {
     },
 
     { name: "name", label: "Event Name" },
-    { name: "eventDate", label: "Event Date", type: "date" },
+
+    {
+      name: "eventDate",
+      label: "Event Date",
+      type: "date",
+      after: (
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--text-secondary)",
+            marginTop: 4,
+          }}
+        >
+          {form.eventDate
+            ? `📅 Fecha seleccionada: ${formatDate(form.eventDate)}`
+            : "📅 Selecciona una fecha"}
+        </p>
+      ),
+    },
     { name: "eventTime", label: "Event Time", type: "time" },
     { name: "location", label: "Location" },
     { name: "notes", label: "Notes", type: "textarea" },

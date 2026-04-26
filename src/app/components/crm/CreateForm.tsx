@@ -4,7 +4,7 @@ export type Field = {
   name: string;
   label: string;
   // type?: "text" | "number" | "select" | "date" | "time" | "textarea";
-  type?: 
+  type?:
   | "text"
   | "number"
   | "select"
@@ -188,7 +188,7 @@ export default function CreateForm({
               value={form[field.name] || ""}
               readOnly={field.readOnly}
               onChange={(e) => {
-                clearError?.(); // 👈 limpia error en cualquier cambio
+                clearError?.();
 
                 setForm({
                   ...form,
@@ -206,6 +206,12 @@ export default function CreateForm({
                 color: "var(--text-primary)",
               }}
             />
+
+            {field.after && (
+              <div style={{ marginTop: 4 }}>
+                {field.after}
+              </div>
+            )}
           </div>
         );
       })}
