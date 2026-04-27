@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import SearchBar from "@/app/components/crm/SearchBar";
 import Pagination from "@/app/components/crm/Pagination";
 import { formatDate, formatTime } from "@/lib/utils/date";
+import ClientSearch from "@/app/components/crm/ClientSearch";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -107,61 +108,68 @@ export default function EventsPage() {
     {
       name: "clientId",
       label: "Client",
-      type: "select",
-      options: clients.map((client) => ({
-        value: client.id,
-        label: client.name,
-      })),
-
+      readOnly: true,
       after: (
-        <div style={{ marginTop: 6 }}>
-          {!showClientForm && (
+        <>
+          {/* seleccionado */}
+          {form.clientId && (
+            <div style={{ fontSize: 14 }}>
+              <div style={{ fontWeight: 600 }}>
+                ✅ Cliente seleccionado
+              </div>
+            </div>
+          )}
+
+          <ClientSearch
+            selected={form.clientId}
+            onSelect={(client) => {
+              setForm((prev) => ({
+                ...prev,
+                clientId: String(client.id),
+              }));
+            }}
+          />
+
+          {/* cambiar cliente */}
+          {form.clientId && (
             <button
-              onClick={() => setShowClientForm(true)}
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  clientId: "",
+                }))
+              }
               style={{
-                padding: "4px 8px",
+                marginTop: 6,
                 fontSize: 12,
-                borderRadius: 6,
-                border: "none",
-                background: "transparent",
-                color: "#2563eb",
+                color: "#dc2626",
                 cursor: "pointer",
-                textAlign: "left",
+                background: "none",
+                border: "none",
               }}
             >
-              + Create new client
+              Change client
             </button>
           )}
 
-          {showClientForm && (
-            <div
-              style={{
-                marginTop: 10,
-                padding: 12,
-                border: "1px solid var(--border-color)",
-                borderRadius: 8,
-                background: "var(--bg-secondary)",
-              }}
-            >
-              {showClientForm && (
-                <>
-                  <InlineClientForm
-                    form={clientForm}
-                    setForm={setClientForm}
-                    onSubmit={createClientInline}
-                    onCancel={() => setShowClientForm(false)}
-                  />
+          {/* 👇 tu create inline sigue funcionando */}
+          <div style={{ marginTop: 10 }}>
+            {!showClientForm && (
+              <button onClick={() => setShowClientForm(true)}>
+                + Create new client
+              </button>
+            )}
 
-                  {clientError && (
-                    <div style={{ marginTop: 8 }}>
-                      <ErrorBox message={clientError} />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+            {showClientForm && (
+              <InlineClientForm
+                form={clientForm}
+                setForm={setClientForm}
+                onSubmit={createClientInline}
+                onCancel={() => setShowClientForm(false)}
+              />
+            )}
+          </div>
+        </>
       ),
     },
 
