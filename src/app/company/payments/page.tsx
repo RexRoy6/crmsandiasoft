@@ -10,6 +10,7 @@ import type { Field } from "@/app/components/crm/CreateForm";
 import SearchBar from "@/app/components/crm/SearchBar";
 import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
 import Pagination from "@/app/components/crm/Pagination";
+import ContractSearch from "@/app/components/crm/ContractSearch";
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -19,14 +20,21 @@ export default function PaymentsPage() {
   const [errorCode, setErrorCode] = useState<number>();
 
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
+  // const [form, setForm] = useState({
+  //   contractId: "",
+  //   currency: "MXN",
+  //   paymentMethod: "cash",
+  //   items: [] as {
+  //     contractItemId: number;
+  //     amount: number;
+  //   }[],
+  // });
+
+  const [form, setForm] = useState<PaymentForm>({
     contractId: "",
     currency: "MXN",
     paymentMethod: "cash",
-    items: [] as {
-      contractItemId: number;
-      amount: number;
-    }[],
+    items: [],
   });
 
   //buscar info de los servicios de contrato
@@ -40,16 +48,62 @@ export default function PaymentsPage() {
   //esto es para el search y pagination
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
+  type PaymentForm = {
+    contractId: string;
+    currency: string;
+    paymentMethod: string;
+    items: {
+      contractItemId: number;
+      amount: number;
+    }[];
+    contract?: {
+      id: number;
+      clientName: string;
+      eventName: string;
+      remainingAmount: number;
+    };
+  };
+
 
   const paymentFields: Field[] = [
     {
       name: "contractId",
       label: "Contract",
-      type: "select",
-      options: availableContracts.map((c) => ({
-        label: `#${c.id} - ${c.client.name} (${c.event.name}) - Remaining $${c.remainingAmount}`,
-        value: c.id,
-      })),
+      readOnly: true,
+      after: (
+        <>
+          {form.contractId && form.contract && (
+            <div style={{ fontSize: 14 }}>
+              <div style={{ fontWeight: 600 }}>
+                ✅ #{form.contract.id} · {form.contract.clientName}
+              </div>
+
+              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                {form.contract.eventName}
+              </div>
+
+              <div style={{ fontSize: 12 }}>
+                💰 Remaining: ${form.contract.remainingAmount}
+              </div>
+            </div>
+          )}
+
+          <ContractSearch
+            onSelect={(c: any) => {
+              setForm((prev: any) => ({
+                ...prev,
+                contractId: String(c.id),
+                contract: {
+                  id: c.id,
+                  clientName: c.client?.name,
+                  eventName: c.event?.name,
+                  remainingAmount: c.remainingAmount,
+                },
+              }));
+            }}
+          />
+        </>
+      ),
     },
     {
       name: "currency",
@@ -114,7 +168,7 @@ export default function PaymentsPage() {
       const data = await res.json();
 
       setContracts(data.data);
-    } catch {}
+    } catch { }
   }
 
   async function fetchContractItems(contractId: string) {
@@ -231,7 +285,16 @@ export default function PaymentsPage() {
           form={form}
           setForm={setForm}
           onSubmit={createPayment}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            setShowForm(false);
+            setForm({
+              contractId: "",
+              currency: "MXN",
+              paymentMethod: "cash",
+              items: [],
+            });
+            setContractItems([]);
+          }}
         />
       )}
 
