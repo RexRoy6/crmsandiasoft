@@ -2,76 +2,84 @@
 
 import { useEffect, useState } from "react";
 
-export default function ContractSearch({ onSelect }: any) {
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+export default function ContractSearch({ onSelect, selected }: any) {
+    const [search, setSearch] = useState("");
+    const [results, setResults] = useState<any[]>([]);
 
-  useEffect(() => {
-    const timeout = setTimeout(async () => {
-      if (!search) {
-        setResults([]);
-        return;
-      }
+    useEffect(() => {
+        const timeout = setTimeout(async () => {
 
-      const res = await fetch(
-        `/api/company/contracts?search=${search}&limit=5`,
-        { credentials: "include" }
-      );
+            if (selected) return null;
+            
+            if (!search) {
+                setResults([]);
+                return;
+            }
 
-      if (!res.ok) return;
+            const res = await fetch(
+                `/api/company/contracts?search=${search}&limit=5`,
+                { credentials: "include" }
+            );
 
-      const data = await res.json();
+            if (!res.ok) return;
 
-      // 👇 solo contratos con saldo pendiente
-      const filtered = data.data.filter(
-        (c: any) => c.remainingAmount > 0
-      );
+            const data = await res.json();
 
-      setResults(filtered);
-    }, 300);
+            // 👇 solo contratos con saldo pendiente
+            const filtered = data.data.filter(
+                (c: any) => c.remainingAmount > 0
+            );
 
-    return () => clearTimeout(timeout);
-  }, [search]);
+            setResults(filtered);
+        }, 300);
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <input
-        placeholder="Search contract..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          padding: "8px 10px",
-          borderRadius: 8,
-          border: "1px solid var(--border-color)",
-          background: "var(--bg-secondary)",
-          color: "var(--text-primary)",
-        }}
-      />
+        return () => clearTimeout(timeout);
+    }, [search]);
 
-      {results.map((c) => (
-        <div
-          key={c.id}
-          onClick={() => onSelect(c)}
-          style={{
-            padding: 10,
-            borderRadius: 8,
-            cursor: "pointer",
-            background: "var(--bg-secondary)",
-          }}
-        >
-          <strong>
-            #{c.id} · {c.client?.name}
-          </strong>
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <input
+                placeholder="Search contract..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                    padding: "8px 10px",
+                    borderRadius: 8,
+                    border: "1px solid var(--border-color)",
+                    background: "var(--bg-secondary)",
+                    color: "var(--text-primary)",
+                }}
+            />
 
-          <div style={{ fontSize: 12 }}>
-            {c.event?.name}
-          </div>
+            {results.map((c) => (
+                <div
+                    key={c.id}
+                    onClick={() => {
+                        onSelect(c);
+                        setSearch("");
+                        setResults([]);
+                    }}
+                    style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        background: "var(--bg-secondary)",
 
-          <div style={{ fontSize: 12 }}>
-            💰 Remaining: ${c.remainingAmount}
-          </div>
+                    }}
+                >
+                    <strong>
+                        #{c.id} · {c.client?.name}
+                    </strong>
+
+                    <div style={{ fontSize: 12 }}>
+                        {c.event?.name}
+                    </div>
+
+                    <div style={{ fontSize: 12 }}>
+                        💰 Remaining: ${c.remainingAmount}
+                    </div>
+                </div>
+            ))}
         </div>
-      ))}
-    </div>
-  );
+    );
 }

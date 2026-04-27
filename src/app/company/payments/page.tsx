@@ -89,6 +89,7 @@ export default function PaymentsPage() {
           )}
 
           <ContractSearch
+            selected={form.contractId}
             onSelect={(c: any) => {
               setForm((prev: any) => ({
                 ...prev,
@@ -102,6 +103,29 @@ export default function PaymentsPage() {
               }));
             }}
           />
+
+          {form.contractId && (
+            <button
+              onClick={() =>
+                setForm((prev: any) => ({
+                  ...prev,
+                  contractId: "",
+                  contract: undefined,
+                }))
+              }
+              style={{
+                marginTop: 6,
+                fontSize: 12,
+                color: "#dc2626",
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+              }}
+            >
+              Change contract
+            </button>
+          )}
+
         </>
       ),
     },
