@@ -59,6 +59,29 @@ export default function EventsPage() {
     email: "",
   });
 
+  //funcion para limpiar form
+  const resetForm = () => {
+    setForm({
+      clientId: "",
+      client: undefined,
+      name: "",
+      eventDate: "",
+      eventTime: "",
+      location: "",
+      notes: "",
+    });
+
+    setClientForm({
+      name: "",
+      phone: "",
+      email: "",
+    });
+
+    setShowClientForm(false);
+    setClientError("");
+  };
+
+
   //es para redirigir a la creacion de contrato
   const router = useRouter();
 
@@ -129,7 +152,7 @@ export default function EventsPage() {
               <div style={{ fontWeight: 600 }}>
                 ✅ {form.client.name}
               </div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
                 {form.client.phone}
               </div>
             </div>
@@ -163,7 +186,8 @@ export default function EventsPage() {
               style={{
                 marginTop: 6,
                 fontSize: 12,
-                color: "#dc2626",
+                color: "var(--error-color)",
+                //color: "#dc2626",
                 cursor: "pointer",
                 background: "none",
                 border: "none",
@@ -176,7 +200,19 @@ export default function EventsPage() {
           {/* 👇 tu create inline sigue funcionando */}
           <div style={{ marginTop: 10 }}>
             {!showClientForm && (
-              <button onClick={() => setShowClientForm(true)}>
+              <button
+                onClick={() => setShowClientForm(true)}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--primary-color)",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
                 + Create new client
               </button>
             )}
@@ -423,7 +459,10 @@ export default function EventsPage() {
       <PageHeader
         title="Events"
         buttonLabel="+ New Event"
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          resetForm();
+          setShowForm(true);
+        }}
       />
 
       <SearchBar
@@ -439,7 +478,10 @@ export default function EventsPage() {
           form={form}
           setForm={setForm}
           onSubmit={createEvent}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            resetForm();
+            setShowForm(false);
+          }}
         />
       )}
 
