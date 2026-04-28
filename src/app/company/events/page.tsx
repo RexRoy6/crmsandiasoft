@@ -39,6 +39,13 @@ export default function EventsPage() {
 
   const [form, setForm] = useState({
     clientId: "",
+    client: undefined as
+      | {
+        id: number;
+        name: string;
+        phone: string;
+      }
+      | undefined,
     name: "",
     eventDate: "",
     eventTime: "",
@@ -90,6 +97,11 @@ export default function EventsPage() {
       setForm((prev) => ({
         ...prev,
         clientId: String(newClient.id),
+        client: {
+          id: newClient.id,
+          name: newClient.name,
+          phone: newClient.phone,
+        },
       }));
 
       setShowClientForm(false);
@@ -112,10 +124,13 @@ export default function EventsPage() {
       after: (
         <>
           {/* seleccionado */}
-          {form.clientId && (
-            <div style={{ fontSize: 14 }}>
+          {form.client && (
+            <div style={{ fontSize: 14, marginBottom: 6 }}>
               <div style={{ fontWeight: 600 }}>
-                ✅ Cliente seleccionado
+                ✅ {form.client.name}
+              </div>
+              <div style={{ fontSize: 12, color: "#6b7280" }}>
+                {form.client.phone}
               </div>
             </div>
           )}
@@ -126,6 +141,11 @@ export default function EventsPage() {
               setForm((prev) => ({
                 ...prev,
                 clientId: String(client.id),
+                client: {
+                  id: client.id,
+                  name: client.name,
+                  phone: client.phone,
+                },
               }));
             }}
           />
@@ -137,6 +157,7 @@ export default function EventsPage() {
                 setForm((prev) => ({
                   ...prev,
                   clientId: "",
+                  client: undefined,
                 }))
               }
               style={{
@@ -311,7 +332,15 @@ export default function EventsPage() {
       //aqui se redirige al cx a la pagina de contratos
 
       setForm({
+
         clientId: "",
+        client: undefined as
+          | {
+            id: number;
+            name: string;
+            phone: string;
+          }
+          | undefined,
         name: "",
         eventDate: "",
         eventTime: "",
