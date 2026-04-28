@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import SearchBar from "@/app/components/crm/SearchBar";
 import Pagination from "@/app/components/crm/Pagination";
 import { formatDate, formatTime } from "@/lib/utils/date";
+import ClientSearch from "@/app/components/crm/ClientSearch";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
@@ -38,6 +39,13 @@ export default function EventsPage() {
 
   const [form, setForm] = useState({
     clientId: "",
+    client: undefined as
+      | {
+        id: number;
+        name: string;
+        phone: string;
+      }
+      | undefined,
     name: "",
     eventDate: "",
     eventTime: "",
@@ -50,6 +58,29 @@ export default function EventsPage() {
     phone: "",
     email: "",
   });
+
+  //funcion para limpiar form
+  const resetForm = () => {
+    setForm({
+      clientId: "",
+      client: undefined,
+      name: "",
+      eventDate: "",
+      eventTime: "",
+      location: "",
+      notes: "",
+    });
+
+    setClientForm({
+      name: "",
+      phone: "",
+      email: "",
+    });
+
+    setShowClientForm(false);
+    setClientError("");
+  };
+
 
   //es para redirigir a la creacion de contrato
   const router = useRouter();
@@ -89,6 +120,11 @@ export default function EventsPage() {
       setForm((prev) => ({
         ...prev,
         clientId: String(newClient.id),
+        client: {
+          id: newClient.id,
+          name: newClient.name,
+          phone: newClient.phone,
+        },
       }));
 
       setShowClientForm(false);
@@ -107,61 +143,90 @@ export default function EventsPage() {
     {
       name: "clientId",
       label: "Client",
-      type: "select",
-      options: clients.map((client) => ({
-        value: client.id,
-        label: client.name,
-      })),
-
+      readOnly: true,
       after: (
-        <div style={{ marginTop: 6 }}>
-          {!showClientForm && (
+        <>
+          {/* seleccionado */}
+          {form.client && (
+            <div style={{ fontSize: 14, marginBottom: 6 }}>
+              <div style={{ fontWeight: 600 }}>
+                ✅ {form.client.name}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                {form.client.phone}
+              </div>
+            </div>
+          )}
+
+          <ClientSearch
+            selected={form.clientId}
+            onSelect={(client) => {
+              setForm((prev) => ({
+                ...prev,
+                clientId: String(client.id),
+                client: {
+                  id: client.id,
+                  name: client.name,
+                  phone: client.phone,
+                },
+              }));
+            }}
+          />
+
+          {/* cambiar cliente */}
+          {form.clientId && (
             <button
-              onClick={() => setShowClientForm(true)}
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  clientId: "",
+                  client: undefined,
+                }))
+              }
               style={{
-                padding: "4px 8px",
+                marginTop: 6,
                 fontSize: 12,
-                borderRadius: 6,
-                border: "none",
-                background: "transparent",
-                color: "#2563eb",
+                color: "var(--error-color)",
+                //color: "#dc2626",
                 cursor: "pointer",
-                textAlign: "left",
+                background: "none",
+                border: "none",
               }}
             >
-              + Create new client
+              Change client
             </button>
           )}
 
-          {showClientForm && (
-            <div
-              style={{
-                marginTop: 10,
-                padding: 12,
-                border: "1px solid var(--border-color)",
-                borderRadius: 8,
-                background: "var(--bg-secondary)",
-              }}
-            >
-              {showClientForm && (
-                <>
-                  <InlineClientForm
-                    form={clientForm}
-                    setForm={setClientForm}
-                    onSubmit={createClientInline}
-                    onCancel={() => setShowClientForm(false)}
-                  />
+          {/* 👇 tu create inline sigue funcionando */}
+          <div style={{ marginTop: 10 }}>
+            {!showClientForm && (
+              <button
+                onClick={() => setShowClientForm(true)}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border: "none",
+                  background: "transparent",
+                  color: "var(--primary-color)",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                + Create new client
+              </button>
+            )}
 
-                  {clientError && (
-                    <div style={{ marginTop: 8 }}>
-                      <ErrorBox message={clientError} />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+            {showClientForm && (
+              <InlineClientForm
+                form={clientForm}
+                setForm={setClientForm}
+                onSubmit={createClientInline}
+                onCancel={() => setShowClientForm(false)}
+              />
+            )}
+          </div>
+        </>
       ),
     },
 
@@ -303,7 +368,15 @@ export default function EventsPage() {
       //aqui se redirige al cx a la pagina de contratos
 
       setForm({
+
         clientId: "",
+        client: undefined as
+          | {
+            id: number;
+            name: string;
+            phone: string;
+          }
+          | undefined,
         name: "",
         eventDate: "",
         eventTime: "",
@@ -386,7 +459,10 @@ export default function EventsPage() {
       <PageHeader
         title="Events"
         buttonLabel="+ New Event"
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          resetForm();
+          setShowForm(true);
+        }}
       />
 
       <SearchBar
@@ -402,7 +478,10 @@ export default function EventsPage() {
           form={form}
           setForm={setForm}
           onSubmit={createEvent}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            resetForm();
+            setShowForm(false);
+          }}
         />
       )}
 
