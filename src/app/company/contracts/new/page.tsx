@@ -130,13 +130,36 @@ export default function NewContractPage() {
             // 1. crear evento
             const dateTime = new Date(`${form.eventDate}T${form.eventTime}`);
 
+            const pad = (n: number) => String(n).padStart(2, "0");
+
+            const formatted = `${dateTime.getFullYear()}-${pad(
+                dateTime.getMonth() + 1
+            )}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
+                dateTime.getMinutes()
+            )}:00`;
+
             const payload = {
                 clientId: Number(form.clientId),
                 name: form.name,
-                eventDate: dateTime,
+                eventDate: formatted,
                 location: form.location,
                 notes: form.notes,
             };
+
+            if (!form.clientId) {
+                setError("Client is required");
+                return;
+            }
+
+            if (!form.name) {
+                setError("Event name is required");
+                return;
+            }
+
+            if (!form.eventDate || !form.eventTime) {
+                setError("Event date and time are required");
+                return;
+            }
 
             const eventRes = await fetch("/api/company/events", {
                 method: "POST",
@@ -170,7 +193,8 @@ export default function NewContractPage() {
 
                 // 👇 manejas tu ConflictError aquí
                 if (contractRes.status === 409) {
-                    alert("Contract already exists for this event");
+                    setError("Contract already exists for this event");
+                    setErrorCode(409);
                     return;
                 }
 
