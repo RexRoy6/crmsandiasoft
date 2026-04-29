@@ -88,6 +88,66 @@ export default function NewContractPage() {
 
     const [eventDateTime, setEventDateTime] = useState<string | null>(null);
 
+    const resetAll = () => {
+    // step
+    setStep("event");
+
+    // contract
+    setContractId(null);
+    setContract(null);
+
+    // event form
+    setForm({
+        clientId: "",
+        client: undefined,
+        name: "",
+        eventDate: "",
+        eventTime: "",
+        location: "",
+        notes: "",
+    });
+
+    // client inline
+    setClientForm({
+        name: "",
+        phone: "",
+        email: "",
+    });
+    setShowClientForm(false);
+
+    // services
+    setServices([]);
+    setCompanyServices([]);
+    setShowServiceForm(false);
+
+    setServiceForm({
+        serviceId: "",
+        quantity: "",
+        unitPrice: "",
+        serviceNotes: "",
+        operationStart: "",
+        operationEnd: "",
+    });
+
+    // payments
+    setPaymentForm({
+        currency: "MXN",
+        paymentMethod: "cash",
+        items: [],
+    });
+
+    setContractItems([]);
+    setShowPaymentForm(false);
+
+    // errors
+    setError("");
+    setClientError("");
+
+    // date
+    setEventDateTime(null);
+};
+
+
     //funcion para limpiar form
     const resetForm = () => {
         setForm({
@@ -895,6 +955,23 @@ export default function NewContractPage() {
                             ))}
                         </div>
                     )}
+
+
+                    <button
+    onClick={resetAll}
+    style={{
+        marginTop: 20,
+        padding: "10px 14px",
+        borderRadius: 8,
+        border: "1px solid var(--border-color)",
+        background: "transparent",
+        cursor: "pointer",
+    }}
+>
+    + New Contract
+</button>
+
+
                 </div>
             )}
         </div>
