@@ -53,12 +53,9 @@ export default function NewContractPage() {
     const [contractItems, setContractItems] = useState<any[]>([]);
     const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-    const updatePaymentItems = (items: any[]) => {
-        setPaymentForm((prev) => ({
-            ...prev,
-            items,
-        }));
-    };
+    const [payments, setPayments] = useState<any[]>([]);
+    const [loadingPayments, setLoadingPayments] = useState(false);
+    const [creatingPayment, setCreatingPayment] = useState(false);
 
 
 
@@ -419,48 +416,82 @@ export default function NewContractPage() {
     const createPayment = async () => {
         if (!contractId) return;
 
-        const total = paymentForm.items.reduce((sum, i) => sum + i.amount, 0);
+        try {
+            setCreatingPayment(true); //  START loading
 
-        if (total <= 0) {
-            setError("Enter at least one amount");
-            return;
-        }
+            const total = paymentForm.items.reduce((sum, i) => sum + i.amount, 0);
 
-        if (services.length === 0) {
-            setError("Add at least one service before payments");
-            return;
-        }
-
-
-        const res = await fetch(
-            `/api/company/contracts/${contractId}/payments`,
-            {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    currency: paymentForm.currency,
-                    paymentMethod: paymentForm.paymentMethod,
-                    items: paymentForm.items.filter((i) => i.amount > 0),
-                }),
+            if (total <= 0) {
+                setError("Enter at least one amount");
+                return;
             }
-        );
 
-        if (!res.ok) {
-            const data = await res.json();
-            setError(data?.error || "Failed to create payment");
-            return;
+            if (services.length === 0) {
+                setError("Add at least one service before payments");
+                return;
+            }
+
+            const res = await fetch(
+                `/api/company/contracts/${contractId}/payments`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        currency: paymentForm.currency,
+                        paymentMethod: paymentForm.paymentMethod,
+                        items: paymentForm.items.filter((i) => i.amount > 0),
+                    }),
+                }
+            );
+
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data?.error || "Failed to create payment");
+                return;
+            }
+
+            //  reset UI
+            setShowPaymentForm(false);
+
+            setPaymentForm({
+                currency: "MXN",
+                paymentMethod: "cash",
+                items: [],
+            });
+
+            // 🔄 refresh data
+            await fetchPayments();
+            await fetchContractItems();
+
+        } catch {
+            setError("Connection error");
+        } finally {
+            setCreatingPayment(false); //  ALWAYS stop loading
         }
+    };
 
-        setShowPaymentForm(false);
+    const fetchPayments = async () => {
+        if (!contractId) return;
 
-        setPaymentForm({
-            currency: "MXN",
-            paymentMethod: "cash",
-            items: [],
-        });
+        try {
+            setLoadingPayments(true);
 
-        fetchContractItems(); // refresh
+            const res = await fetch(
+                `/api/company/contracts/${contractId}/payments`,
+                { credentials: "include" }
+            );
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+
+            setPayments(data.payments); // 👈 importante
+        } catch {
+            setError("Failed to load payments");
+        } finally {
+            setLoadingPayments(false);
+        }
     };
 
     //service fields
@@ -526,6 +557,7 @@ export default function NewContractPage() {
             fetchCompanyServices();
             fetchContract();
             fetchContractItems();
+            fetchPayments();
         }
     }, [step, contractId]);
 
@@ -806,7 +838,7 @@ export default function NewContractPage() {
                             form={paymentForm}
                             setForm={setPaymentForm}
                             onSubmit={createPayment}
-                            onCancel={() => setShowPaymentForm(false)}
+                            submitLabel={creatingPayment ? "Saving..." : "Save Payment"}
                         />
                     )}
 
@@ -816,6 +848,50 @@ export default function NewContractPage() {
                             formItems={paymentForm.items}
                             setForm={setPaymentForm}
                         />
+                    )}
+
+                    {/* PAYMENTS LIST */}
+
+                    {loadingPayments && (
+                        <p style={{ fontSize: 12, color: "gray" }}>
+                            Loading payments...
+                        </p>
+                    )}
+
+                    {!loadingPayments && payments.length === 0 && (
+                        <p style={{ fontSize: 12, color: "gray" }}>
+                            No payments yet
+                        </p>
+                    )}
+
+                    {payments.length > 0 && (
+                        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+                            {payments.map((payment) => (
+                                <div
+                                    key={payment.id}
+                                    style={{
+                                        padding: 10,
+                                        border: "1px solid var(--border-color)",
+                                        borderRadius: 8,
+                                        background: "var(--bg-secondary)",
+                                    }}
+                                >
+                                    <strong>Payment #{payment.id}</strong>
+
+                                    <div style={{ fontSize: 12 }}>
+                                        Method: {payment.paymentMethod}
+                                    </div>
+
+                                    <div style={{ fontSize: 12 }}>
+                                        Amount: ${payment.amount}
+                                    </div>
+
+                                    <div style={{ fontSize: 12 }}>
+                                        {new Date(payment.createdAt).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
             )}
