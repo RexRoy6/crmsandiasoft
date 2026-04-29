@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
-import { contracts, events, clients, payments } from "@/db/schema"
+import { contracts, events, clients, payments ,ContractStatus} from "@/db/schema"
 import { sql } from "drizzle-orm"
 
 import { eq, and, isNull, like, or, desc } from "drizzle-orm"
@@ -70,12 +70,14 @@ export async function getCompanyContracts({
   search,
   page = 1,
   limit = 10,
-  eventId
+  eventId,
+  status
 }: {
   search?: string
   page?: number
   limit?: number
   eventId?: number
+  status?: ContractStatus
 }) {
 
   const { companyId } = await getAuthContext()
@@ -94,6 +96,9 @@ export async function getCompanyContracts({
   if (eventId) {
     conditions.push(eq(contracts.eventId, eventId))
   }
+  if (status) {
+  conditions.push(eq(contracts.status, status))
+}
 
   if (search) {
     const term = `%${search}%`

@@ -10,6 +10,7 @@ import type { Field } from "@/app/components/crm/CreateForm";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
 import ContractItemCard from "@/app/components/crm/ContractItemCard";
 
+
 export default function ContractServicesPage() {
   const params = useParams();
   const contractId = Number(params.contractId);
