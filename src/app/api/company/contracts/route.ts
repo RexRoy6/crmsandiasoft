@@ -8,8 +8,11 @@ import {
 } from "@/lib/validations/contractValidation"
 import { requireAuth } from "@/lib/auth/requireAuth"
 
-
+import { CONTRACT_STATUS, ContractStatus } from "@/db/schema"
 /* ---------- POST (create contract) ---------- */
+
+class ConflictError extends Error { }
+
 
 export async function POST(req: Request) {
   const auth = await requireAuth()
@@ -41,12 +44,20 @@ export async function POST(req: Request) {
         { status: 404 }
       )
     }
-    
 
-    if (error.message === "Contract already exists for this event") {
+
+    // if (error.message === "Contract already exists for this event") {
+    //   return Response.json(
+    //     { error: error.message },
+    //     { status: 400 }
+    //   )
+    // }
+
+
+    if (error instanceof ConflictError) {
       return Response.json(
         { error: error.message },
-        { status: 400 }
+        { status: 409 }
       )
     }
 
@@ -71,6 +82,11 @@ export async function GET(req: Request) {
 
     const search = searchParams.get("search") ?? undefined
     const eventId = searchParams.get("eventId")
+    const statusParam = searchParams.get("status")
+
+    const status = CONTRACT_STATUS.includes(statusParam as any)
+      ? (statusParam as ContractStatus)
+      : undefined
     const page = Number(searchParams.get("page") ?? 1)
     const limit = Number(searchParams.get("limit") ?? 10)
 
@@ -79,6 +95,7 @@ export async function GET(req: Request) {
       page,
       limit,
       eventId: eventId ? Number(eventId) : undefined,
+      status
     })
 
     return Response.json(result)

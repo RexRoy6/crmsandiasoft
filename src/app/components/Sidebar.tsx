@@ -11,10 +11,12 @@ import {
   Briefcase,
   AlarmClock,
   Settings,
+  Star
 } from "lucide-react";
 
 const menu = [
   { label: "Home", href: "/company", icon: Home },
+  { label: "Registro Rapido", href: "/company/contracts/new", icon: Star },
   { label: "Services", href: "/company/service", icon: Briefcase },
   { label: "Clients", href: "/company/clients", icon: Users },
   { label: "Events", href: "/company/events", icon: AlarmClock },

@@ -26,6 +26,8 @@ type Props = {
   onSubmit: () => void;
   onCancel: () => void;
   clearError?: () => void;
+  submitLabel?: string;
+  loading?: boolean;
 };
 
 export default function CreateForm({
@@ -36,6 +38,8 @@ export default function CreateForm({
   onSubmit,
   onCancel,
   clearError,
+  submitLabel = "Create",
+  loading = false,
 }: Props) {
   return (
     <div
@@ -230,17 +234,18 @@ export default function CreateForm({
       >
         <button
           onClick={onSubmit}
+          disabled={loading}
           style={{
             padding: "10px 16px",
             borderRadius: 8,
             border: "none",
-            background: "#2563eb",
+            background: loading ? "#94a3b8" : "#2563eb",
             color: "white",
-            cursor: "pointer",
+            cursor: loading ? "not-allowed" : "pointer",
             fontWeight: 500,
           }}
         >
-          Create
+          {loading ? "Saving..." : submitLabel}
         </button>
 
         <button
