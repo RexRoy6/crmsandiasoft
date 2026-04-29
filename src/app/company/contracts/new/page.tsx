@@ -8,8 +8,6 @@ import ErrorBox from "@/app/components/ErrorBox";
 export default function NewContractPage() {
 
     const [clientError, setClientError] = useState("");
-
-    const [clients, setClients] = useState<any[]>([]);
     const [error, setError] = useState("");
     const [errorCode, setErrorCode] = useState<number | undefined>();
 
@@ -99,9 +97,6 @@ export default function NewContractPage() {
             setClientError("");
 
             const newClient = await res.json();
-
-            // 🔥 clave: actualizar lista
-            setClients((prev) => [...prev, newClient]);
 
             // 🔥 seleccionar automáticamente
             setForm((prev) => ({
@@ -283,6 +278,13 @@ export default function NewContractPage() {
                                 onCancel={() => setShowClientForm(false)}
                             />
                         )}
+
+                        {clientError && (
+                            <p style={{ color: "var(--error-color)", fontSize: 12 }}>
+                                {clientError}
+                            </p>
+                        )}
+
                     </div>
                 </>
             ),
