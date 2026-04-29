@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import ClientSearch from "@/app/components/crm/ClientSearch";
 import InlineClientForm from "@/app/components/crm/InlineClientForm";
@@ -18,6 +18,22 @@ export default function NewContractPage() {
 
     //es para crear un nuevo cliente
     const [showClientForm, setShowClientForm] = useState(false);
+
+
+    //cosas para service:
+    const [services, setServices] = useState<any[]>([]);
+    const [companyServices, setCompanyServices] = useState<any[]>([]);
+    const [showServiceForm, setShowServiceForm] = useState(false);
+
+    const [serviceForm, setServiceForm] = useState({
+        serviceId: "",
+        quantity: "",
+        unitPrice: "",
+        serviceNotes: "",
+        operationStart: "",
+        operationEnd: "",
+    });
+
 
     const [step, setStep] = useState<"event" | "services">("event");
 
@@ -45,6 +61,9 @@ export default function NewContractPage() {
         phone: "",
         email: "",
     });
+
+
+    const [eventDateTime, setEventDateTime] = useState<string | null>(null);
 
     //funcion para limpiar form
     const resetForm = () => {
@@ -123,6 +142,8 @@ export default function NewContractPage() {
     };
 
 
+
+
     /* ---------- CREATE EVENT + CONTRACT ---------- */
 
     const createAll = async () => {
@@ -137,6 +158,7 @@ export default function NewContractPage() {
             )}-${pad(dateTime.getDate())} ${pad(dateTime.getHours())}:${pad(
                 dateTime.getMinutes()
             )}:00`;
+            setEventDateTime(formatted);
 
             const payload = {
                 clientId: Number(form.clientId),
@@ -213,6 +235,157 @@ export default function NewContractPage() {
             alert("Connection error");
         }
     };
+
+
+    //services
+    const fetchServices = async () => {
+        if (!contractId) return;
+
+        try {
+            const res = await fetch(
+                `/api/company/contracts/${contractId}/services`,
+                { credentials: "include" }
+            );
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+            setServices(data);
+        } catch {
+            setError("Failed to load services");
+        }
+    };
+    //buscar servicios
+    const fetchCompanyServices = async () => {
+        try {
+            const res = await fetch("/api/company/services", {
+                credentials: "include",
+            });
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+            setCompanyServices(data);
+        } catch {
+            setError("Failed to load service catalog");
+        }
+    };
+
+    //crear/agreagar servicio
+    const createService = async () => {
+        if (!contractId) return;
+
+        try {
+            const combineDateTime = (time?: string) => {
+                if (!time || !eventDateTime) return undefined;
+
+                const date = new Date(eventDateTime);
+
+                const [h, m] = time.split(":");
+
+                date.setHours(Number(h));
+                date.setMinutes(Number(m));
+                date.setSeconds(0);
+
+                return date.toISOString();
+            };
+
+            if (!serviceForm.serviceId) {
+                setError("Service is required");
+                return;
+            }
+
+            if (!serviceForm.quantity || Number(serviceForm.quantity) <= 0) {
+                setError("Quantity must be greater than 0");
+                return;
+            }
+
+            if (!serviceForm.unitPrice) {
+                setError("Unit price is required");
+                return;
+            }
+
+
+            const res = await fetch(
+                `/api/company/contracts/${contractId}/services`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        serviceId: Number(serviceForm.serviceId),
+                        quantity: Number(serviceForm.quantity),
+                        unitPrice: Number(serviceForm.unitPrice),
+                        serviceNotes: serviceForm.serviceNotes || undefined,
+                        operationStart: combineDateTime(serviceForm.operationStart),
+                        operationEnd: combineDateTime(serviceForm.operationEnd),
+                    }),
+                }
+            );
+
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data?.error || "Failed to add service");
+                return;
+            }
+
+            setShowServiceForm(false);
+
+            setServiceForm({
+                serviceId: "",
+                quantity: "",
+                unitPrice: "",
+                serviceNotes: "",
+                operationStart: "",
+                operationEnd: "",
+            });
+
+            fetchServices();
+
+        } catch {
+            setError("Connection error");
+        }
+    };
+    //service fields
+    const serviceFields: Field[] = [
+        {
+            name: "serviceId",
+            label: "Service",
+            type: "select",
+            options: companyServices.map((s) => ({
+                value: String(s.id),
+                label: `${s.name} ($${s.priceBase})`,
+            })),
+            onChange: (value) => {
+                const service = companyServices.find(
+                    (s) => String(s.id) === value
+                );
+
+                if (!service) return;
+
+                setServiceForm((prev) => ({
+                    ...prev,
+                    serviceId: value,
+                    unitPrice: String(service.priceBase),
+                }));
+            },
+        },
+        { name: "quantity", label: "Quantity", type: "number" },
+        { name: "unitPrice", label: "Unit Price", type: "number" },
+        { name: "serviceNotes", label: "Notes", type: "textarea" },
+        { name: "operationStart", label: "Start Time", type: "time" },
+        { name: "operationEnd", label: "End Time", type: "time" },
+    ];
+
+
+    useEffect(() => {
+        if (step === "services" && contractId) {
+            fetchServices();
+            fetchCompanyServices();
+        }
+    }, [step, contractId]);
 
     /* ---------- FORM FIELDS ---------- */
 
@@ -355,21 +528,71 @@ export default function NewContractPage() {
                         borderRadius: 10,
                     }}
                 >
-                    <h3>2. Add Services</h3>
+                    <h3>2. Services</h3>
 
-                    <p style={{ fontSize: 12, color: "gray" }}>
-                        Add services to build your contract total
-                    </p>
+                    <button
+                        onClick={() => setShowServiceForm(true)}
+                        style={{
+                            marginBottom: 10,
+                            padding: "8px 12px",
+                            borderRadius: 6,
+                            border: "none",
+                            background: "#2563eb",
+                            color: "white",
+                            cursor: "pointer",
+                        }}
+                    >
+                        + Add Service
+                    </button>
 
-                    <p>Contract ID: {contractId}</p>
+                    {showServiceForm && (
+                        <CreateForm
+                            title="Add Service"
+                            fields={serviceFields}
+                            form={serviceForm}
+                            setForm={setServiceForm}
+                            onSubmit={createService}
+                            onCancel={() => setShowServiceForm(false)}
+                        />
+                    )}
 
+                    {serviceForm.quantity && serviceForm.unitPrice && (
+                        <p style={{ fontSize: 13 }}>
+                            Subtotal: $
+                            {Number(serviceForm.quantity) * Number(serviceForm.unitPrice)}
+                        </p>
+                    )}
+
+                    {/* LIST */}
+                    {services.length === 0 && !showServiceForm && (
+                        <p>No services yet</p>
+                    )}
+
+                    {services.map((item) => (
+                        <div
+                            key={item.id}
+                            style={{
+                                padding: 10,
+                                border: "1px solid var(--border-color)",
+                                borderRadius: 6,
+                                marginBottom: 6,
+                            }}
+                        >
+                            <strong>{item.serviceName}</strong>
+
+                            <div style={{ fontSize: 12 }}>
+                                Qty: {item.quantity} · $
+                                {item.unitPrice}
+                            </div>
+                        </div>
+                    ))}
 
                     <hr style={{ margin: "20px 0" }} />
 
                     <h3>3. Payments</h3>
 
                     <p style={{ fontSize: 12, color: "gray" }}>
-                        Track payments from client
+                        (lo conectamos después)
                     </p>
                 </div>
             )}
