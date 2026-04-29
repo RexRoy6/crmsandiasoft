@@ -838,7 +838,9 @@ export default function NewContractPage() {
                             form={paymentForm}
                             setForm={setPaymentForm}
                             onSubmit={createPayment}
-                            submitLabel={creatingPayment ? "Saving..." : "Save Payment"}
+                            onCancel={() => setShowPaymentForm(false)}
+                            submitLabel="Save Payment"
+                            loading={creatingPayment}
                         />
                     )}
 
