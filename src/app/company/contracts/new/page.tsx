@@ -7,6 +7,7 @@ import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import ErrorBox from "@/app/components/ErrorBox";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
 import ContractItemCard from "@/app/components/crm/ContractItemCard";
+import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
 
 export default function NewContractPage() {
 
@@ -39,6 +40,27 @@ export default function NewContractPage() {
 
 
     const [step, setStep] = useState<"event" | "services">("event");
+
+    //cosas para payments
+    const [paymentForm, setPaymentForm] = useState({
+        currency: "MXN",
+        paymentMethod: "cash",
+        items: [] as {
+            contractItemId: number;
+            amount: number;
+        }[],
+    });
+    const [contractItems, setContractItems] = useState<any[]>([]);
+    const [showPaymentForm, setShowPaymentForm] = useState(false);
+
+    const updatePaymentItems = (items: any[]) => {
+        setPaymentForm((prev) => ({
+            ...prev,
+            items,
+        }));
+    };
+
+
 
     const [contractId, setContractId] = useState<number | null>(null);
     const [contract, setContract] = useState<any>(null);
@@ -369,6 +391,78 @@ export default function NewContractPage() {
             setError("Connection error");
         }
     };
+
+
+    //fetch contract items
+
+    const fetchContractItems = async () => {
+        if (!contractId) return;
+
+        const res = await fetch(
+            `/api/company/contracts/${contractId}/services`,
+            { credentials: "include" }
+        );
+
+        const data = await res.json();
+
+        setContractItems(data);
+
+        setPaymentForm((prev) => ({
+            ...prev,
+            items: data.map((item: any) => ({
+                contractItemId: item.id,
+                amount: 0,
+            })),
+        }));
+    };
+
+    const createPayment = async () => {
+        if (!contractId) return;
+
+        const total = paymentForm.items.reduce((sum, i) => sum + i.amount, 0);
+
+        if (total <= 0) {
+            setError("Enter at least one amount");
+            return;
+        }
+
+        if (services.length === 0) {
+            setError("Add at least one service before payments");
+            return;
+        }
+
+
+        const res = await fetch(
+            `/api/company/contracts/${contractId}/payments`,
+            {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currency: paymentForm.currency,
+                    paymentMethod: paymentForm.paymentMethod,
+                    items: paymentForm.items.filter((i) => i.amount > 0),
+                }),
+            }
+        );
+
+        if (!res.ok) {
+            const data = await res.json();
+            setError(data?.error || "Failed to create payment");
+            return;
+        }
+
+        setShowPaymentForm(false);
+
+        setPaymentForm({
+            currency: "MXN",
+            paymentMethod: "cash",
+            items: [],
+        });
+
+        fetchContractItems(); // refresh
+    };
+
     //service fields
     const serviceFields: Field[] = [
         {
@@ -401,11 +495,37 @@ export default function NewContractPage() {
     ];
 
 
+
+    //payment fields
+
+    const paymentFields: Field[] = [
+        {
+            name: "currency",
+            label: "Currency",
+            type: "select",
+            options: [
+                { label: "MXN", value: "MXN" },
+                { label: "USD", value: "USD" },
+            ],
+        },
+        {
+            name: "paymentMethod",
+            label: "Payment Method",
+            type: "select",
+            options: [
+                { label: "Cash", value: "cash" },
+                { label: "Transfer", value: "transfer" },
+                { label: "Card", value: "card" },
+            ],
+        },
+    ];
+
     useEffect(() => {
         if (step === "services" && contractId) {
             fetchServices();
             fetchCompanyServices();
             fetchContract();
+            fetchContractItems();
         }
     }, [step, contractId]);
 
@@ -660,9 +780,43 @@ export default function NewContractPage() {
 
                     <h3>3. Payments</h3>
 
-                    <p style={{ fontSize: 12, color: "gray" }}>
-                        (lo conectamos después)
-                    </p>
+                    <button
+                        onClick={() => {
+                            setShowPaymentForm(true);
+                            fetchContractItems();
+                        }}
+
+                        style={{
+                            marginBottom: 10,
+                            padding: "8px 12px",
+                            borderRadius: 6,
+                            border: "none",
+                            background: "#16a34a",
+                            color: "white",
+                            cursor: "pointer",
+                        }}
+                    >
+                        + Add Payment
+                    </button>
+
+                    {showPaymentForm && (
+                        <CreateForm
+                            title="Add Payment"
+                            fields={paymentFields}
+                            form={paymentForm}
+                            setForm={setPaymentForm}
+                            onSubmit={createPayment}
+                            onCancel={() => setShowPaymentForm(false)}
+                        />
+                    )}
+
+                    {showPaymentForm && contractItems.length > 0 && (
+                        <PaymentAllocationCard
+                            items={contractItems}
+                            formItems={paymentForm.items}
+                            setForm={setPaymentForm}
+                        />
+                    )}
                 </div>
             )}
         </div>
