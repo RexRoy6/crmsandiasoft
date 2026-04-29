@@ -5,6 +5,9 @@ import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import ClientSearch from "@/app/components/crm/ClientSearch";
 import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import ErrorBox from "@/app/components/ErrorBox";
+import EventInfoCard from "@/app/components/crm/EventInfoCard";
+import ContractItemCard from "@/app/components/crm/ContractItemCard";
+
 export default function NewContractPage() {
 
     const [clientError, setClientError] = useState("");
@@ -38,6 +41,7 @@ export default function NewContractPage() {
     const [step, setStep] = useState<"event" | "services">("event");
 
     const [contractId, setContractId] = useState<number | null>(null);
+    const [contract, setContract] = useState<any>(null);
 
     const [form, setForm] = useState({
         clientId: "",
@@ -236,6 +240,23 @@ export default function NewContractPage() {
         }
     };
 
+    //fetch contract
+    const fetchContract = async () => {
+        if (!contractId) return;
+
+        try {
+            const res = await fetch(`/api/company/contracts/${contractId}`, {
+                credentials: "include",
+            });
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+            setContract(data);
+        } catch {
+            setError("Failed to load contract");
+        }
+    };
 
     //services
     const fetchServices = async () => {
@@ -384,6 +405,7 @@ export default function NewContractPage() {
         if (step === "services" && contractId) {
             fetchServices();
             fetchCompanyServices();
+            fetchContract();
         }
     }, [step, contractId]);
 
@@ -521,6 +543,8 @@ export default function NewContractPage() {
 
             {/* STEP 2 */}
             {step === "services" && contractId && (
+
+
                 <div
                     style={{
                         padding: 20,
@@ -528,6 +552,9 @@ export default function NewContractPage() {
                         borderRadius: 10,
                     }}
                 >
+                    {contract?.eventId && (
+                        <EventInfoCard eventId={contract.eventId} />
+                    )}
                     <h3>2. Services</h3>
 
                     <button
@@ -569,22 +596,64 @@ export default function NewContractPage() {
                     )}
 
                     {services.map((item) => (
-                        <div
+                        <ContractItemCard
                             key={item.id}
-                            style={{
-                                padding: 10,
-                                border: "1px solid var(--border-color)",
-                                borderRadius: 6,
-                                marginBottom: 6,
-                            }}
-                        >
-                            <strong>{item.serviceName}</strong>
+                            item={item}
+                            onDelete={async (id) => {
+                                if (!confirm("Remove service?")) return;
 
-                            <div style={{ fontSize: 12 }}>
-                                Qty: {item.quantity} · $
-                                {item.unitPrice}
-                            </div>
-                        </div>
+                                try {
+                                    const res = await fetch(`/api/company/contract-items/${id}`, {
+                                        method: "DELETE",
+                                        credentials: "include",
+                                    });
+
+                                    if (!res.ok) {
+                                        const data = await res.json();
+                                        setError(data?.error || "Failed to delete");
+                                        return;
+                                    }
+
+                                    fetchServices();
+                                } catch {
+                                    setError("Connection error");
+                                }
+                            }}
+                            onUpdate={async (id, data) => {
+                                try {
+                                    const toISO = (value?: any) => {
+                                        if (!value) return undefined;
+
+                                        const date = new Date(value);
+                                        if (isNaN(date.getTime())) return undefined;
+
+                                        return date.toISOString();
+                                    };
+
+                                    const res = await fetch(`/api/company/contract-items/${id}`, {
+                                        method: "PATCH",
+                                        credentials: "include",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                            ...data,
+                                            operationStart: toISO(data.operationStart),
+                                            operationEnd: toISO(data.operationEnd),
+                                        }),
+                                    });
+
+                                    if (!res.ok) {
+                                        setError("Failed to update");
+                                        return;
+                                    }
+
+                                    fetchServices();
+                                } catch {
+                                    setError("Connection error");
+                                }
+                            }}
+                        />
                     ))}
 
                     <hr style={{ margin: "20px 0" }} />
