@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import PaymentAllocationCard from "@/app/components/crm/payments/PaymentAllocationCard";
 import ErrorBox from "@/app/components/ErrorBox";
+import ContractSearch from "@/app/components/crm/ContractSearch";
 
 import { useContractItems } from "@/app/hooks/useContractItems";
 
@@ -11,11 +12,17 @@ export default function PaymentForm({
   contractId,
   onSuccess,
 }: {
-  contractId: string;
+  contractId?: string;
   onSuccess?: () => void;
 }) {
+  const isGlobal = !contractId;
+
+  const [selectedContractId, setSelectedContractId] = useState<string>("");
+
+  const activeContractId = contractId || selectedContractId;
+
   const { contractItems, fetchContractItems } =
-    useContractItems(contractId);
+    useContractItems(activeContractId);
 
   const [show, setShow] = useState(false);
 
@@ -31,7 +38,27 @@ export default function PaymentForm({
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number>();
 
+  /* ---------- fields dinámicos ---------- */
+
   const fields: Field[] = [
+    ...(isGlobal
+      ? [
+          {
+            name: "contractId",
+            label: "Contract",
+            readOnly: true,
+            after: (
+              <ContractSearch
+                selected={selectedContractId}
+                onSelect={(c: any) => {
+                  setSelectedContractId(String(c.id));
+                }}
+              />
+            ),
+          },
+        ]
+      : []),
+
     {
       name: "currency",
       label: "Currency",
@@ -53,15 +80,32 @@ export default function PaymentForm({
     },
   ];
 
+  /* ---------- lifecycle ---------- */
+
+  useEffect(() => {
+    if (selectedContractId) {
+      fetchContractItems().then((items) => {
+        setForm((prev) => ({
+          ...prev,
+          items,
+        }));
+      });
+    }
+  }, [selectedContractId]);
+
+  /* ---------- actions ---------- */
+
   async function openForm() {
     setShow(true);
 
-    const items = await fetchContractItems();
+    if (contractId) {
+      const items = await fetchContractItems();
 
-    setForm((prev) => ({
-      ...prev,
-      items,
-    }));
+      setForm((prev) => ({
+        ...prev,
+        items,
+      }));
+    }
   }
 
   function closeForm() {
@@ -73,11 +117,17 @@ export default function PaymentForm({
       items: [],
     });
 
+    setSelectedContractId("");
     setError("");
   }
 
   async function handleSubmit() {
     try {
+      if (!activeContractId) {
+        setError("Select a contract");
+        return;
+      }
+
       const total = form.items.reduce(
         (sum, i) => sum + i.amount,
         0
@@ -89,7 +139,7 @@ export default function PaymentForm({
       }
 
       const res = await fetch(
-        `/api/company/contracts/${contractId}/payments`,
+        `/api/company/contracts/${activeContractId}/payments`,
         {
           method: "POST",
           credentials: "include",
@@ -114,15 +164,16 @@ export default function PaymentForm({
 
       closeForm();
 
-      onSuccess?.(); // 🔥 refresca lista desde afuera
+      onSuccess?.();
     } catch {
       setError("Connection error");
     }
   }
 
+  /* ---------- UI ---------- */
+
   return (
     <>
-      {/* botón */}
       <button
         onClick={openForm}
         style={{
@@ -138,7 +189,6 @@ export default function PaymentForm({
         + Add Payment
       </button>
 
-      {/* form */}
       {show && (
         <>
           <CreateForm
