@@ -1,7 +1,7 @@
 import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
-import { contracts, events, clients, payments ,ContractStatus} from "@/db/schema"
+import { contracts, events, clients, payments, ContractStatus } from "@/db/schema"
 import { sql } from "drizzle-orm"
 
 import { eq, and, isNull, like, or, desc } from "drizzle-orm"
@@ -97,8 +97,8 @@ export async function getCompanyContracts({
     conditions.push(eq(contracts.eventId, eventId))
   }
   if (status) {
-  conditions.push(eq(contracts.status, status))
-}
+    conditions.push(eq(contracts.status, status))
+  }
 
   if (search) {
     const term = `%${search}%`
@@ -137,7 +137,14 @@ export async function getCompanyContracts({
     .from(contracts)
     .leftJoin(clients, eq(contracts.clientId, clients.id))
     .leftJoin(events, eq(contracts.eventId, events.id))
-    .leftJoin(payments, eq(payments.contractId, contracts.id))
+    //.leftJoin(payments, eq(payments.contractId, contracts.id))
+    .leftJoin(
+      payments,
+      and(
+        eq(payments.contractId, contracts.id),
+        isNull(payments.deletedAt)
+      )
+    )
     .where(whereClause)
     .groupBy(
       contracts.id,
@@ -239,9 +246,16 @@ export async function getContract(id: number) {
       eq(contracts.eventId, events.id)
     )
 
+    // .leftJoin(
+    //   payments,
+    //   eq(payments.contractId, contracts.id)
+    // )
     .leftJoin(
       payments,
-      eq(payments.contractId, contracts.id)
+      and(
+        eq(payments.contractId, contracts.id),
+        isNull(payments.deletedAt)
+      )
     )
 
     .where(

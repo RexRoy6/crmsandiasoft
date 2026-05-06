@@ -45,25 +45,16 @@ export async function getContractPayments(
     throw new Error("contract not found")
   }
 
-  const contractPayments =
-    await tdb.findMany(
-      payments,
-      eq(payments.contractId, contractId)
+  const contractPayments = await db
+  .select()
+  .from(payments)
+  .where(
+    and(
+      eq(payments.contractId, contractId),
+      isNull(payments.deletedAt)
     )
+  )
 
-  //
-  // const paymentItemsRows = await db
-  //   .select({
-  //     paymentId: paymentItems.paymentId,
-  //     contractItemId: paymentItems.contractItemId,
-  //     amount: paymentItems.amount
-  //   })
-  //   .from(paymentItems)
-  //   .innerJoin(
-  //     payments,
-  //     eq(paymentItems.paymentId, payments.id)
-  //   )
-  //   .where(eq(payments.contractId, contractId))
   const paymentItemsRows = await db
     .select({
       paymentId: paymentItems.paymentId,
@@ -545,11 +536,15 @@ export async function getPayment(id: number) {
 
   if (!contract) return null
 
-  const contractPayments =
-    await tdb.findMany(
-      payments,
-      eq(payments.contractId, payment.contractId)
+ const contractPayments = await db
+  .select()
+  .from(payments)
+  .where(
+    and(
+      eq(payments.contractId, payment.contractId),
+      isNull(payments.deletedAt)
     )
+  )
 
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),

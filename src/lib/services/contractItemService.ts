@@ -54,9 +54,14 @@ export async function addServiceToContract(
 
   const existingItem = await tdb.findFirst(
     contractItems,
+    // and(
+    //   eq(contractItems.contractId, contractId),
+    //   eq(contractItems.serviceId, data.serviceId)
+    // )
     and(
       eq(contractItems.contractId, contractId),
-      eq(contractItems.serviceId, data.serviceId)
+      eq(contractItems.serviceId, data.serviceId),
+      isNull(contractItems.deletedAt)
     )
   )
 
@@ -198,7 +203,13 @@ export async function getContractServices(contractId: number) {
       payments,
       eq(paymentItems.paymentId, payments.id)
     )
-    .where(eq(payments.contractId, contractId))
+    //.where(eq(payments.contractId, contractId))
+    .where(
+      and(
+        eq(payments.contractId, contractId),
+        isNull(payments.deletedAt)
+      )
+    )
 
   /* ---------- 3. AGRUPAR PAGOS POR ITEM (🔥 NUEVO) ---------- */
 
@@ -329,10 +340,19 @@ async function recalculateContractTotal(contractId: number) {
 
   const tdb = await tenantDb()
 
-  const items = await tdb.findMany(
-    contractItems,
-    eq(contractItems.contractId, contractId)
-  )
+  // const items = await tdb.findMany(
+  //   contractItems,
+  //   eq(contractItems.contractId, contractId)
+  // )
+  const items = await db
+    .select()
+    .from(contractItems)
+    .where(
+      and(
+        eq(contractItems.contractId, contractId),
+        isNull(contractItems.deletedAt)
+      )
+    )
 
   const total = items.reduce((sum, item) => {
     return sum + (item.quantity * Number(item.unitPrice))
