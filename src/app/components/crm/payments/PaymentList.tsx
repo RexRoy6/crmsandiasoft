@@ -14,24 +14,24 @@ export default function PaymentList({
 
 
   async function handleDelete(id: number) {
-  if (!confirm("Delete this payment?")) return;
+    if (!confirm("Delete this payment?")) return;
 
-  try {
-    const res = await fetch(`/api/company/payments/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(`/api/company/payments/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    if (!res.ok) {
-      alert("Failed to delete payment");
-      return;
+      if (!res.ok) {
+        alert("Failed to delete payment");
+        return;
+      }
+
+      onDeleteSuccess?.(); // refresca lista
+    } catch {
+      alert("Connection error");
     }
-
-    onDeleteSuccess?.(); // refresca lista
-  } catch {
-    alert("Connection error");
   }
-}
 
   if (payments.length === 0) {
     return (
@@ -93,19 +93,6 @@ export default function PaymentList({
             </div>
           }
         >
-          <button
-  onClick={() => handleDelete(payment.id)}
-  style={{
-    marginTop: 8,
-    fontSize: 12,
-    color: "var(--error-color)",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  }}
->
-  Delete
-</button>
           <div
             style={{
               display: "flex",
@@ -129,7 +116,41 @@ export default function PaymentList({
               <strong>Date:</strong>{" "}
               {new Date(payment.createdAt).toLocaleDateString()}
             </span>
+
+
+
+
+
+
           </div>
+          <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 12 }}>
+            <button
+              onClick={() => handleDelete(payment.id)}
+              style={{
+                marginTop: 10,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--error-color)",
+                background: "var(--error-bg)",
+                border: "1px solid var(--error-border)",
+                borderRadius: 6,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--error-color)";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--error-bg)";
+                e.currentTarget.style.color = "var(--error-color)";
+              }}
+            >
+              🗑 Delete
+            </button>
+          </div>
+
         </ListCard>
       ))}
     </div>
