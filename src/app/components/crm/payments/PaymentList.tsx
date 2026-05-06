@@ -2,11 +2,37 @@
 
 import ListCard from "@/app/components/crm/ListCard";
 
+
+
 export default function PaymentList({
   payments,
+  onDeleteSuccess,
 }: {
   payments: any[];
+  onDeleteSuccess?: () => void;
 }) {
+
+
+  async function handleDelete(id: number) {
+  if (!confirm("Delete this payment?")) return;
+
+  try {
+    const res = await fetch(`/api/company/payments/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      alert("Failed to delete payment");
+      return;
+    }
+
+    onDeleteSuccess?.(); // refresca lista
+  } catch {
+    alert("Connection error");
+  }
+}
+
   if (payments.length === 0) {
     return (
       <p style={{ color: "var(--text-secondary)" }}>
@@ -67,6 +93,19 @@ export default function PaymentList({
             </div>
           }
         >
+          <button
+  onClick={() => handleDelete(payment.id)}
+  style={{
+    marginTop: 8,
+    fontSize: 12,
+    color: "var(--error-color)",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+  }}
+>
+  Delete
+</button>
           <div
             style={{
               display: "flex",

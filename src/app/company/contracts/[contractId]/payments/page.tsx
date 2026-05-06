@@ -13,7 +13,7 @@ import { useContractPayments } from "@/app/hooks/useContractPayments";
 export default function ContractPaymentsPage() {
   const params = useParams();
   const contractId = params.contractId as string;
-// hooks (toda la lógica vive aquí ahora)
+  // hooks (toda la lógica vive aquí ahora)
   const {
     payments,
     contractTotal,
@@ -52,7 +52,10 @@ export default function ContractPaymentsPage() {
           Loading payments...
         </p>
       ) : (
-        <PaymentList payments={payments} />
+        <PaymentList
+          payments={payments}
+          onDeleteSuccess={fetchPayments}
+        />
       )}
     </div>
   );

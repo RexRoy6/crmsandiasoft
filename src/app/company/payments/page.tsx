@@ -44,7 +44,7 @@ export default function PaymentsPage() {
         {pagination?.total ?? 0} payments found
       </p>
 
-      {/* 🔥 reutilizable */}
+      {/* reutilizable */}
       <PaymentForm onSuccess={fetchPayments} />
 
       {error && <ErrorBox message={error} code={errorCode} />}
