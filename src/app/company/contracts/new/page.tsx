@@ -7,7 +7,7 @@ import InlineClientForm from "@/app/components/crm/InlineClientForm";
 import ErrorBox from "@/app/components/ErrorBox";
 import EventInfoCard from "@/app/components/crm/EventInfoCard";
 import ContractItemCard from "@/app/components/crm/ContractItemCard";
-import PaymentAllocationCard from "@/app/components/payments/PaymentAllocationCard";
+import PaymentAllocationCard from "@/app/components/crm/payments/PaymentAllocationCard";
 
 export default function NewContractPage() {
 
