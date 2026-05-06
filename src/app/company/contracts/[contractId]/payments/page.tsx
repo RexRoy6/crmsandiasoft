@@ -7,7 +7,7 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import ListCard from "@/app/components/crm/ListCard";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import ErrorBox from "@/app/components/ErrorBox";
-import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
+import PaymentAllocationCard from "@/app/components/payments/PaymentAllocationCard";
 import { useRouter } from "next/navigation";
 
 export default function ContractPaymentsPage() {

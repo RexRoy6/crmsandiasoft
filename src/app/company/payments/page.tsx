@@ -8,7 +8,7 @@ import ErrorBox from "@/app/components/ErrorBox";
 import CreateForm from "@/app/components/crm/CreateForm";
 import type { Field } from "@/app/components/crm/CreateForm";
 import SearchBar from "@/app/components/crm/SearchBar";
-import PaymentAllocationCard from "@/app/components/crm/PaymentAllocationCard";
+import PaymentAllocationCard from "@/app/components/payments/PaymentAllocationCard";
 import Pagination from "@/app/components/crm/Pagination";
 import ContractSearch from "@/app/components/crm/ContractSearch";
 
