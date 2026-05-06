@@ -43,20 +43,20 @@ export default function PaymentForm({
   const fields: Field[] = [
     ...(isGlobal
       ? [
-          {
-            name: "contractId",
-            label: "Contract",
-            readOnly: true,
-            after: (
-              <ContractSearch
-                selected={selectedContractId}
-                onSelect={(c: any) => {
-                  setSelectedContractId(String(c.id));
-                }}
-              />
-            ),
-          },
-        ]
+        {
+          name: "contractId",
+          label: "Contract",
+          readOnly: true,
+          after: (
+            <ContractSearch
+              selected={selectedContractId}
+              onSelect={(c: any) => {
+                setSelectedContractId(String(c.id));
+              }}
+            />
+          ),
+        },
+      ]
       : []),
 
     {
@@ -78,6 +78,15 @@ export default function PaymentForm({
         { label: "Card", value: "card" },
       ],
     },
+    {
+      name: "paidAt",
+      label: "Payment Date",
+      type: "datetime-local",
+    },
+    {
+      name: "ticketNumber",
+      label: "Ticket Number",
+    }
   ];
 
   /* ---------- lifecycle ---------- */

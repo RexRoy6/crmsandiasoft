@@ -111,6 +111,8 @@ export async function getContractPayments(
   const enrichedPayments = contractPayments.map(p => ({
     ...p,
     amount: Number(p.amount),
+    paidAt: p.paidAt,
+    ticketNumber: p.ticketNumber,
     items: itemsByPayment.get(p.id) || []
   }))
 
@@ -271,7 +273,10 @@ export async function createPayment(
       contractId,
       amount: total.toString(),
       currency: data.currency,
-      paymentMethod: data.paymentMethod
+      paymentMethod: data.paymentMethod,
+
+      paidAt: data.paidAt ? new Date(data.paidAt) : null,
+      ticketNumber: data.ticketNumber ?? null,
     })
 
     paymentId = result[0].insertId
@@ -328,8 +333,10 @@ export async function createPayment(
     amount: total.toFixed(2),
     currency: data.currency,
     paymentMethod: data.paymentMethod,
-    items: data.items, // 🔥 útil para frontend
+    items: data.items,
     createdAt: new Date(),
+    paidAt: data.paidAt ?? null,
+    ticketNumber: data.ticketNumber ?? null
   }
 
   const paymentStatus = getPaymentStatus(
@@ -398,7 +405,9 @@ export async function getCompanyPayments({
       clientName: clients.name,
       eventName: events.name,
 
-      paidAmount: sum(payments.amount)
+      paidAmount: sum(payments.amount),
+      paidAt: payments.paidAt,
+      ticketNumber: payments.ticketNumber,
     })
     .from(payments)
     .leftJoin(contracts, eq(payments.contractId, contracts.id))
@@ -483,6 +492,8 @@ export async function getCompanyPayments({
       currency: row.currency,
       paymentMethod: row.paymentMethod,
       createdAt: row.createdAt,
+      paidAt: row.paidAt,
+      ticketNumber: row.ticketNumber,
 
       contract: {
         id: row.contractId,
