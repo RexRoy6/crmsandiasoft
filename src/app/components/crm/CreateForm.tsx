@@ -86,7 +86,7 @@ export default function CreateForm({
               </label>
 
               <select
-                value={form[field.name] || ""}
+                value={form[field.name] ?? ""}
                 onChange={(e) => {
                   const value = e.target.value;
                   clearError?.();
@@ -147,7 +147,7 @@ export default function CreateForm({
               </label>
 
               <textarea
-                value={form[field.name] || ""}
+                value={form[field.name] ?? ""}
                 rows={4}
                 onChange={(e) => {
                   clearError?.();
@@ -189,7 +189,7 @@ export default function CreateForm({
 
             <input
               type={field.type || "text"}
-              value={form[field.name] || ""}
+              value={form[field.name] ?? ""}
               readOnly={field.readOnly}
               onChange={(e) => {
                 clearError?.();

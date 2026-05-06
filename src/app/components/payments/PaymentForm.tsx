@@ -164,8 +164,8 @@ export default function PaymentForm({
             paymentMethod: form.paymentMethod,
             // paidAt: form.paidAt || undefined,
             paidAt: form.paidAt
-  ? new Date(form.paidAt).toISOString()
-  : undefined,
+              ? new Date(form.paidAt).toISOString()
+              : undefined,
             ticketNumber: form.ticketNumber || undefined,
             items: form.items.filter((i) => i.amount > 0),
           }),
