@@ -6,13 +6,13 @@ export type Field = {
   name: string;
   label: string;
   type?:
-    | "text"
-    | "number"
-    | "select"
-    | "date"
-    | "time"
-    | "datetime-local"
-    | "textarea";
+  | "text"
+  | "number"
+  | "select"
+  | "date"
+  | "time"
+  | "datetime-local"
+  | "textarea";
 
   options?: { value: string; label: string }[];
 
@@ -52,15 +52,6 @@ export default function CreateForm({
     value: string
   ) {
 
-    console.log(
-      "FIELD:",
-      field.name,
-      "TYPE:",
-      field.type,
-      "VALUE:",
-      value
-    );
-
     clearError?.();
 
     if (field.onChange) {
@@ -68,13 +59,13 @@ export default function CreateForm({
       return;
     }
 
-    setForm({
-      ...form,
+    setForm((prev: any) => ({
+      ...prev,
       [field.name]:
         field.type === "number"
           ? Number(value)
           : String(value),
-    });
+    }));
   }
 
   return (
@@ -103,6 +94,8 @@ export default function CreateForm({
 
       {fields.map((field) => {
 
+      
+
         /* ---------- SELECT ---------- */
 
         if (field.type === "select") {
@@ -127,9 +120,9 @@ export default function CreateForm({
 
               <select
                 value={form[field.name] ?? ""}
-                onChange={(e) =>
-                  handleFieldChange(field, e.target.value)
-                }
+                onChange={(e) => {
+                  handleFieldChange(field, e.target.value);
+                }}
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
@@ -186,9 +179,11 @@ export default function CreateForm({
               <textarea
                 value={form[field.name] ?? ""}
                 rows={4}
-                onChange={(e) =>
-                  handleFieldChange(field, e.target.value)
-                }
+                onChange={(e) => {
+                  console.log("DATETIME CHANGE", e.target.value);
+
+                  handleFieldChange(field, e.target.value);
+                }}
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
@@ -220,7 +215,6 @@ export default function CreateForm({
             >
               {field.label}
             </label>
-
             <input
               type={field.type || "text"}
               value={form[field.name] ?? ""}

@@ -81,6 +81,11 @@ export default function PaymentForm({
       ],
     },
     {
+      name: "paidAt",
+      label: "Payment Date",
+      type: "date",
+    },
+    {
       name: "ticketNumber",
       label: "Ticket Number",
     }
@@ -146,40 +151,15 @@ export default function PaymentForm({
         return;
       }
 
-      console.log("FORM STATE:", form);
-
-      const paidAt = form.paidAt
-        ? new Date(form.paidAt)
-        : null;
-
-
-
-      console.log("RAW paidAt:", form.paidAt);
-
-      console.log("DATE object:", paidAt);
-
-      console.log(
-        "ISO:",
-        paidAt?.toISOString()
-      );
-
-      if (paidAt && isNaN(paidAt.getTime())) {
-        setError("Invalid payment date");
-        return;
-      }
-
-
       const payload = {
         currency: form.currency,
         paymentMethod: form.paymentMethod,
-        paidAt: paidAt?.toISOString(),
+        paidAt: form.paidAt
+          ? new Date(form.paidAt).toISOString()
+          : undefined,
         ticketNumber: form.ticketNumber || undefined,
         items: form.items.filter((i) => i.amount > 0),
       };
-
-      console.log("FINAL PAYLOAD:", payload);
-
-
 
       const res = await fetch(
         `/api/company/contracts/${activeContractId}/payments`,
@@ -249,31 +229,6 @@ export default function PaymentForm({
             onSubmit={handleSubmit}
             onCancel={closeForm}
           />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              marginTop: 12,
-            }}
-          >
-            <label>Payment Date</label>
-
-            <input
-              type="datetime-local"
-              value={form.paidAt}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                console.log("DATETIME:", value);
-
-                setForm((prev) => ({
-                  ...prev,
-                  paidAt: value,
-                }));
-              }}
-            />
-          </div>
 
           {contractItems.length > 0 && (
             <PaymentAllocationCard
