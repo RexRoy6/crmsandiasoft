@@ -1,9 +1,10 @@
-import { ReactNode } from "react"
+"use client";
+
+import { ReactNode } from "react";
 
 export type Field = {
   name: string;
   label: string;
-  // type?: "text" | "number" | "select" | "date" | "time" | "textarea";
   type?:
   | "text"
   | "number"
@@ -12,9 +13,13 @@ export type Field = {
   | "time"
   | "datetime-local"
   | "textarea";
+
   options?: { value: string; label: string }[];
+
   onChange?: (value: string) => void;
+
   readOnly?: boolean;
+
   after?: ReactNode;
 };
 
@@ -41,6 +46,28 @@ export default function CreateForm({
   submitLabel = "Create",
   loading = false,
 }: Props) {
+
+  function handleFieldChange(
+    field: Field,
+    value: string
+  ) {
+
+    clearError?.();
+
+    if (field.onChange) {
+      field.onChange(value);
+      return;
+    }
+
+    setForm((prev: any) => ({
+      ...prev,
+      [field.name]:
+        field.type === "number"
+          ? Number(value)
+          : String(value),
+    }));
+  }
+
   return (
     <div
       style={{
@@ -66,7 +93,13 @@ export default function CreateForm({
       </h3>
 
       {fields.map((field) => {
+
+      
+
+        /* ---------- SELECT ---------- */
+
         if (field.type === "select") {
+
           return (
             <div
               key={field.name}
@@ -86,19 +119,9 @@ export default function CreateForm({
               </label>
 
               <select
-                value={form[field.name] || ""}
+                value={form[field.name] ?? ""}
                 onChange={(e) => {
-                  const value = e.target.value;
-                  clearError?.();
-
-                  if (field.onChange) {
-                    field.onChange(value);
-                  } else {
-                    setForm({
-                      ...form,
-                      [field.name]: value,
-                    });
-                  }
+                  handleFieldChange(field, e.target.value);
                 }}
                 style={{
                   padding: "10px 12px",
@@ -108,16 +131,20 @@ export default function CreateForm({
                   color: "var(--text-primary)",
                 }}
               >
-                <option value="">Select...</option>
+                <option value="">
+                  Select...
+                </option>
 
                 {field.options?.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
+                  <option
+                    key={opt.value}
+                    value={opt.value}
+                  >
                     {opt.label}
                   </option>
                 ))}
               </select>
 
-              {/* 👇 AQUI VA EL BOTÓN */}
               {field.after && (
                 <div style={{ marginTop: 4 }}>
                   {field.after}
@@ -127,7 +154,10 @@ export default function CreateForm({
           );
         }
 
+        /* ---------- TEXTAREA ---------- */
+
         if (field.type === "textarea") {
+
           return (
             <div
               key={field.name}
@@ -147,15 +177,12 @@ export default function CreateForm({
               </label>
 
               <textarea
-                value={form[field.name] || ""}
+                value={form[field.name] ?? ""}
                 rows={4}
                 onChange={(e) => {
-                  clearError?.();
+                  console.log("DATETIME CHANGE", e.target.value);
 
-                  setForm({
-                    ...form,
-                    [field.name]: e.target.value,
-                  });
+                  handleFieldChange(field, e.target.value);
                 }}
                 style={{
                   padding: "10px 12px",
@@ -168,6 +195,8 @@ export default function CreateForm({
             </div>
           );
         }
+
+        /* ---------- INPUT ---------- */
 
         return (
           <div
@@ -186,22 +215,13 @@ export default function CreateForm({
             >
               {field.label}
             </label>
-
             <input
               type={field.type || "text"}
-              value={form[field.name] || ""}
+              value={form[field.name] ?? ""}
               readOnly={field.readOnly}
-              onChange={(e) => {
-                clearError?.();
-
-                setForm({
-                  ...form,
-                  [field.name]:
-                    field.type === "number"
-                      ? Number(e.target.value)
-                      : e.target.value,
-                });
-              }}
+              onChange={(e) =>
+                handleFieldChange(field, e.target.value)
+              }
               style={{
                 padding: "8px 10px",
                 fontSize: 12,
@@ -210,7 +230,7 @@ export default function CreateForm({
                 background: field.readOnly
                   ? "var(--bg-primary)"
                   : "var(--bg-secondary)",
-                color: "var(--text-secondary)",
+                color: "var(--text-primary)",
               }}
             />
 
@@ -223,7 +243,7 @@ export default function CreateForm({
         );
       })}
 
-
+      {/* ---------- ACTIONS ---------- */}
 
       <div
         style={{
@@ -239,13 +259,19 @@ export default function CreateForm({
             padding: "10px 16px",
             borderRadius: 8,
             border: "none",
-            background: loading ? "#94a3b8" : "#2563eb",
+            background: loading
+              ? "#94a3b8"
+              : "#2563eb",
             color: "white",
-            cursor: loading ? "not-allowed" : "pointer",
+            cursor: loading
+              ? "not-allowed"
+              : "pointer",
             fontWeight: 500,
           }}
         >
-          {loading ? "Saving..." : submitLabel}
+          {loading
+            ? "Saving..."
+            : submitLabel}
         </button>
 
         <button
@@ -253,7 +279,8 @@ export default function CreateForm({
           style={{
             padding: "10px 16px",
             borderRadius: 8,
-            border: "1px solid var(--border-color)",
+            border:
+              "1px solid var(--border-color)",
             background: "transparent",
             color: "var(--text-primary)",
             cursor: "pointer",
