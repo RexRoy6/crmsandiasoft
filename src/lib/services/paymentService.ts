@@ -13,6 +13,7 @@ import {
 } from "@/db/schema"
 
 import { eq, and, isNull, sum, sql, like, or, desc } from "drizzle-orm"
+import { activePayments, notDeletedPayments } from "@/db/filters";
 
 import type {
   CreatePaymentInput
@@ -45,25 +46,11 @@ export async function getContractPayments(
     throw new Error("contract not found")
   }
 
-  const contractPayments =
-    await tdb.findMany(
-      payments,
-      eq(payments.contractId, contractId)
-    )
+  const contractPayments = await db
+    .select()
+    .from(payments)
+    .where(activePayments(contractId))
 
-  //
-  // const paymentItemsRows = await db
-  //   .select({
-  //     paymentId: paymentItems.paymentId,
-  //     contractItemId: paymentItems.contractItemId,
-  //     amount: paymentItems.amount
-  //   })
-  //   .from(paymentItems)
-  //   .innerJoin(
-  //     payments,
-  //     eq(paymentItems.paymentId, payments.id)
-  //   )
-  //   .where(eq(payments.contractId, contractId))
   const paymentItemsRows = await db
     .select({
       paymentId: paymentItems.paymentId,
@@ -87,7 +74,8 @@ export async function getContractPayments(
       services,
       eq(contractItemsTable.serviceId, services.id)
     )
-    .where(eq(payments.contractId, contractId))
+    //.where(eq(payments.contractId, contractId))
+    .where(activePayments(contractId))
 
   const itemsByPayment = new Map<number, any[]>()
 
@@ -111,6 +99,8 @@ export async function getContractPayments(
   const enrichedPayments = contractPayments.map(p => ({
     ...p,
     amount: Number(p.amount),
+    paidAt: p.paidAt,
+    ticketNumber: p.ticketNumber,
     items: itemsByPayment.get(p.id) || []
   }))
 
@@ -175,10 +165,19 @@ export async function createPayment(
 
   /* ---------- 3. validar contract items (O(n)) ---------- */
 
+  // const contractItems =
+  //   await tdb.findMany(
+  //     contractItemsTable,
+  //     eq(contractItemsTable.contractId, contractId)
+  //   )
+
   const contractItems =
     await tdb.findMany(
       contractItemsTable,
-      eq(contractItemsTable.contractId, contractId)
+      and(
+        eq(contractItemsTable.contractId, contractId),
+        isNull(contractItemsTable.deletedAt)
+      )
     )
 
   const contractItemsMap = new Map(
@@ -198,11 +197,14 @@ export async function createPayment(
         paid: sql<number>`COALESCE(SUM(${paymentItems.amount}),0)`
       })
       .from(paymentItems)
-      .leftJoin(
+
+      .innerJoin(
         payments,
         eq(paymentItems.paymentId, payments.id)
       )
-      .where(eq(payments.contractId, contractId))
+
+      .where(activePayments(contractId))
+
       .groupBy(paymentItems.contractItemId)
 
 
@@ -224,7 +226,14 @@ export async function createPayment(
         totalPaid: sql<number>`COALESCE(SUM(${payments.amount}),0)`
       })
       .from(payments)
-      .where(eq(payments.contractId, contractId))
+      //.where(eq(payments.contractId, contractId))
+      // .where(
+      //   and(
+      //     eq(payments.contractId, contractId),
+      //     isNull(payments.deletedAt)
+      //   )
+      // )
+      .where(activePayments(contractId))
 
     const paid = Number(row.totalPaid)
 
@@ -271,7 +280,10 @@ export async function createPayment(
       contractId,
       amount: total.toString(),
       currency: data.currency,
-      paymentMethod: data.paymentMethod
+      paymentMethod: data.paymentMethod,
+
+      paidAt: data.paidAt ? new Date(data.paidAt) : null,
+      ticketNumber: data.ticketNumber ?? null,
     })
 
     paymentId = result[0].insertId
@@ -328,8 +340,10 @@ export async function createPayment(
     amount: total.toFixed(2),
     currency: data.currency,
     paymentMethod: data.paymentMethod,
-    items: data.items, // 🔥 útil para frontend
+    items: data.items,
     createdAt: new Date(),
+    paidAt: data.paidAt ?? null,
+    ticketNumber: data.ticketNumber ?? null
   }
 
   const paymentStatus = getPaymentStatus(
@@ -366,9 +380,14 @@ export async function getCompanyPayments({
   const offset = (page - 1) * limit
 
   /* ---------- WHERE dinámico ---------- */
+  // const conditions = [
+  //   eq(contracts.companyId, companyId!),
+  //   isNull(payments.deletedAt)
+  // ]
+
   const conditions = [
     eq(contracts.companyId, companyId!),
-    isNull(payments.deletedAt)
+    notDeletedPayments()
   ]
 
   if (search) {
@@ -398,7 +417,9 @@ export async function getCompanyPayments({
       clientName: clients.name,
       eventName: events.name,
 
-      paidAmount: sum(payments.amount)
+      paidAmount: sum(payments.amount),
+      paidAt: payments.paidAt,
+      ticketNumber: payments.ticketNumber,
     })
     .from(payments)
     .leftJoin(contracts, eq(payments.contractId, contracts.id))
@@ -483,6 +504,8 @@ export async function getCompanyPayments({
       currency: row.currency,
       paymentMethod: row.paymentMethod,
       createdAt: row.createdAt,
+      paidAt: row.paidAt,
+      ticketNumber: row.ticketNumber,
 
       contract: {
         id: row.contractId,
@@ -534,11 +557,23 @@ export async function getPayment(id: number) {
 
   if (!contract) return null
 
-  const contractPayments =
-    await tdb.findMany(
-      payments,
-      eq(payments.contractId, payment.contractId)
-    )
+  const contractPayments = await db
+    .select()
+    .from(payments)
+    // .where(
+    //   and(
+    //     eq(payments.contractId, payment.contractId),
+    //     isNull(payments.deletedAt)
+    //   )
+    // )
+
+    // .where(
+    //   and(
+    //     eq(payments.contractId, contractId),
+    //     isNull(payments.deletedAt)
+    //   )
+    // )
+    .where(activePayments(payment.contractId))
 
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),

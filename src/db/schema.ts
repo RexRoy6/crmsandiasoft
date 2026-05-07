@@ -258,8 +258,17 @@ export const payments = mysqlTable("payments", {
   currency: mysqlEnum("currency", ["MXN", "USD"]).notNull(),
   paymentMethod: varchar("payment_method", { length: 50 }),
 
+  // 🆕 NUEVOS CAMPOS
+  paidAt: datetime("paid_at"), // fecha real del pago (opcional)
+  ticketNumber: varchar("ticket_number", { length: 100 }),
+
   ...baseColumns
-})
+}, (table) => ({
+  contractIdx: index("payments_contract_idx").on(table.contractId),
+
+  // opcional pero útil si buscas por ticket
+  ticketIdx: index("payments_ticket_idx").on(table.ticketNumber),
+}))
 
 /* ---------- REFUNDS ---------- */
 

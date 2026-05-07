@@ -29,6 +29,8 @@ export default function PaymentForm({
   const [form, setForm] = useState({
     currency: "MXN",
     paymentMethod: "cash",
+    paidAt: "",
+    ticketNumber: "",
     items: [] as {
       contractItemId: number;
       amount: number;
@@ -43,20 +45,20 @@ export default function PaymentForm({
   const fields: Field[] = [
     ...(isGlobal
       ? [
-          {
-            name: "contractId",
-            label: "Contract",
-            readOnly: true,
-            after: (
-              <ContractSearch
-                selected={selectedContractId}
-                onSelect={(c: any) => {
-                  setSelectedContractId(String(c.id));
-                }}
-              />
-            ),
-          },
-        ]
+        {
+          name: "contractId",
+          label: "Contract",
+          readOnly: true,
+          after: (
+            <ContractSearch
+              selected={selectedContractId}
+              onSelect={(c: any) => {
+                setSelectedContractId(String(c.id));
+              }}
+            />
+          ),
+        },
+      ]
       : []),
 
     {
@@ -78,6 +80,15 @@ export default function PaymentForm({
         { label: "Card", value: "card" },
       ],
     },
+    {
+      name: "paidAt",
+      label: "Payment Date",
+      type: "date",
+    },
+    {
+      name: "ticketNumber",
+      label: "Ticket Number",
+    }
   ];
 
   /* ---------- lifecycle ---------- */
@@ -114,6 +125,8 @@ export default function PaymentForm({
     setForm({
       currency: "MXN",
       paymentMethod: "cash",
+      paidAt: "",
+      ticketNumber: "",
       items: [],
     });
 
@@ -138,6 +151,16 @@ export default function PaymentForm({
         return;
       }
 
+      const payload = {
+        currency: form.currency,
+        paymentMethod: form.paymentMethod,
+        paidAt: form.paidAt
+          ? new Date(form.paidAt).toISOString()
+          : undefined,
+        ticketNumber: form.ticketNumber || undefined,
+        items: form.items.filter((i) => i.amount > 0),
+      };
+
       const res = await fetch(
         `/api/company/contracts/${activeContractId}/payments`,
         {
@@ -146,11 +169,18 @@ export default function PaymentForm({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            currency: form.currency,
-            paymentMethod: form.paymentMethod,
-            items: form.items.filter((i) => i.amount > 0),
-          }),
+          // body: JSON.stringify({
+          //   currency: form.currency,
+          //   paymentMethod: form.paymentMethod,
+
+          //   // paidAt: form.paidAt
+          //   //   ? new Date(form.paidAt).toISOString()
+          //   //   : undefined,
+          //   paidAt: paidAt?.toISOString(),
+          //   ticketNumber: form.ticketNumber || undefined,
+          //   items: form.items.filter((i) => i.amount > 0),
+          // }),
+          body: JSON.stringify(payload),
         }
       );
 
