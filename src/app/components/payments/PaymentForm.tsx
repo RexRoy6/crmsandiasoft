@@ -150,6 +150,12 @@ export default function PaymentForm({
         setError("Enter at least one amount");
         return;
       }
+      console.log("SENDING:", {
+  currency: form.currency,
+  paymentMethod: form.paymentMethod,
+  paidAt: form.paidAt,
+  ticketNumber: form.ticketNumber,
+});
 
       const res = await fetch(
         `/api/company/contracts/${activeContractId}/payments`,
