@@ -151,6 +151,8 @@ export default function PaymentForm({
         return;
       }
 
+      console.log("FORM STATE:", form);
+
       const paidAt = form.paidAt
         ? new Date(form.paidAt)
         : null;
