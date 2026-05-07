@@ -13,6 +13,7 @@ import {
 } from "@/db/schema"
 
 import { eq, and, isNull, sum, sql, like, or, desc } from "drizzle-orm"
+import { activePayments, notDeletedPayments } from "@/db/filters";
 
 import type {
   CreatePaymentInput
@@ -48,12 +49,7 @@ export async function getContractPayments(
   const contractPayments = await db
     .select()
     .from(payments)
-    .where(
-      and(
-        eq(payments.contractId, contractId),
-        isNull(payments.deletedAt)
-      )
-    )
+    .where(activePayments(contractId))
 
   const paymentItemsRows = await db
     .select({
@@ -78,7 +74,8 @@ export async function getContractPayments(
       services,
       eq(contractItemsTable.serviceId, services.id)
     )
-    .where(eq(payments.contractId, contractId))
+    //.where(eq(payments.contractId, contractId))
+    .where(activePayments(contractId))
 
   const itemsByPayment = new Map<number, any[]>()
 
@@ -168,10 +165,19 @@ export async function createPayment(
 
   /* ---------- 3. validar contract items (O(n)) ---------- */
 
+  // const contractItems =
+  //   await tdb.findMany(
+  //     contractItemsTable,
+  //     eq(contractItemsTable.contractId, contractId)
+  //   )
+
   const contractItems =
     await tdb.findMany(
       contractItemsTable,
-      eq(contractItemsTable.contractId, contractId)
+      and(
+        eq(contractItemsTable.contractId, contractId),
+        isNull(contractItemsTable.deletedAt)
+      )
     )
 
   const contractItemsMap = new Map(
@@ -191,16 +197,14 @@ export async function createPayment(
         paid: sql<number>`COALESCE(SUM(${paymentItems.amount}),0)`
       })
       .from(paymentItems)
-      .leftJoin(
+
+      .innerJoin(
         payments,
         eq(paymentItems.paymentId, payments.id)
       )
-      .where(
-        and(
-          eq(payments.contractId, contractId),
-          isNull(payments.deletedAt)
-        )
-      )
+
+      .where(activePayments(contractId))
+
       .groupBy(paymentItems.contractItemId)
 
 
@@ -223,12 +227,13 @@ export async function createPayment(
       })
       .from(payments)
       //.where(eq(payments.contractId, contractId))
-      .where(
-        and(
-          eq(payments.contractId, contractId),
-          isNull(payments.deletedAt)
-        )
-      )
+      // .where(
+      //   and(
+      //     eq(payments.contractId, contractId),
+      //     isNull(payments.deletedAt)
+      //   )
+      // )
+      .where(activePayments(contractId))
 
     const paid = Number(row.totalPaid)
 
@@ -375,9 +380,14 @@ export async function getCompanyPayments({
   const offset = (page - 1) * limit
 
   /* ---------- WHERE dinámico ---------- */
+  // const conditions = [
+  //   eq(contracts.companyId, companyId!),
+  //   isNull(payments.deletedAt)
+  // ]
+
   const conditions = [
     eq(contracts.companyId, companyId!),
-    isNull(payments.deletedAt)
+    notDeletedPayments()
   ]
 
   if (search) {
@@ -550,12 +560,20 @@ export async function getPayment(id: number) {
   const contractPayments = await db
     .select()
     .from(payments)
-    .where(
-      and(
-        eq(payments.contractId, payment.contractId),
-        isNull(payments.deletedAt)
-      )
-    )
+    // .where(
+    //   and(
+    //     eq(payments.contractId, payment.contractId),
+    //     isNull(payments.deletedAt)
+    //   )
+    // )
+
+    // .where(
+    //   and(
+    //     eq(payments.contractId, contractId),
+    //     isNull(payments.deletedAt)
+    //   )
+    // )
+    .where(activePayments(payment.contractId))
 
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),
