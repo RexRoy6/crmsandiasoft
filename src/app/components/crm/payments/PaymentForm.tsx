@@ -81,11 +81,6 @@ export default function PaymentForm({
       ],
     },
     {
-      name: "paidAt",
-      label: "Payment Date",
-      type: "datetime-local",
-    },
-    {
       name: "ticketNumber",
       label: "Ticket Number",
     }
@@ -254,6 +249,31 @@ export default function PaymentForm({
             onSubmit={handleSubmit}
             onCancel={closeForm}
           />
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              marginTop: 12,
+            }}
+          >
+            <label>Payment Date</label>
+
+            <input
+              type="datetime-local"
+              value={form.paidAt}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                console.log("DATETIME:", value);
+
+                setForm((prev) => ({
+                  ...prev,
+                  paidAt: value,
+                }));
+              }}
+            />
+          </div>
 
           {contractItems.length > 0 && (
             <PaymentAllocationCard
