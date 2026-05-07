@@ -46,14 +46,14 @@ export async function getContractPayments(
   }
 
   const contractPayments = await db
-  .select()
-  .from(payments)
-  .where(
-    and(
-      eq(payments.contractId, contractId),
-      isNull(payments.deletedAt)
+    .select()
+    .from(payments)
+    .where(
+      and(
+        eq(payments.contractId, contractId),
+        isNull(payments.deletedAt)
+      )
     )
-  )
 
   const paymentItemsRows = await db
     .select({
@@ -195,7 +195,12 @@ export async function createPayment(
         payments,
         eq(paymentItems.paymentId, payments.id)
       )
-      .where(eq(payments.contractId, contractId))
+      .where(
+        and(
+          eq(payments.contractId, contractId),
+          isNull(payments.deletedAt)
+        )
+      )
       .groupBy(paymentItems.contractItemId)
 
 
@@ -217,7 +222,13 @@ export async function createPayment(
         totalPaid: sql<number>`COALESCE(SUM(${payments.amount}),0)`
       })
       .from(payments)
-      .where(eq(payments.contractId, contractId))
+      //.where(eq(payments.contractId, contractId))
+      .where(
+        and(
+          eq(payments.contractId, contractId),
+          isNull(payments.deletedAt)
+        )
+      )
 
     const paid = Number(row.totalPaid)
 
@@ -536,15 +547,15 @@ export async function getPayment(id: number) {
 
   if (!contract) return null
 
- const contractPayments = await db
-  .select()
-  .from(payments)
-  .where(
-    and(
-      eq(payments.contractId, payment.contractId),
-      isNull(payments.deletedAt)
+  const contractPayments = await db
+    .select()
+    .from(payments)
+    .where(
+      and(
+        eq(payments.contractId, payment.contractId),
+        isNull(payments.deletedAt)
+      )
     )
-  )
 
   const paidAmount = contractPayments.reduce(
     (sum, p) => sum + Number(p.amount),
