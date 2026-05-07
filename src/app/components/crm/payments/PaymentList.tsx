@@ -1,8 +1,7 @@
 "use client";
 
 import ListCard from "@/app/components/crm/ListCard";
-
-
+import { formatDate } from "@/lib/utils/date";
 
 export default function PaymentList({
   payments,
@@ -11,7 +10,6 @@ export default function PaymentList({
   payments: any[];
   onDeleteSuccess?: () => void;
 }) {
-
 
   async function handleDelete(id: number) {
     if (!confirm("Delete this payment?")) return;
@@ -27,7 +25,7 @@ export default function PaymentList({
         return;
       }
 
-      onDeleteSuccess?.(); // refresca lista
+      onDeleteSuccess?.();
     } catch {
       alert("Connection error");
     }
@@ -55,7 +53,26 @@ export default function PaymentList({
           title={`Payment #${payment.id}`}
           link="#"
           content={
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              
+              {/* 🔥 ticket */}
+              {payment.ticketNumber && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 500,
+                    color: "#7c3aed",
+                    background: "#f5f3ff",
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    width: "fit-content",
+                  }}
+                >
+                  🧾 Ticket: {payment.ticketNumber}
+                </div>
+              )}
+
+              {/* items */}
               {payment.items.map((item: any) => (
                 <div
                   key={`p${payment.id}-c${payment.contractId}-i${item.contractItemId}`}
@@ -93,6 +110,7 @@ export default function PaymentList({
             </div>
           }
         >
+          {/* meta info */}
           <div
             style={{
               display: "flex",
@@ -100,34 +118,45 @@ export default function PaymentList({
               gap: 6,
               marginTop: 8,
               fontSize: 13,
-              color: "var(--text-primary)",
             }}
           >
             <span>
               <strong>Currency:</strong> {payment.currency}
             </span>
+
             <span>
               <strong>Amount:</strong> ${payment.amount}
             </span>
+
             <span>
               <strong>Method:</strong> {payment.paymentMethod}
             </span>
+
+            {/* 🔥 fecha REAL */}
             <span>
-              <strong>Date:</strong>{" "}
-              {new Date(payment.createdAt).toLocaleDateString()}
+              <strong>Payment Date:</strong>{" "}
+              {payment.paidAt
+                ? formatDate(payment.paidAt)
+                : "—"}
             </span>
 
-
-
-
-
-
+            {/* 🔥 fecha sistema */}
+            <span style={{ color: "var(--text-secondary)", fontSize: 12 }}>
+              Recorded: {formatDate(payment.createdAt)}
+            </span>
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 12 }}>
+
+          {/* delete */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-start",
+              marginTop: 12,
+            }}
+          >
             <button
               onClick={() => handleDelete(payment.id)}
               style={{
-                marginTop: 10,
                 padding: "6px 12px",
                 fontSize: 12,
                 fontWeight: 500,
@@ -150,7 +179,6 @@ export default function PaymentList({
               🗑 Delete
             </button>
           </div>
-
         </ListCard>
       ))}
     </div>

@@ -29,6 +29,8 @@ export default function PaymentForm({
   const [form, setForm] = useState({
     currency: "MXN",
     paymentMethod: "cash",
+    paidAt: "",
+    ticketNumber: "",
     items: [] as {
       contractItemId: number;
       amount: number;
@@ -123,6 +125,8 @@ export default function PaymentForm({
     setForm({
       currency: "MXN",
       paymentMethod: "cash",
+      paidAt: "",
+      ticketNumber: "",
       items: [],
     });
 
@@ -146,6 +150,12 @@ export default function PaymentForm({
         setError("Enter at least one amount");
         return;
       }
+      console.log("SENDING:", {
+  currency: form.currency,
+  paymentMethod: form.paymentMethod,
+  paidAt: form.paidAt,
+  ticketNumber: form.ticketNumber,
+});
 
       const res = await fetch(
         `/api/company/contracts/${activeContractId}/payments`,
@@ -158,6 +168,11 @@ export default function PaymentForm({
           body: JSON.stringify({
             currency: form.currency,
             paymentMethod: form.paymentMethod,
+            // paidAt: form.paidAt || undefined,
+            paidAt: form.paidAt
+              ? new Date(form.paidAt).toISOString()
+              : undefined,
+            ticketNumber: form.ticketNumber || undefined,
             items: form.items.filter((i) => i.amount > 0),
           }),
         }
