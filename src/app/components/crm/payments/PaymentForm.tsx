@@ -150,12 +150,39 @@ export default function PaymentForm({
         setError("Enter at least one amount");
         return;
       }
-      console.log("SENDING:", {
-  currency: form.currency,
-  paymentMethod: form.paymentMethod,
-  paidAt: form.paidAt,
-  ticketNumber: form.ticketNumber,
-});
+
+      const paidAt = form.paidAt
+        ? new Date(form.paidAt)
+        : null;
+
+
+
+      console.log("RAW paidAt:", form.paidAt);
+
+      console.log("DATE object:", paidAt);
+
+      console.log(
+        "ISO:",
+        paidAt?.toISOString()
+      );
+
+      if (paidAt && isNaN(paidAt.getTime())) {
+        setError("Invalid payment date");
+        return;
+      }
+
+
+      const payload = {
+        currency: form.currency,
+        paymentMethod: form.paymentMethod,
+        paidAt: paidAt?.toISOString(),
+        ticketNumber: form.ticketNumber || undefined,
+        items: form.items.filter((i) => i.amount > 0),
+      };
+
+      console.log("FINAL PAYLOAD:", payload);
+
+
 
       const res = await fetch(
         `/api/company/contracts/${activeContractId}/payments`,
@@ -165,16 +192,18 @@ export default function PaymentForm({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            currency: form.currency,
-            paymentMethod: form.paymentMethod,
-            // paidAt: form.paidAt || undefined,
-            paidAt: form.paidAt
-              ? new Date(form.paidAt).toISOString()
-              : undefined,
-            ticketNumber: form.ticketNumber || undefined,
-            items: form.items.filter((i) => i.amount > 0),
-          }),
+          // body: JSON.stringify({
+          //   currency: form.currency,
+          //   paymentMethod: form.paymentMethod,
+
+          //   // paidAt: form.paidAt
+          //   //   ? new Date(form.paidAt).toISOString()
+          //   //   : undefined,
+          //   paidAt: paidAt?.toISOString(),
+          //   ticketNumber: form.ticketNumber || undefined,
+          //   items: form.items.filter((i) => i.amount > 0),
+          // }),
+          body: JSON.stringify(payload),
         }
       );
 
