@@ -555,17 +555,25 @@ export default function NewContractPage() {
         { name: "operationEnd", label: "End Time", type: "time" },
     ];
 
-
     useEffect(() => {
 
-        if (!contractId) return;
+        if (!contractId || !contract) return;
+
+        if (contract.status !== "draft") {
+
+            localStorage.removeItem(
+                "activeContractDraft"
+            );
+
+            return;
+        }
 
         localStorage.setItem(
             "activeContractDraft",
             String(contractId)
         );
 
-    }, [contractId]);
+    }, [contractId, contract]);
 
     useEffect(() => {
 
@@ -586,14 +594,16 @@ export default function NewContractPage() {
                     }
                 );
 
-                if (!res.ok) {
+                const contract = await res.json();
+
+                if (contract.status !== "draft") {
+
                     localStorage.removeItem(
                         "activeContractDraft"
                     );
+
                     return;
                 }
-
-                const contract = await res.json();
 
                 setContractId(contract.id);
                 setContract(contract);
