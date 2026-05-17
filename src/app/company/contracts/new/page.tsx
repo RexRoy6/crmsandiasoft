@@ -18,9 +18,7 @@ export default function NewContractPage() {
     const [errorCode, setErrorCode] = useState<number | undefined>();
 
 
-    //para buscar clientes
-    const [search, setSearch] = useState("");
-    //
+
 
     //es para crear un nuevo cliente
     const [showClientForm, setShowClientForm] = useState(false);
@@ -121,7 +119,8 @@ export default function NewContractPage() {
             operationEnd: "",
         });
 
-
+        //payments
+        setPayments([]);
 
         // errors
         setError("");
@@ -287,13 +286,14 @@ export default function NewContractPage() {
                     return;
                 }
 
-                alert("Error creating contract");
+                setError(data?.error || "Error creating contract");
                 return;
             }
 
             const contract = await contractRes.json();
 
             resetForm();
+            setContract(contract);
             setContractId(contract.id);
             setStep("services");
 
@@ -603,6 +603,7 @@ export default function NewContractPage() {
                 );
 
                 setStep("services");
+                setError("");
 
             } catch (e) {
                 console.error(e);
@@ -742,49 +743,52 @@ export default function NewContractPage() {
 
             {step === "event" && (
 
+                <>
+                    <CreateForm
+                        title="1. Create Event"
+                        fields={fields}
+                        form={form}
+                        setForm={setForm}
+                        onSubmit={createAll}
+                        onCancel={resetForm}
+                    />
+                    <hr style={{ margin: "30px 0" }} />
 
-                <CreateForm
-                    title="1. Create Event"
-                    fields={fields}
-                    form={form}
-                    setForm={setForm}
-                    onSubmit={createAll}
-                    onCancel={resetForm}
-                />
+                    <div>
+                        <div
+                            style={{
+                                padding: 20,
+                                border: "1px solid var(--border-color)",
+                                borderRadius: 10,
+                            }}
+                        >
 
+                            <h3 style={{ marginBottom: 10 }}>
+                                Continue Existing Event
+                            </h3>
 
-            )
+                            <p
+                                style={{
+                                    fontSize: 13,
+                                    color: "var(--text-secondary)",
+                                    marginBottom: 10,
+                                }}
+                            >
+                                Search for an existing event and continue the contract flow.
+                            </p>
 
-            }
-            <hr style={{ margin: "30px 0" }} />
+                            <EventSearch
+                                onSelect={continueExistingEvent}
+                            />
 
-            <div
-                style={{
-                    padding: 20,
-                    border: "1px solid var(--border-color)",
-                    borderRadius: 10,
-                }}
-            >
+                        </div>
 
-                <h3 style={{ marginBottom: 10 }}>
-                    Continue Existing Event
-                </h3>
+                    </div>
 
-                <p
-                    style={{
-                        fontSize: 13,
-                        color: "var(--text-secondary)",
-                        marginBottom: 10,
-                    }}
-                >
-                    Search for an existing event and continue the contract flow.
-                </p>
+                </>
 
-                <EventSearch
-                    onSelect={continueExistingEvent}
-                />
+            )}
 
-            </div>
 
             {error && <ErrorBox message={error} code={errorCode} />}
 
@@ -799,8 +803,8 @@ export default function NewContractPage() {
                         borderRadius: 10,
                     }}
                 >
-                    {contract?.eventId && (
-                        <EventInfoCard eventId={contract.eventId} />
+                    {contract?.event?.id && (
+                        <EventInfoCard eventId={contract.event.id} />
                     )}
                     <h3>2. Services</h3>
 
