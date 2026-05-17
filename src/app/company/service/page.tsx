@@ -1,161 +1,59 @@
 "use client";
-import { useEffect, useState } from "react";
+
 import ErrorBox from "@/app/components/ErrorBox";
+
 import PageHeader from "@/app/components/crm/PageHeader";
-import CreateForm from "@/app/components/crm/CreateForm";
-import ListCard from "@/app/components/crm/ListCard";
-import type { Field } from "@/app/components/crm/CreateForm";
+
+import ServiceCreateForm from
+"@/app/components/crm/services/ServiceCreateForm";
+
+import ServiceList from
+"@/app/components/crm/services/ServiceList";
+
+import { useCompanyServices }
+from "@/app/hooks/services/useCompanyServices";
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<any[]>([]);
-  const [error, setError] = useState("");
-  const [errorCode, setErrorCode] = useState<number | undefined>();
-  const [loading, setLoading] = useState(true);
-  //para crear servicios
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    stockTotal: 1,
-    priceBase: "",
-  });
-  //campos para formulario de servicios
-  const serviceFields: Field[] = [
-    { name: "name", label: "Name" },
-    { name: "description", label: "Description" },
-    { name: "stockTotal", label: "Stock", type: "number" },
-    { name: "priceBase", label: "Base Price" },
-  ];
 
-  const fetchServices = async () => {
-    try {
-      setLoading(true);
+    const {
 
-      const res = await fetch("/api/company/services", {
-        credentials: "include",
-      });
+        services,
 
-      if (!res.ok) {
-        setError("Failed to fetch services");
-        setErrorCode(res.status);
-        return;
-      }
+        loading,
 
-      const data = await res.json();
+        error,
 
-      setServices(data);
-    } catch {
-      setError("Connection error");
-    } finally {
-      setLoading(false);
-    }
-  };
+        errorCode,
 
-  const createService = async () => {
-    try {
-      setError("");
-      setErrorCode(undefined);
+        createService,
 
-      const res = await fetch("/api/company/services", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
+    } = useCompanyServices();
 
-      if (!res.ok) {
-        setError("Failed to create service");
-        setErrorCode(res.status);
-        return;
-      }
+    return (
 
-      setShowForm(false);
+        <div>
 
-      setForm({
-        name: "",
-        description: "",
-        stockTotal: 1,
-        priceBase: "",
-      });
+            <PageHeader
+                title="Services"
+                buttonLabel="+ New Service"
+            />
 
-      fetchServices(); // refresh list
-    } catch {
-      setError("Connection error");
-    }
-  };
+            {error && (
+                <ErrorBox
+                    message={error}
+                    code={errorCode}
+                />
+            )}
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
+            <ServiceCreateForm
+                onSubmit={createService}
+            />
 
-  return (
-    <div>
-      <PageHeader
-        title="Services"
-        buttonLabel="+ New Service"
-        onClick={() => setShowForm(true)}
-      />
-      {showForm && (
-        <CreateForm
-          title="Create Service"
-          fields={serviceFields}
-          form={form}
-          setForm={setForm}
-          onSubmit={createService}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
+            <ServiceList
+                services={services}
+                loading={loading}
+            />
 
-      {error && <ErrorBox message={error} code={errorCode} />}
-
-      {loading && <p>Loading services...</p>}
-
-      {!loading && services.length === 0 && <p>No services found.</p>}
-
-      {!loading && services.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          {services.map((service) => {
-            const isActive = !service.deletedAt;
-            return (
-              <ListCard
-                key={service.id}
-                title={service.name}
-                subtitle={service.description}
-                content={
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 4,
-                      marginTop: 6,
-                      fontSize: 13,
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    <span>
-                      <strong>Stock:</strong> {service.stockTotal}
-                    </span>
-
-                    <span>
-                      <strong>Price:</strong> ${service.priceBase}
-                    </span>
-                  </div>
-                }
-                link={`/company/service/${service.id}`}
-                isActive={isActive}
-              />
-            );
-          })}
         </div>
-      )}
-    </div>
-  );
+    );
 }
