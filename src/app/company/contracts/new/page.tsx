@@ -9,6 +9,9 @@ import EventInfoCard from "@/app/components/crm/EventInfoCard";
 import ContractItemCard from "@/app/components/crm/ContractItemCard";
 import PaymentList from "@/app/components/crm/payments/PaymentList";
 import PaymentForm from "@/app/components/crm/payments/PaymentForm";
+import EventSearch from "@/app/components/crm/events/EventSearch";
+import { resumeContractDraft } from "@/services/contracts/resumeContractDraft";
+
 export default function NewContractPage() {
 
     const [clientError, setClientError] = useState("");
@@ -16,9 +19,7 @@ export default function NewContractPage() {
     const [errorCode, setErrorCode] = useState<number | undefined>();
 
 
-    //para buscar clientes
-    const [search, setSearch] = useState("");
-    //
+
 
     //es para crear un nuevo cliente
     const [showClientForm, setShowClientForm] = useState(false);
@@ -44,7 +45,7 @@ export default function NewContractPage() {
     //cosas para payments
     const [payments, setPayments] = useState<any[]>([]);
     const [loadingPayments, setLoadingPayments] = useState(false);
- 
+
 
 
 
@@ -78,55 +79,57 @@ export default function NewContractPage() {
     const [eventDateTime, setEventDateTime] = useState<string | null>(null);
 
     const resetAll = () => {
-    // step
-    setStep("event");
+        // step
+        setStep("event");
 
-    // contract
-    setContractId(null);
-    setContract(null);
+        // contract
+        setContractId(null);
+        setContract(null);
 
-    // event form
-    setForm({
-        clientId: "",
-        client: undefined,
-        name: "",
-        eventDate: "",
-        eventTime: "",
-        location: "",
-        notes: "",
-    });
+        localStorage.removeItem("activeContractDraft");
+        // event form
+        setForm({
+            clientId: "",
+            client: undefined,
+            name: "",
+            eventDate: "",
+            eventTime: "",
+            location: "",
+            notes: "",
+        });
 
-    // client inline
-    setClientForm({
-        name: "",
-        phone: "",
-        email: "",
-    });
-    setShowClientForm(false);
+        // client inline
+        setClientForm({
+            name: "",
+            phone: "",
+            email: "",
+        });
+        setShowClientForm(false);
 
-    // services
-    setServices([]);
-    setCompanyServices([]);
-    setShowServiceForm(false);
+        // services
+        setServices([]);
+        setCompanyServices([]);
+        setShowServiceForm(false);
 
-    setServiceForm({
-        serviceId: "",
-        quantity: "",
-        unitPrice: "",
-        serviceNotes: "",
-        operationStart: "",
-        operationEnd: "",
-    });
+        setServiceForm({
+            serviceId: "",
+            quantity: "",
+            unitPrice: "",
+            serviceNotes: "",
+            operationStart: "",
+            operationEnd: "",
+        });
 
+        //payments
+        setPayments([]);
 
+        // errors
+        setError("");
+        setClientError("");
 
-    // errors
-    setError("");
-    setClientError("");
-
-    // date
-    setEventDateTime(null);
-};
+        // date
+        setEventDateTime(null);
+    };
 
 
     //funcion para limpiar form
@@ -284,13 +287,14 @@ export default function NewContractPage() {
                     return;
                 }
 
-                alert("Error creating contract");
+                setError(data?.error || "Error creating contract");
                 return;
             }
 
             const contract = await contractRes.json();
 
             resetForm();
+            setContract(contract);
             setContractId(contract.id);
             setStep("services");
 
@@ -455,6 +459,40 @@ export default function NewContractPage() {
         }
     };
 
+
+    const continueExistingEvent = async (
+        event: any
+    ) => {
+
+        try {
+
+            const result =
+                await resumeContractDraft(
+                    event.id
+                );
+
+            setContractId(
+                result.contract.id
+            );
+
+            setContract(
+                result.contract
+            );
+
+            setEventDateTime(
+                event.eventDate
+            );
+
+            setStep("services");
+
+        } catch (e: any) {
+
+            setError(
+                e.message || "Connection error"
+            );
+        }
+    };
+
     //service fields
     const serviceFields: Field[] = [
         {
@@ -486,6 +524,74 @@ export default function NewContractPage() {
         { name: "operationEnd", label: "End Time", type: "time" },
     ];
 
+    useEffect(() => {
+
+        if (!contractId || !contract) return;
+
+        if (contract.status !== "draft") {
+
+            localStorage.removeItem(
+                "activeContractDraft"
+            );
+
+            return;
+        }
+
+        localStorage.setItem(
+            "activeContractDraft",
+            String(contractId)
+        );
+
+    }, [contractId, contract]);
+
+    useEffect(() => {
+
+        const saved = localStorage.getItem(
+            "activeContractDraft"
+        );
+
+        if (!saved) return;
+
+        const restore = async () => {
+
+            try {
+
+                const res = await fetch(
+                    `/api/company/contracts/${saved}`,
+                    {
+                        credentials: "include",
+                    }
+                );
+
+                const contract = await res.json();
+
+                if (contract.status !== "draft") {
+
+                    localStorage.removeItem(
+                        "activeContractDraft"
+                    );
+
+                    return;
+                }
+
+                setContractId(contract.id);
+                setContract(contract);
+
+                setEventDateTime(
+                    contract.event?.eventDate || null
+                );
+
+                setStep("services");
+                setError("");
+
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        restore();
+
+    }, []);
 
 
     useEffect(() => {
@@ -616,16 +722,52 @@ export default function NewContractPage() {
 
             {step === "event" && (
 
+                <>
+                    <CreateForm
+                        title="1. Create Event"
+                        fields={fields}
+                        form={form}
+                        setForm={setForm}
+                        onSubmit={createAll}
+                        onCancel={resetForm}
+                    />
+                    <hr style={{ margin: "30px 0" }} />
 
-                <CreateForm
-                    title="1. Create Event"
-                    fields={fields}
-                    form={form}
-                    setForm={setForm}
-                    onSubmit={createAll}
-                    onCancel={resetForm}
-                />
+                    <div>
+                        <div
+                            style={{
+                                padding: 20,
+                                border: "1px solid var(--border-color)",
+                                borderRadius: 10,
+                            }}
+                        >
+
+                            <h3 style={{ marginBottom: 10 }}>
+                                Continue Existing Event
+                            </h3>
+
+                            <p
+                                style={{
+                                    fontSize: 13,
+                                    color: "var(--text-secondary)",
+                                    marginBottom: 10,
+                                }}
+                            >
+                                Search for an existing event and continue the contract flow.
+                            </p>
+
+                            <EventSearch
+                                onSelect={continueExistingEvent}
+                            />
+
+                        </div>
+
+                    </div>
+
+                </>
+
             )}
+
 
             {error && <ErrorBox message={error} code={errorCode} />}
 
@@ -640,8 +782,8 @@ export default function NewContractPage() {
                         borderRadius: 10,
                     }}
                 >
-                    {contract?.eventId && (
-                        <EventInfoCard eventId={contract.eventId} />
+                    {contract?.event?.id && (
+                        <EventInfoCard eventId={contract.event.id} />
                     )}
                     <h3>2. Services</h3>
 
@@ -746,36 +888,36 @@ export default function NewContractPage() {
 
                     <hr style={{ margin: "20px 0" }} />
 
-                 <h3>3. Payments</h3>
+                    <h3>3. Payments</h3>
 
-{/* 🔥 reutilizas todo */}
-<PaymentForm
-  contractId={String(contractId)}
-  onSuccess={fetchPayments}
-/>
+                    {/* 🔥 reutilizas todo */}
+                    <PaymentForm
+                        contractId={String(contractId)}
+                        onSuccess={fetchPayments}
+                    />
 
-{loadingPayments ? (
-  <p style={{ fontSize: 12, color: "gray" }}>
-    Loading payments...
-  </p>
-) : (
-  <PaymentList payments={payments} />
-)}
+                    {loadingPayments ? (
+                        <p style={{ fontSize: 12, color: "gray" }}>
+                            Loading payments...
+                        </p>
+                    ) : (
+                        <PaymentList payments={payments} />
+                    )}
 
 
                     <button
-    onClick={resetAll}
-    style={{
-        marginTop: 20,
-        padding: "10px 14px",
-        borderRadius: 8,
-        border: "1px solid var(--border-color)",
-        background: "transparent",
-        cursor: "pointer",
-    }}
->
-    + New Contract
-</button>
+                        onClick={resetAll}
+                        style={{
+                            marginTop: 20,
+                            padding: "10px 14px",
+                            borderRadius: 8,
+                            border: "1px solid var(--border-color)",
+                            background: "transparent",
+                            cursor: "pointer",
+                        }}
+                    >
+                        + New Contract
+                    </button>
 
 
                 </div>
