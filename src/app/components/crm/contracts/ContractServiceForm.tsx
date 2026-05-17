@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
+import { formatDate } from "@/lib/utils/date";
 import CreateForm, {
     Field,
 } from "@/app/components/crm/CreateForm";
@@ -187,9 +187,7 @@ export default function ContractServiceForm({
                     >
                         📅 Event date:
                         {" "}
-                        {new Date(
-                            contract?.event?.eventDate
-                        ).toLocaleDateString()}
+                       {formatDate(contract?.event?.eventDate)}
                     </p>
 
                     <p
