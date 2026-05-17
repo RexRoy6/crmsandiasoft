@@ -10,6 +10,7 @@ import ContractItemCard from "@/app/components/crm/ContractItemCard";
 import PaymentList from "@/app/components/crm/payments/PaymentList";
 import PaymentForm from "@/app/components/crm/payments/PaymentForm";
 import EventSearch from "@/app/components/crm/events/EventSearch";
+import { resumeContractDraft } from "@/services/contracts/resumeContractDraft";
 
 export default function NewContractPage() {
 
@@ -459,68 +460,36 @@ export default function NewContractPage() {
     };
 
 
-    const continueExistingEvent = async (event: any) => {
+    const continueExistingEvent = async (
+        event: any
+    ) => {
 
         try {
 
-            // buscar draft existente
-            const res = await fetch(
-                `/api/company/contracts?eventId=${event.id}&status=draft`,
-                {
-                    credentials: "include",
-                }
-            );
-
-            if (!res.ok) {
-                setError("Failed to search contracts");
-                return;
-            }
-
-            const data = await res.json();
-
-            let contract;
-
-            // ya existe draft
-            if (data.data?.length > 0) {
-
-                contract = data.data[0];
-
-            } else {
-
-                // crear draft nuevo
-                const createRes = await fetch(
-                    "/api/company/contracts",
-                    {
-                        method: "POST",
-                        credentials: "include",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            eventId: event.id,
-                            status: "draft",
-                            totalAmount: 0,
-                        }),
-                    }
+            const result =
+                await resumeContractDraft(
+                    event.id
                 );
 
-                if (!createRes.ok) {
-                    setError("Failed to create draft");
-                    return;
-                }
+            setContractId(
+                result.contract.id
+            );
 
-                contract = await createRes.json();
-            }
+            setContract(
+                result.contract
+            );
 
-            setContractId(contract.id);
-            setContract(contract);
-
-            setEventDateTime(event.eventDate);
+            setEventDateTime(
+                event.eventDate
+            );
 
             setStep("services");
 
-        } catch {
-            setError("Connection error");
+        } catch (e: any) {
+
+            setError(
+                e.message || "Connection error"
+            );
         }
     };
 
