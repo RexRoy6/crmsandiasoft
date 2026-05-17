@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm, {
     Field
 } from "@/app/components/crm/CreateForm";
@@ -75,13 +75,13 @@ export default function ServiceCreateForm({
     return (
 
         <>
-
-            <button
-                onClick={() => setShowForm(true)}
-            >
-                + New Service
-            </button>
-
+            <PageHeader
+                title={`Create service 👉`}
+                buttonLabel="+ Create Service"
+                onClick={() => {
+                    setShowForm(true);
+                }}
+            />
             {showForm && (
 
                 <CreateForm
