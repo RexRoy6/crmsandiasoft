@@ -470,7 +470,7 @@ export default function NewContractPage() {
         try {
 
             const res = await fetch(
-                "/api/company/services",
+                "/api/company/services/active",
                 {
                     credentials: "include",
                 }
@@ -935,6 +935,10 @@ export default function NewContractPage() {
                                         operationStart,
                                         operationEnd,
                                     };
+
+                                    // console.log("RAW FORM DATA", data);
+                                    // console.log("EVENT DATE", eventDate);
+                                    // console.log("PAYLOAD", payload);
 
                                     const res = await fetch(
                                         `/api/company/contracts/${contractId}/services`,

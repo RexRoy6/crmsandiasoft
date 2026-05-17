@@ -31,10 +31,16 @@ export async function POST(
 
     const body = await req.json()
 
+   // console.log("BODY RECEIVED", body)
+
     const parsed =
       createContractItemSchema.safeParse(body)
 
     if (!parsed.success) {
+      console.log(
+        "ZOD ERROR",
+        parsed.error.flatten()
+      )
       return Response.json(
         { error: parsed.error.flatten() },
         { status: 400 }

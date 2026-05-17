@@ -28,6 +28,8 @@ export async function addServiceToContract(
 
   const tdb = await tenantDb()
 
+
+
   /* ---------- CONTRACT EXISTS ---------- */
 
   const contract = await tdb.findFirst(

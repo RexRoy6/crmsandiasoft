@@ -1,6 +1,6 @@
 import { tenantDb } from "@/lib/db/tenantDb"
 import { services } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq,isNull } from "drizzle-orm"
 import type { UpdateServiceInput } from "@/lib/validations/serviceValidation"
 
 
@@ -27,8 +27,20 @@ export async function createService(data: {
 }
 
 export async function getCompanyServices() {
+
   const tdb = await tenantDb()
+
   return tdb.findManyRaw(services)
+}
+
+export async function getActiveCompanyServices() {
+
+  const tdb = await tenantDb()
+
+  return tdb.findMany(
+    services,
+    isNull(services.deletedAt)
+  )
 }
 
 export async function getCompanyService(id: number) {
