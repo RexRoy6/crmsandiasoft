@@ -28,7 +28,9 @@ export async function addServiceToContract(
 
   const tdb = await tenantDb()
 
-  /* contract exists */
+
+
+  /* ---------- CONTRACT EXISTS ---------- */
 
   const contract = await tdb.findFirst(
     contracts,
@@ -39,7 +41,7 @@ export async function addServiceToContract(
     throw new Error("contract not found")
   }
 
-  /* service exists */
+  /* ---------- SERVICE EXISTS ---------- */
 
   const service = await tdb.findFirst(
     services,
@@ -50,14 +52,36 @@ export async function addServiceToContract(
     throw new Error("service not found")
   }
 
-  /* existing item */
+  /* ---------- NORMALIZE DATETIMES ---------- */
+
+  let operationStart: Date | null = null
+  let operationEnd: Date | null = null
+
+  if (data.operationStart) {
+    operationStart = new Date(data.operationStart)
+  }
+
+  if (data.operationEnd) {
+
+    operationEnd = new Date(
+      data.operationEnd
+    )
+
+    // overnight support
+    if (
+      operationStart &&
+      operationEnd < operationStart
+    ) {
+      operationEnd.setDate(
+        operationEnd.getDate() + 1
+      )
+    }
+  }
+
+  /* ---------- EXISTING ITEM ---------- */
 
   const existingItem = await tdb.findFirst(
     contractItems,
-    // and(
-    //   eq(contractItems.contractId, contractId),
-    //   eq(contractItems.serviceId, data.serviceId)
-    // )
     and(
       eq(contractItems.contractId, contractId),
       eq(contractItems.serviceId, data.serviceId),
@@ -65,75 +89,100 @@ export async function addServiceToContract(
     )
   )
 
-  const used = existingItem ? existingItem.quantity : 0
+  const used =
+    existingItem
+      ? existingItem.quantity
+      : 0
+
+  /* ---------- STOCK VALIDATION ---------- */
 
   if (
     service.stockTotal !== null &&
     used + data.quantity > service.stockTotal
   ) {
-    const available = service.stockTotal - used
 
-    const error: any = new Error("not enough stock")
+    const available =
+      service.stockTotal - used
+
+    const error: any =
+      new Error("not enough stock")
+
     error.code = "STOCK_EXCEEDED"
     error.available = available
 
     throw error
   }
 
-  /* update existing */
+  /* ---------- UPDATE EXISTING ---------- */
 
   if (existingItem) {
 
     const newQuantity =
-      (existingItem.quantity ?? 0) + data.quantity
+      (existingItem.quantity ?? 0) +
+      data.quantity
 
     await tdb.update(
       contractItems,
       {
         quantity: newQuantity,
-        ...(data.serviceNotes && { serviceNotes: data.serviceNotes })
+
+        unitPrice:
+          data.unitPrice ??
+          existingItem.unitPrice,
+
+        serviceNotes:
+          data.serviceNotes ??
+          existingItem.serviceNotes,
+
+        operationStart,
+        operationEnd,
       },
       eq(contractItems.id, existingItem.id)
     )
 
-    await recalculateContractTotal(contractId)
+    await recalculateContractTotal(
+      contractId
+    )
 
     return tdb.findFirst(
       contractItems,
       eq(contractItems.id, existingItem.id)
     )
-
   }
 
-  /* insert item */
+  /* ---------- INSERT ITEM ---------- */
 
-  const [result] = await tdb.insert(contractItems, {
-    contractId,
-    serviceId: data.serviceId,
-    quantity: data.quantity,
-    unitPrice: data.unitPrice ?? service.priceBase,
-    serviceNotes: data.serviceNotes ?? null,
+  const [result] = await tdb.insert(
+    contractItems,
+    {
+      contractId,
 
-    operationStart: data.operationStart
-      ? new Date(data.operationStart)
-      : null,
+      serviceId: data.serviceId,
 
-    operationEnd: data.operationEnd
-      ? new Date(data.operationEnd)
-      : null,
+      quantity: data.quantity,
 
+      unitPrice:
+        data.unitPrice ??
+        service.priceBase,
 
-  })
+      serviceNotes:
+        data.serviceNotes ?? null,
+
+      operationStart,
+      operationEnd,
+    }
+  )
 
   const insertId = result.insertId
 
-  await recalculateContractTotal(contractId)
+  await recalculateContractTotal(
+    contractId
+  )
 
   return tdb.findFirst(
     contractItems,
     eq(contractItems.id, insertId)
   )
-
 }
 
 /* ---------- GET CONTRACT SERVICES ---------- */
