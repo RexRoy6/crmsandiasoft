@@ -908,24 +908,49 @@ export default function NewContractPage() {
 
                                 try {
 
-                                    const res =
-                                        await fetch(
-                                            `/api/company/contracts/${contractId}/services`,
-                                            {
-                                                method: "POST",
-                                                credentials: "include",
-                                                headers: {
-                                                    "Content-Type":
-                                                        "application/json",
-                                                },
-                                                body: JSON.stringify(data),
-                                            }
-                                        );
+                                    const eventDate =
+                                        contract?.event?.eventDate
+                                            ?.split("T")[0];
+
+                                    const operationStart =
+                                        data.operationStart
+                                            ? new Date(
+                                                `${eventDate}T${data.operationStart}`
+                                            ).toISOString()
+                                            : undefined;
+
+                                    const operationEnd =
+                                        data.operationEnd
+                                            ? new Date(
+                                                `${eventDate}T${data.operationEnd}`
+                                            ).toISOString()
+                                            : undefined;
+
+                                    const payload = {
+                                        serviceId: Number(data.serviceId),
+                                        quantity: Number(data.quantity),
+                                        unitPrice: Number(data.unitPrice),
+                                        serviceNotes: data.serviceNotes,
+
+                                        operationStart,
+                                        operationEnd,
+                                    };
+
+                                    const res = await fetch(
+                                        `/api/company/contracts/${contractId}/services`,
+                                        {
+                                            method: "POST",
+                                            credentials: "include",
+                                            headers: {
+                                                "Content-Type": "application/json",
+                                            },
+                                            body: JSON.stringify(payload),
+                                        }
+                                    );
 
                                     if (!res.ok) {
 
-                                        const result =
-                                            await res.json();
+                                        const result = await res.json();
 
                                         setError(
                                             parseError(
@@ -934,18 +959,22 @@ export default function NewContractPage() {
                                             )
                                         );
 
-                                        return;
+                                        return false;
                                     }
 
                                     setError("");
 
-                                    fetchServices();
+                                    await fetchServices();
 
-                                } catch {
+                                    return true;
 
-                                    setError(
-                                        "Connection error"
-                                    );
+                                } catch (e) {
+
+                                    console.error(e);
+
+                                    setError("Connection error");
+
+                                    return false;
                                 }
                             }}
                         />
