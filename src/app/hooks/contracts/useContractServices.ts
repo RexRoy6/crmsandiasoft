@@ -75,7 +75,7 @@ export function useContractServices(
         try {
 
             const res = await fetch(
-                "/api/company/services",
+                "/api/company/services/active",
                 {
                     credentials: "include",
                 }
