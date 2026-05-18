@@ -57,12 +57,12 @@ export async function middleware(req: NextRequest) {
     }
 
     //logs
-    if (process.env.NODE_ENV === "development") {
-      console.log("ROLE TYPE:", typeof payload.role)
-      console.log("ROLE VALUE:", payload.role)
-      console.log("IS VALID ROLE:", ["admin", "owner", "user"].includes(payload.role))
-      console.log("TEST RBAC_CONFIG:", JSON.stringify(RBAC_CONFIG, null, 2))
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   console.log("ROLE TYPE:", typeof payload.role)
+    //   console.log("ROLE VALUE:", payload.role)
+    //   console.log("IS VALID ROLE:", ["admin", "owner", "user"].includes(payload.role))
+    //   console.log("TEST RBAC_CONFIG:", JSON.stringify(RBAC_CONFIG, null, 2))
+    // }
     //logs
 
     const allowed = checkPermission(pathname, req.method, payload.role)

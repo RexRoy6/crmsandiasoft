@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import ListCard from "./ListCard";
+
+import {
+  formatTime,
+  toLocalInput,
+} from "@/lib/utils/date";
 
 type Props = {
   item: any;
@@ -9,16 +15,12 @@ type Props = {
   onDelete: (id: number) => void;
 };
 
-export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
+export default function ContractItemCard({
+  item,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [editing, setEditing] = useState(false);
-
-  const toLocalInput = (iso?: string) => {
-    if (!iso) return "";
-    const date = new Date(iso);
-    const offset = date.getTimezoneOffset();
-    const local = new Date(date.getTime() - offset * 60000);
-    return local.toISOString().slice(0, 16);
-  };
 
   const [form, setForm] = useState({
     serviceId: "",
@@ -40,9 +42,13 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
 
   const service = item.service;
 
-  const subtotalView = Number(item.quantity || 0) * Number(item.unitPrice || 0);
+  const subtotalView =
+    Number(item.quantity || 0) *
+    Number(item.unitPrice || 0);
 
-  const subtotalEdit = Number(form.quantity || 0) * Number(item.unitPrice || 0);
+  const subtotalEdit =
+    Number(form.quantity || 0) *
+    Number(item.unitPrice || 0);
 
   return (
     <>
@@ -60,58 +66,118 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
               }}
             >
               {/* Quantity */}
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Quantity
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>
+
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
                   {item.quantity}
                 </span>
               </div>
 
               {/* Unit Price */}
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Unit Price
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>
+
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
                   ${item.unitPrice}
                 </span>
               </div>
 
               {/* Subtotal */}
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                  }}
+                >
                   Subtotal
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>
+
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
                   ${subtotalView}
                 </span>
               </div>
 
               {/* Schedule */}
-              {item.operationStart && item.operationEnd && (
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <span
-                    style={{ fontSize: 12, color: "var(--text-secondary)" }}
+              {item.operationStart &&
+                item.operationEnd && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                    }}
                   >
-                    Schedule
-                  </span>
-                  <span style={{ fontSize: 13 }}>
-                    {new Date(item.operationStart).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    -{" "}
-                    {new Date(item.operationEnd).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              )}
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color:
+                          "var(--text-secondary)",
+                      }}
+                    >
+                      Schedule
+                    </span>
+
+                    <span
+                      style={{
+                        fontSize: 13,
+                      }}
+                    >
+                      {formatTime(
+                        item.operationStart
+                      )}{" "}
+                      -{" "}
+                      {formatTime(
+                        item.operationEnd
+                      )}
+                    </span>
+                  </div>
+                )}
 
               {/* Notes */}
               {item.serviceNotes && (
@@ -119,9 +185,11 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
                   style={{
                     marginTop: 4,
                     padding: "8px 10px",
-                    background: "var(--bg-primary)",
+                    background:
+                      "var(--bg-primary)",
                     borderRadius: 8,
-                    border: "1px solid var(--border-color)",
+                    border:
+                      "1px solid var(--border-color)",
                     fontSize: 12,
                   }}
                 >
@@ -133,21 +201,25 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
           actions={[
             {
               label: "Edit",
-              onClick: () => setEditing(true),
+              onClick: () =>
+                setEditing(true),
             },
             {
               label: "Remove",
-              onClick: () => onDelete(item.id),
+              onClick: () =>
+                onDelete(item.id),
             },
           ]}
         />
       ) : (
         <div
           style={{
-            border: "1px solid var(--border-color)",
+            border:
+              "1px solid var(--border-color)",
             padding: 12,
             borderRadius: 10,
-            background: "var(--bg-primary)",
+            background:
+              "var(--bg-primary)",
           }}
         >
           <div
@@ -155,19 +227,25 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              background: "var(--bg-secondary)",
+              background:
+                "var(--bg-secondary)",
               padding: 16,
               borderRadius: 10,
-              animation: "fadeIn 0.2s ease",
+              animation:
+                "fadeIn 0.2s ease",
             }}
           >
             {/* Header */}
             <div>
-              <h3 style={{ margin: 0 }}>{service?.name}</h3>
+              <h3 style={{ margin: 0 }}>
+                {service?.name}
+              </h3>
+
               <p
                 style={{
                   margin: 0,
-                  color: "var(--text-secondary)",
+                  color:
+                    "var(--text-secondary)",
                   fontSize: 13,
                 }}
               >
@@ -176,20 +254,42 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
             </div>
 
             {/* Quantity */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <label
+                style={{
+                  fontSize: 13,
+                  color:
+                    "var(--text-secondary)",
+                }}
+              >
                 Quantity
               </label>
+
               <input
                 type="number"
                 value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    quantity:
+                      e.target.value,
+                  })
+                }
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: "var(--bg-primary)",
-                  color: "var(--text-primary)",
+                  border:
+                    "1px solid var(--border-color)",
+                  background:
+                    "var(--bg-primary)",
+                  color:
+                    "var(--text-primary)",
                 }}
               />
             </div>
@@ -198,35 +298,65 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent:
+                  "space-between",
                 fontSize: 14,
-                borderBottom: "1px solid var(--border-color)",
+                borderBottom:
+                  "1px solid var(--border-color)",
                 paddingBottom: 6,
               }}
             >
-              <span style={{ color: "var(--text-secondary)" }}>
+              <span
+                style={{
+                  color:
+                    "var(--text-secondary)",
+                }}
+              >
                 💰 Subtotal
               </span>
-              <strong>${subtotalEdit}</strong>
+
+              <strong>
+                ${subtotalEdit}
+              </strong>
             </div>
 
             {/* Notes */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <label
+                style={{
+                  fontSize: 13,
+                  color:
+                    "var(--text-secondary)",
+                }}
+              >
                 📝 Notes
               </label>
+
               <textarea
                 value={form.serviceNotes}
                 onChange={(e) =>
-                  setForm({ ...form, serviceNotes: e.target.value })
+                  setForm({
+                    ...form,
+                    serviceNotes:
+                      e.target.value,
+                  })
                 }
                 rows={3}
                 style={{
                   padding: "10px 12px",
                   borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: "var(--bg-primary)",
-                  color: "var(--text-primary)",
+                  border:
+                    "1px solid var(--border-color)",
+                  background:
+                    "var(--bg-primary)",
+                  color:
+                    "var(--text-primary)",
                   resize: "vertical",
                 }}
               />
@@ -236,135 +366,199 @@ export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns:
+                  "1fr 1fr",
                 gap: 12,
               }}
             >
+              {/* Start */}
               <div
                 style={{
-                  flex: 1,
                   display: "flex",
-                  flexDirection: "column",
+                  flexDirection:
+                    "column",
                   gap: 6,
                 }}
               >
-                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    color:
+                      "var(--text-secondary)",
+                  }}
+                >
                   🕒 Start
                 </label>
+
                 <input
                   type="datetime-local"
-                  value={form.operationStart || ""}
+                  value={
+                    form.operationStart ||
+                    ""
+                  }
                   onChange={(e) =>
-                    setForm({ ...form, operationStart: e.target.value })
+                    setForm({
+                      ...form,
+                      operationStart:
+                        e.target.value,
+                    })
                   }
                   style={{
-                    padding: "10px 12px",
+                    padding:
+                      "10px 12px",
                     borderRadius: 8,
-                    border: "1px solid var(--border-color)",
-                    background: "var(--bg-primary)",
-                    color: "var(--text-primary)",
+                    border:
+                      "1px solid var(--border-color)",
+                    background:
+                      "var(--bg-primary)",
+                    color:
+                      "var(--text-primary)",
                   }}
                 />
               </div>
 
+              {/* End */}
               <div
                 style={{
-                  flex: 1,
                   display: "flex",
-                  flexDirection: "column",
+                  flexDirection:
+                    "column",
                   gap: 6,
                 }}
               >
-                <label style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                <label
+                  style={{
+                    fontSize: 13,
+                    color:
+                      "var(--text-secondary)",
+                  }}
+                >
                   🕒 End
                 </label>
+
                 <input
                   type="datetime-local"
-                  value={form.operationEnd || ""}
+                  value={
+                    form.operationEnd ||
+                    ""
+                  }
                   onChange={(e) =>
-                    setForm({ ...form, operationEnd: e.target.value })
+                    setForm({
+                      ...form,
+                      operationEnd:
+                        e.target.value,
+                    })
                   }
                   style={{
-                    padding: "10px 12px",
+                    padding:
+                      "10px 12px",
                     borderRadius: 8,
-                    border: "1px solid var(--border-color)",
-                    background: "var(--bg-primary)",
-                    color: "var(--text-primary)",
+                    border:
+                      "1px solid var(--border-color)",
+                    background:
+                      "var(--bg-primary)",
+                    color:
+                      "var(--text-primary)",
                   }}
                 />
               </div>
             </div>
 
             {/* Preview */}
-            {form.operationStart && form.operationEnd && (
-              <div
-                style={{
-                  fontSize: 13,
-                  background: "var(--bg-primary)",
-                  padding: 8,
-                  borderRadius: 8,
-                }}
-              >
-                🕒{" "}
-                {new Date(form.operationStart).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                -{" "}
-                {new Date(form.operationEnd).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </div>
-            )}
+            {form.operationStart &&
+              form.operationEnd && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    background:
+                      "var(--bg-primary)",
+                    padding: 8,
+                    borderRadius: 8,
+                  }}
+                >
+                  🕒{" "}
+                  {formatTime(
+                    form.operationStart
+                  )}{" "}
+                  -{" "}
+                  {formatTime(
+                    form.operationEnd
+                  )}
+                </div>
+              )}
 
             {/* Actions */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns:
+                  "1fr 1fr",
                 gap: 12,
               }}
             >
               <button
                 onClick={() => {
                   onUpdate(item.id, {
-                    quantity: Number(form.quantity),
-                    serviceNotes: form.serviceNotes,
-                    operationEnd: form.operationEnd,
-                    operationStart: form.operationStart,
+                    quantity: Number(
+                      form.quantity
+                    ),
+                    serviceNotes:
+                      form.serviceNotes,
+                    operationEnd:
+                      form.operationEnd,
+                    operationStart:
+                      form.operationStart,
                   });
+
                   setEditing(false);
                 }}
                 style={{
-                  padding: "10px 16px",
+                  padding:
+                    "10px 16px",
                   borderRadius: 8,
                   border: "none",
-                  background: "#2563eb",
+                  background:
+                    "#2563eb",
                   color: "white",
                   cursor: "pointer",
                   transition: "0.2s",
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.opacity = "0.85")}
-                onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.opacity =
+                    "0.85")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.opacity =
+                    "1")
+                }
               >
                 Save
               </button>
 
               <button
-                onClick={() => setEditing(false)}
+                onClick={() =>
+                  setEditing(false)
+                }
                 style={{
-                  padding: "10px 16px",
+                  padding:
+                    "10px 16px",
                   borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: "transparent",
+                  border:
+                    "1px solid var(--border-color)",
                   color: "white",
                   cursor: "pointer",
                   transition: "0.2s",
-                  backgroundColor: "#e33131",
+                  backgroundColor:
+                    "#e33131",
                 }}
-                onMouseOver={(e) => (e.currentTarget.style.opacity = "0.85")}
-                onMouseOut={(e) => (e.currentTarget.style.opacity = "1")}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.opacity =
+                    "0.85")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.opacity =
+                    "1")
+                }
               >
                 Cancel
               </button>
