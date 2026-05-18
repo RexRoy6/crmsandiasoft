@@ -27,155 +27,126 @@ export default function PaymentAllocationCard({
   setForm,
 }: Props) {
   return (
-    <div style={{ marginTop: 20 }}>
-
-      <h3>Allocate Payment</h3>
-
+    <div>
       {items.map((item, index) => {
-
-        const total =
-          item.quantity * Number(item.unitPrice);
-
+        const total = item.quantity * Number(item.unitPrice);
         const paid = item.paidAmount || 0;
-        const remaining = item.remainingAmount ?? (total - paid);
+        const remaining = item.remainingAmount ?? total - paid;
+
+        const value = formItems[index]?.amount || "";
 
         return (
-          <div
-            key={item.id}
-            style={{
-              padding: 16,
-              border: "1px solid var(--border-color)",
-              borderRadius: 12,
-              marginBottom: 12,
-              background: "var(--bg-primary)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-            }}
-          >
-            {/* HEADER */}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                <strong style={{ fontSize: 15 }}>
-                  {item.service.name}
-                </strong>
+          <div key={item.id} style={styles.row}>
+            {/* LEFT */}
+            <div style={styles.left}>
+              <strong>{item.service.name}</strong>
 
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                    marginTop: 2,
-                  }}
-                >
-                  {item.service.description}
-                </p>
-              </div>
-
-              {/* TOTAL BADGE */}
-              <div
-                style={{
-                  background: "var(--bg-secondary)",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
-              >
-                ${total}
-              </div>
-            </div>
-
-            {/* DETAILS */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 13,
-              }}
-            >
-              <span>
-                Qty: {item.quantity} × ${Number(item.unitPrice)}
+              <span style={styles.meta}>
+                {item.quantity} × ${Number(item.unitPrice)} = ${total}
               </span>
+
+              <span style={styles.paid}>Paid: ${paid}</span>
             </div>
 
-            {/* PROGRESS BAR */}
-            <div
-              style={{
-                height: 6,
-                borderRadius: 6,
-                background: "var(--bg-secondary)",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${(paid / total) * 100}%`,
-                  background: "#22c55e",
-                  height: "100%",
+            {/* RIGHT */}
+            <div style={styles.right}>
+              <span style={styles.remaining}>Remaining: ${remaining}</span>
+
+              <input
+                type="number"
+                value={value}
+                max={remaining}
+                min={0}
+                style={styles.input}
+                onChange={(e) => {
+                  let val = Number(e.target.value);
+
+                  // 🔒 HARD LIMIT (clave)
+                  if (val > remaining) val = remaining;
+                  if (val < 0) val = 0;
+
+                  setForm((prev: any) => {
+                    const updated = [...prev.items];
+
+                    updated[index] = {
+                      ...updated[index],
+                      amount: val,
+                    };
+
+                    return {
+                      ...prev,
+                      items: updated,
+                    };
+                  });
                 }}
               />
             </div>
-
-            {/* PAID / REMAINING */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: 12,
-              }}
-            >
-              <span style={{ color: "#16a34a" }}>
-                Paid: ${paid}
-              </span>
-
-              <span style={{ color: "#dc2626" }}>
-                Remaining: ${remaining}
-              </span>
-            </div>
-
-            {/* INPUT */}
-            <input
-              type="number"
-              placeholder="Enter amount"
-              value={formItems[index]?.amount || ""}
-              max={remaining}
-              style={{
-                marginTop: 6,
-                padding: "8px 10px",
-                borderRadius: 8,
-                border: "1px solid var(--border-color)",
-                background: "var(--bg-secondary)",
-                color: "var(--text-primary)",
-                fontSize: 13,
-                outline: "none",
-              }}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-
-                setForm((prev: any) => {
-                  const updated = [...prev.items];
-
-                  updated[index] = {
-                    ...updated[index],
-                    amount: value,
-                  };
-
-                  return {
-                    ...prev,
-                    items: updated,
-                  };
-                });
-              }}
-            />
           </div>
         );
       })}
 
-      <p style={{ marginTop: 10 }}>
-        Total Payment: $
-        {formItems.reduce((sum, i) => sum + i.amount, 0)}
+      <p style={styles.total}>
+        Total Payment: ${formItems.reduce((sum, i) => sum + i.amount, 0)}
       </p>
 
+      <div
+        style={{ marginTop: 10, height: 1, background: "var(--border-color)" }}
+      />
     </div>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  row: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 14,
+    border: "1px solid var(--border-color)",
+    borderRadius: 12,
+    marginBottom: 10,
+    background: "var(--bg-primary)",
+  },
+
+  left: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+
+  meta: {
+    fontSize: 13,
+    color: "var(--text-secondary)",
+  },
+
+  paid: {
+    fontSize: 13,
+    color: "#16a34a",
+  },
+
+  right: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  remaining: {
+    fontSize: 13,
+    color: "var(--text-secondary)",
+  },
+
+  input: {
+    width: 80,
+    padding: "6px 8px",
+    borderRadius: 8,
+    border: "1px solid var(--border-color)",
+    background: "var(--bg-secondary)",
+    color: "var(--text-primary)",
+    fontSize: 13,
+  },
+
+  total: {
+    marginTop: 10,
+    fontWeight: 600,
+  },
+};
