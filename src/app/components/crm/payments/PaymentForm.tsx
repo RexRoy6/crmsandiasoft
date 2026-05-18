@@ -45,20 +45,20 @@ export default function PaymentForm({
   const fields: Field[] = [
     ...(isGlobal
       ? [
-        {
-          name: "contractId",
-          label: "Contract",
-          readOnly: true,
-          after: (
-            <ContractSearch
-              selected={selectedContractId}
-              onSelect={(c: any) => {
-                setSelectedContractId(String(c.id));
-              }}
-            />
-          ),
-        },
-      ]
+          {
+            name: "contractId",
+            label: "Contract",
+            readOnly: true,
+            after: (
+              <ContractSearch
+                selected={selectedContractId}
+                onSelect={(c: any) => {
+                  setSelectedContractId(String(c.id));
+                }}
+              />
+            ),
+          },
+        ]
       : []),
 
     {
@@ -88,7 +88,7 @@ export default function PaymentForm({
     {
       name: "ticketNumber",
       label: "Ticket Number",
-    }
+    },
   ];
 
   /* ---------- lifecycle ---------- */
@@ -141,10 +141,7 @@ export default function PaymentForm({
         return;
       }
 
-      const total = form.items.reduce(
-        (sum, i) => sum + i.amount,
-        0
-      );
+      const total = form.items.reduce((sum, i) => sum + i.amount, 0);
 
       if (total <= 0) {
         setError("Enter at least one amount");
@@ -154,9 +151,7 @@ export default function PaymentForm({
       const payload = {
         currency: form.currency,
         paymentMethod: form.paymentMethod,
-        paidAt: form.paidAt
-          ? new Date(form.paidAt).toISOString()
-          : undefined,
+        paidAt: form.paidAt ? new Date(form.paidAt).toISOString() : undefined,
         ticketNumber: form.ticketNumber || undefined,
         items: form.items.filter((i) => i.amount > 0),
       };
@@ -181,7 +176,7 @@ export default function PaymentForm({
           //   items: form.items.filter((i) => i.amount > 0),
           // }),
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       if (!res.ok) {
@@ -220,7 +215,28 @@ export default function PaymentForm({
       </button>
 
       {show && (
-        <>
+        <div
+          style={{
+            paddingTop: 16,
+            paddingRight: 16,
+            paddingBottom: 0,
+            paddingLeft: 16,
+            border: "1px solid var(--border-color)",
+            borderRadius: 12,
+            background: "var(--bg-primary)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          {contractItems.length > 0 && (
+            <PaymentAllocationCard
+              items={contractItems}
+              formItems={form.items}
+              setForm={setForm}
+            />
+          )}
           <CreateForm
             title="Add Payment"
             fields={fields}
@@ -229,15 +245,7 @@ export default function PaymentForm({
             onSubmit={handleSubmit}
             onCancel={closeForm}
           />
-
-          {contractItems.length > 0 && (
-            <PaymentAllocationCard
-              items={contractItems}
-              formItems={form.items}
-              setForm={setForm}
-            />
-          )}
-        </>
+        </div>
       )}
 
       {error && <ErrorBox message={error} code={errorCode} />}

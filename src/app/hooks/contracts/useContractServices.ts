@@ -221,14 +221,18 @@ export function useContractServices(
 
                 setErrorCode(res.status);
 
-                return;
+                return false;
             }
 
             await fetchServices();
 
+            return true;
+
         } catch {
 
             setError("Connection error");
+
+            return false;
         }
     }
 
