@@ -34,6 +34,9 @@ import ContractServiceForm
 import ContractServicesList
     from "@/app/components/crm/contracts/ContractServicesList";
 
+import ContractSummaryCard
+    from "@/app/components/crm/contracts/ContractSummaryCard";
+
 export default function NewContractPage() {
 
     const [clientError, setClientError] =
@@ -886,231 +889,244 @@ export default function NewContractPage() {
 
             {step === "services" &&
                 contractId && (
-
-                    <div
-                        style={{
-                            padding: 20,
-                            border:
-                                "1px solid var(--border-color)",
-                            borderRadius: 10,
-                        }}
-                    >
-                        <h3>
-                            2. Services
-                        </h3>
-
-                        <ContractServiceForm
-                            companyServices={
-                                companyServices
-                            }
+                    <>
+                        <ContractSummaryCard
                             contract={contract}
-                            onSubmit={async (data) => {
+                        />
+                        <div
+                            style={{
+                                padding: 20,
+                                border:
+                                    "1px solid var(--border-color)",
+                                borderRadius: 10,
+                            }}
+                        >
+                            <h3>
+                                2. Services
+                            </h3>
 
-                                try {
+                            <ContractServiceForm
+                                companyServices={
+                                    companyServices
+                                }
+                                contract={contract}
+                                onSubmit={async (data) => {
 
-                                    const eventDate =
-                                        contract?.event?.eventDate
-                                            ?.split("T")[0];
+                                    try {
 
-                                    const operationStart =
-                                        data.operationStart
-                                            ? new Date(
-                                                `${eventDate}T${data.operationStart}`
-                                            ).toISOString()
-                                            : undefined;
+                                        const eventDate =
+                                            contract?.event?.eventDate
+                                                ?.split("T")[0];
 
-                                    const operationEnd =
-                                        data.operationEnd
-                                            ? new Date(
-                                                `${eventDate}T${data.operationEnd}`
-                                            ).toISOString()
-                                            : undefined;
+                                        const operationStart =
+                                            data.operationStart
+                                                ? new Date(
+                                                    `${eventDate}T${data.operationStart}`
+                                                ).toISOString()
+                                                : undefined;
 
-                                    const payload = {
-                                        serviceId: Number(data.serviceId),
-                                        quantity: Number(data.quantity),
-                                        unitPrice: Number(data.unitPrice),
-                                        serviceNotes: data.serviceNotes,
+                                        const operationEnd =
+                                            data.operationEnd
+                                                ? new Date(
+                                                    `${eventDate}T${data.operationEnd}`
+                                                ).toISOString()
+                                                : undefined;
 
-                                        operationStart,
-                                        operationEnd,
-                                    };
+                                        const payload = {
+                                            serviceId: Number(data.serviceId),
+                                            quantity: Number(data.quantity),
+                                            unitPrice: Number(data.unitPrice),
+                                            serviceNotes: data.serviceNotes,
 
-                                    // console.log("RAW FORM DATA", data);
-                                    // console.log("EVENT DATE", eventDate);
-                                    // console.log("PAYLOAD", payload);
+                                            operationStart,
+                                            operationEnd,
+                                        };
 
-                                    const res = await fetch(
-                                        `/api/company/contracts/${contractId}/services`,
-                                        {
-                                            method: "POST",
-                                            credentials: "include",
-                                            headers: {
-                                                "Content-Type": "application/json",
-                                            },
-                                            body: JSON.stringify(payload),
-                                        }
-                                    );
+                                        // console.log("RAW FORM DATA", data);
+                                        // console.log("EVENT DATE", eventDate);
+                                        // console.log("PAYLOAD", payload);
 
-                                    if (!res.ok) {
-
-                                        const result = await res.json();
-
-                                        setError(
-                                            parseError(
-                                                result?.error,
-                                                "Failed to add service"
-                                            )
+                                        const res = await fetch(
+                                            `/api/company/contracts/${contractId}/services`,
+                                            {
+                                                method: "POST",
+                                                credentials: "include",
+                                                headers: {
+                                                    "Content-Type": "application/json",
+                                                },
+                                                body: JSON.stringify(payload),
+                                            }
                                         );
+
+                                        if (!res.ok) {
+
+                                            const result = await res.json();
+
+                                            setError(
+                                                parseError(
+                                                    result?.error,
+                                                    "Failed to add service"
+                                                )
+                                            );
+
+                                            return false;
+                                        }
+
+                                        setError("");
+
+                                        await fetchServices();
+
+                                        return true;
+
+                                    } catch (e) {
+
+                                        console.error(e);
+
+                                        setError("Connection error");
 
                                         return false;
                                     }
-
-                                    setError("");
-
-                                    await fetchServices();
-
-                                    return true;
-
-                                } catch (e) {
-
-                                    console.error(e);
-
-                                    setError("Connection error");
-
-                                    return false;
-                                }
-                            }}
-                        />
-
-                        <ContractServicesList
-                            services={services}
-                            loading={false}
-                            onDelete={async (id) => {
-
-                                if (
-                                    !confirm(
-                                        "Remove service?"
-                                    )
-                                ) return;
-
-                                try {
-
-                                    const res =
-                                        await fetch(
-                                            `/api/company/contract-items/${id}`,
-                                            {
-                                                method: "DELETE",
-                                                credentials: "include",
-                                            }
-                                        );
-
-                                    if (!res.ok) {
-
-                                        const data =
-                                            await res.json();
-
-                                        setError(
-                                            parseError(
-                                                data?.error,
-                                                "Failed to delete"
-                                            )
-                                        );
-
-                                        return;
-                                    }
-
-                                    setError("");
-
-                                    fetchServices();
-
-                                } catch {
-
-                                    setError(
-                                        "Connection error"
-                                    );
-                                }
-                            }}
-                            onUpdate={async (
-                                id,
-                                data
-                            ) => {
-
-                                try {
-
-                                    const res =
-                                        await fetch(
-                                            `/api/company/contract-items/${id}`,
-                                            {
-                                                method: "PATCH",
-                                                credentials: "include",
-                                                headers: {
-                                                    "Content-Type":
-                                                        "application/json",
-                                                },
-                                                body: JSON.stringify(data),
-                                            }
-                                        );
-
-                                    if (!res.ok) {
-
-                                        const result =
-                                            await res.json();
-
-                                        setError(
-                                            parseError(
-                                                result?.error,
-                                                "Failed to update"
-                                            )
-                                        );
-
-                                        return;
-                                    }
-
-                                    setError("");
-
-                                    fetchServices();
-
-                                } catch {
-
-                                    setError(
-                                        "Connection error"
-                                    );
-                                }
-                            }}
-                        />
-
-                        <hr
-                            style={{
-                                margin:
-                                    "20px 0",
-                            }}
-                        />
-
-                        <h3>
-                            3. Payments
-                        </h3>
-
-                        <PaymentForm
-                            contractId={String(contractId)}
-                            onSuccess={fetchPayments}
-                        />
-
-                        {loadingPayments ? (
-                            <p
-                                style={{
-                                    fontSize: 12,
-                                    color: "gray",
                                 }}
-                            >
-                                Loading payments...
-                            </p>
-                        ) : (
-                            <PaymentList
-                                payments={payments}
                             />
-                        )}
 
+                            <ContractServicesList
+                                services={services}
+                                loading={false}
+                                onDelete={async (id) => {
+
+                                    if (
+                                        !confirm(
+                                            "Remove service?"
+                                        )
+                                    ) return;
+
+                                    try {
+
+                                        const res =
+                                            await fetch(
+                                                `/api/company/contract-items/${id}`,
+                                                {
+                                                    method: "DELETE",
+                                                    credentials: "include",
+                                                }
+                                            );
+
+                                        if (!res.ok) {
+
+                                            const data =
+                                                await res.json();
+
+                                            setError(
+                                                parseError(
+                                                    data?.error,
+                                                    "Failed to delete"
+                                                )
+                                            );
+
+                                            return;
+                                        }
+
+                                        setError("");
+
+                                        fetchServices();
+
+                                    } catch {
+
+                                        setError(
+                                            "Connection error"
+                                        );
+                                    }
+                                }}
+                                onUpdate={async (
+                                    id,
+                                    data
+                                ) => {
+
+                                    try {
+
+                                        const res =
+                                            await fetch(
+                                                `/api/company/contract-items/${id}`,
+                                                {
+                                                    method: "PATCH",
+                                                    credentials: "include",
+                                                    headers: {
+                                                        "Content-Type":
+                                                            "application/json",
+                                                    },
+                                                    body: JSON.stringify(data),
+                                                }
+                                            );
+
+                                        if (!res.ok) {
+
+                                            const result =
+                                                await res.json();
+
+                                            setError(
+                                                parseError(
+                                                    result?.error,
+                                                    "Failed to update"
+                                                )
+                                            );
+
+                                            return;
+                                        }
+
+                                        setError("");
+
+                                        fetchServices();
+
+                                    } catch {
+
+                                        setError(
+                                            "Connection error"
+                                        );
+                                    }
+                                }}
+                            />
+
+                            <hr
+                                style={{
+                                    margin:
+                                        "20px 0",
+                                }}
+                            />
+
+                            <h3>
+                                3. Payments
+                            </h3>
+
+                            <PaymentForm
+                                contractId={String(contractId)}
+                                onSuccess={fetchPayments}
+                            />
+
+                            {loadingPayments ? (
+                                <p
+                                    style={{
+                                        fontSize: 12,
+                                        color: "gray",
+                                    }}
+                                >
+                                    Loading payments...
+                                </p>
+                            ) : (
+                                <PaymentList
+                                    payments={payments}
+                                />
+                            )}
+                            <p>
+                                ⚠️ Este es el paso final de el registro rapido ⚠️
+                            </p>
+                            <p>
+                                ⚠️ si deseas continuar con un registro nuevo refrezca la pagina 🔄
+                            </p>
+                            <p>
+                                ⚠️ o darle click al boton de abajo ⬇️
+                            </p>
+
+                        </div>
                         <button
                             onClick={resetAll}
                             style={{
@@ -1125,9 +1141,10 @@ export default function NewContractPage() {
                                 cursor: "pointer",
                             }}
                         >
-                            + New Contract
+                            🏁 ir a Crear contrato desde cero
                         </button>
-                    </div>
+
+                    </>
                 )}
         </div>
     );
