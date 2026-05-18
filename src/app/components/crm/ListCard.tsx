@@ -94,6 +94,8 @@ export default function ListCard({
         transition: "all 0.2s ease",
         marginBottom: 12,
         opacity: isActive ? 1 : 0.6,
+        padding: 20,
+        backgroundColor: "var(--bg-primary)",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";

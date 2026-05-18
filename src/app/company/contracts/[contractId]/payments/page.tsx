@@ -27,15 +27,7 @@ export default function ContractPaymentsPage() {
 
   return (
     <div>
-      <PageHeader
-        title={`Contract ${contractId} Payments`}
-      />
-
-      {/* completamente encapsulado  parte de pagos */}
-      <PaymentForm
-        contractId={contractId}
-        onSuccess={fetchPayments}
-      />
+      <PageHeader title={`Contract ${contractId} Payments`} />
 
       <ContractSummary
         total={contractTotal}
@@ -43,20 +35,20 @@ export default function ContractPaymentsPage() {
         remaining={remainingAmount}
       />
 
-      {error && (
-        <ErrorBox message={error} code={errorCode} />
-      )}
+      {/* completamente encapsulado  parte de pagos */}
+      <div style={{ marginTop: 20 }}>
+        <PaymentForm contractId={contractId} onSuccess={fetchPayments} />
+      </div>
 
-      {loading ? (
-        <p style={{ color: "var(--text-secondary)" }}>
-          Loading payments...
-        </p>
-      ) : (
-        <PaymentList
-          payments={payments}
-          onDeleteSuccess={fetchPayments}
-        />
-      )}
+      {error && <ErrorBox message={error} code={errorCode} />}
+
+      <div style={{ marginTop: 20 }}>
+        {loading ? (
+          <p style={{ color: "var(--text-secondary)" }}>Loading payments...</p>
+        ) : (
+          <PaymentList payments={payments} onDeleteSuccess={fetchPayments} />
+        )}
+      </div>
     </div>
   );
 }
