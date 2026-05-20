@@ -6,12 +6,6 @@ import CreateForm, {
     Field,
 } from "@/app/components/crm/CreateForm";
 
-import ClientSearch
-    from "@/app/components/crm/ClientSearch";
-
-import InlineClientForm
-    from "@/app/components/crm/InlineClientForm";
-
 import ErrorBox
     from "@/app/components/ErrorBox";
 
@@ -37,10 +31,11 @@ import ContractServicesList
 import ContractSummaryCard
     from "@/app/components/crm/contracts/ContractSummaryCard";
 
+import ClientSelector
+    from "@/app/components/crm/clients/ClientSelector";
+
 export default function NewContractPage() {
 
-    const [clientError, setClientError] =
-        useState("");
 
     const [error, setError] =
         useState("");
@@ -81,10 +76,6 @@ export default function NewContractPage() {
 
         return fallback;
     };
-
-    // client
-    const [showClientForm, setShowClientForm] =
-        useState(false);
 
     // services
     const [services, setServices] =
@@ -128,13 +119,6 @@ export default function NewContractPage() {
         notes: "",
     });
 
-    // new client form
-    const [clientForm, setClientForm] =
-        useState({
-            name: "",
-            phone: "",
-            email: "",
-        });
 
     const [eventDateTime, setEventDateTime] =
         useState<string | null>(null);
@@ -160,21 +144,12 @@ export default function NewContractPage() {
             notes: "",
         });
 
-        setClientForm({
-            name: "",
-            phone: "",
-            email: "",
-        });
-
-        setShowClientForm(false);
-
         setServices([]);
         setCompanyServices([]);
 
         setPayments([]);
 
         setError("");
-        setClientError("");
 
         setEventDateTime(null);
     };
@@ -190,85 +165,8 @@ export default function NewContractPage() {
             location: "",
             notes: "",
         });
-
-        setClientForm({
-            name: "",
-            phone: "",
-            email: "",
-        });
-
-        setShowClientForm(false);
-
-        setClientError("");
     };
 
-    const createClientInline = async () => {
-
-        try {
-
-            if (
-                !clientForm.name ||
-                !clientForm.phone
-            ) {
-
-                setClientError(
-                    "All client fields are required"
-                );
-
-                return;
-            }
-
-            const res = await fetch(
-                "/api/company/clients",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(clientForm),
-                }
-            );
-
-            if (!res.ok) {
-
-                setClientError(
-                    "Failed to create client"
-                );
-
-                setErrorCode(res.status);
-
-                return;
-            }
-
-            setClientError("");
-
-            const newClient =
-                await res.json();
-
-            setForm((prev) => ({
-                ...prev,
-                clientId: String(newClient.id),
-                client: {
-                    id: newClient.id,
-                    name: newClient.name,
-                    phone: newClient.phone,
-                },
-            }));
-
-            setShowClientForm(false);
-
-            setClientForm({
-                name: "",
-                phone: "",
-                email: "",
-            });
-
-        } catch {
-
-            setError("Connection error");
-        }
-    };
 
     const createAll = async () => {
 
@@ -665,127 +563,27 @@ export default function NewContractPage() {
             label: "Client",
             readOnly: true,
             after: (
-                <>
-                    {form.client && (
-                        <div
-                            style={{
-                                fontSize: 14,
-                                marginBottom: 6,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: 600,
-                                }}
-                            >
-                                ✅ {form.client.name}
-                            </div>
-
-                            <div
-                                style={{
-                                    fontSize: 12,
-                                    color:
-                                        "var(--text-secondary)",
-                                }}
-                            >
-                                {form.client.phone}
-                            </div>
-                        </div>
-                    )}
-
-                    <ClientSearch
-                        selected={form.clientId}
-                        onSelect={(client) => {
-
-                            setForm((prev) => ({
-                                ...prev,
-                                clientId:
-                                    String(client.id),
-                                client: {
-                                    id: client.id,
-                                    name: client.name,
-                                    phone: client.phone,
-                                },
-                            }));
-                        }}
-                    />
-
-                    {form.clientId && (
-                        <button
-                            onClick={() =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    clientId: "",
-                                    client: undefined,
-                                }))
-                            }
-                            style={{
-                                marginTop: 6,
-                                fontSize: 12,
-                                color:
-                                    "var(--error-color)",
-                                cursor: "pointer",
-                                background: "none",
-                                border: "none",
-                            }}
-                        >
-                            Change client
-                        </button>
-                    )}
-
-                    <div
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        {!showClientForm && (
-                            <button
-                                onClick={() =>
-                                    setShowClientForm(true)
-                                }
-                                style={{
-                                    padding: "4px 8px",
-                                    fontSize: 12,
-                                    borderRadius: 6,
-                                    border: "none",
-                                    background:
-                                        "transparent",
-                                    color:
-                                        "var(--primary-color)",
-                                    cursor: "pointer",
-                                    textAlign: "left",
-                                }}
-                            >
-                                + Create new client
-                            </button>
-                        )}
-
-                        {showClientForm && (
-                            <InlineClientForm
-                                form={clientForm}
-                                setForm={setClientForm}
-                                onSubmit={
-                                    createClientInline
-                                }
-                                onCancel={() =>
-                                    setShowClientForm(false)
-                                }
-                            />
-                        )}
-
-                        {clientError && (
-                            <p
-                                style={{
-                                    color:
-                                        "var(--error-color)",
-                                    fontSize: 12,
-                                }}
-                            >
-                                {clientError}
-                            </p>
-                        )}
-                    </div>
-                </>
+                <ClientSelector
+                    selected={form.client}
+                    onSelect={(client) => {
+                        setForm((prev) => ({
+                            ...prev,
+                            clientId: String(client.id),
+                            client: {
+                                id: client.id,
+                                name: client.name,
+                                phone: client.phone,
+                            },
+                        }));
+                    }}
+                    onClear={() => {
+                        setForm((prev) => ({
+                            ...prev,
+                            clientId: "",
+                            client: undefined,
+                        }));
+                    }}
+                />
             ),
         },
         {
