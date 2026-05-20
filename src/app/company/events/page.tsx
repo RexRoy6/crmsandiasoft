@@ -6,18 +6,19 @@ import PageHeader from "@/app/components/crm/PageHeader";
 import CreateForm from "@/app/components/crm/CreateForm";
 import ListCard from "@/app/components/crm/ListCard";
 import type { Field } from "@/app/components/crm/CreateForm";
-import InlineClientForm from "@/app/components/crm/InlineClientForm";
+import ClientSelector
+  from "@/app/components/crm/clients/ClientSelector";
 import { useRouter } from "next/navigation";
 import SearchBar from "@/app/components/crm/SearchBar";
 import Pagination from "@/app/components/crm/Pagination";
 import { formatDate, formatTime } from "@/lib/utils/date";
-import ClientSearch from "@/app/components/crm/ClientSearch";
+
 
 export default function EventsPage() {
   const [events, setEvents] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
+
+
   const [error, setError] = useState("");
-  const [clientError, setClientError] = useState("");
   const [errorCode, setErrorCode] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
@@ -32,10 +33,7 @@ export default function EventsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
-  //
 
-  //es para crear un nuevo cliente
-  const [showClientForm, setShowClientForm] = useState(false);
 
   const [form, setForm] = useState({
     clientId: "",
@@ -52,12 +50,7 @@ export default function EventsPage() {
     location: "",
     notes: "",
   });
-  //form para nuevo cx
-  const [clientForm, setClientForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-  });
+
 
   //funcion para limpiar form
   const resetForm = () => {
@@ -70,74 +63,11 @@ export default function EventsPage() {
       location: "",
       notes: "",
     });
-
-    setClientForm({
-      name: "",
-      phone: "",
-      email: "",
-    });
-
-    setShowClientForm(false);
-    setClientError("");
   };
 
 
   //es para redirigir a la creacion de contrato
   const router = useRouter();
-
-  //fucion para crear un cx
-
-  const createClientInline = async () => {
-    try {
-      //if (!clientForm.name || !clientForm.phone || !clientForm.email) {
-      if (!clientForm.name || !clientForm.phone) {
-        setClientError("All client fields are required");
-        return;
-      }
-
-      const res = await fetch("/api/company/clients", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(clientForm),
-      });
-
-      if (!res.ok) {
-        setClientError("Failed to create client");
-        return;
-      }
-
-      setClientError("");
-
-      const newClient = await res.json();
-
-      // 🔥 clave: actualizar lista
-      setClients((prev) => [...prev, newClient]);
-
-      // 🔥 seleccionar automáticamente
-      setForm((prev) => ({
-        ...prev,
-        clientId: String(newClient.id),
-        client: {
-          id: newClient.id,
-          name: newClient.name,
-          phone: newClient.phone,
-        },
-      }));
-
-      setShowClientForm(false);
-
-      setClientForm({
-        name: "",
-        phone: "",
-        email: "",
-      });
-    } catch {
-      setError("Connection error");
-    }
-  };
 
   const eventFields: Field[] = [
     {
@@ -145,88 +75,27 @@ export default function EventsPage() {
       label: "Client",
       readOnly: true,
       after: (
-        <>
-          {/* seleccionado */}
-          {form.client && (
-            <div style={{ fontSize: 14, marginBottom: 6 }}>
-              <div style={{ fontWeight: 600 }}>
-                ✅ {form.client.name}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                {form.client.phone}
-              </div>
-            </div>
-          )}
-
-          <ClientSearch
-            selected={form.clientId}
-            onSelect={(client) => {
-              setForm((prev) => ({
-                ...prev,
-                clientId: String(client.id),
-                client: {
-                  id: client.id,
-                  name: client.name,
-                  phone: client.phone,
-                },
-              }));
-            }}
-          />
-
-          {/* cambiar cliente */}
-          {form.clientId && (
-            <button
-              onClick={() =>
-                setForm((prev) => ({
-                  ...prev,
-                  clientId: "",
-                  client: undefined,
-                }))
-              }
-              style={{
-                marginTop: 6,
-                fontSize: 12,
-                color: "var(--error-color)",
-                //color: "#dc2626",
-                cursor: "pointer",
-                background: "none",
-                border: "none",
-              }}
-            >
-              Change client
-            </button>
-          )}
-
-          {/* 👇 tu create inline sigue funcionando */}
-          <div style={{ marginTop: 10 }}>
-            {!showClientForm && (
-              <button
-                onClick={() => setShowClientForm(true)}
-                style={{
-                  padding: "4px 8px",
-                  fontSize: 12,
-                  borderRadius: 6,
-                  border: "none",
-                  background: "transparent",
-                  color: "var(--primary-color)",
-                  cursor: "pointer",
-                  textAlign: "left",
-                }}
-              >
-                + Create new client
-              </button>
-            )}
-
-            {showClientForm && (
-              <InlineClientForm
-                form={clientForm}
-                setForm={setClientForm}
-                onSubmit={createClientInline}
-                onCancel={() => setShowClientForm(false)}
-              />
-            )}
-          </div>
-        </>
+        <ClientSelector
+          selected={form.client}
+          onSelect={(client) => {
+            setForm((prev) => ({
+              ...prev,
+              clientId: String(client.id),
+              client: {
+                id: client.id,
+                name: client.name,
+                phone: client.phone,
+              },
+            }));
+          }}
+          onClear={() => {
+            setForm((prev) => ({
+              ...prev,
+              clientId: "",
+              client: undefined,
+            }));
+          }}
+        />
       ),
     },
 
@@ -280,22 +149,6 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
-  };
-  const fetchClients = async () => {
-    try {
-      const res = await fetch("/api/company/clients", {
-        credentials: "include",
-      });
-
-      if (!res.ok) return;
-
-      const result = await res.json();
-      /* quitar clientes eliminados */
-
-      const activeClients = result.data.filter((c: any) => !c.deletedAt);
-
-      setClients(activeClients);
-    } catch { }
   };
 
   const createEvent = async () => {
@@ -441,7 +294,6 @@ export default function EventsPage() {
 
   // fetch inicial (clients + contracts)
   useEffect(() => {
-    fetchClients();
     fetchContracts();
   }, []);
 
