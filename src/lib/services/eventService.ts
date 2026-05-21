@@ -1,6 +1,7 @@
 import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
-import { events, clients } from "@/db/schema"
+import { events, clients, contracts } from "@/db/schema"
+import { activeContracts } from "@/db/filters"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { and, eq, isNotNull, isNull, or, like, desc } from "drizzle-orm"
 import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
@@ -46,6 +47,7 @@ export async function getEvents({
   const { companyId } = await getAuthContext()
 
   const offset = (page - 1) * limit
+  const safeCompanyId = companyId ?? undefined
 
   const filters = [
     eq(events.companyId, companyId!),
@@ -84,10 +86,27 @@ export async function getEvents({
       client: {
         id: clients.id,
         name: clients.name
+      },
+
+      contract: {
+        id: contracts.id,
+        status: contracts.status
       }
     })
     .from(events)
-    .leftJoin(clients, eq(events.clientId, clients.id))
+
+    .leftJoin(
+      clients,
+      eq(events.clientId, clients.id)
+    )
+
+    .leftJoin(
+      contracts,
+      and(
+        eq(contracts.eventId, events.id),
+        activeContracts(safeCompanyId)
+      )
+    )
     .where(and(...filters))
     .orderBy(desc(events.eventDate))
     .limit(limit)
@@ -120,6 +139,8 @@ export async function getEventById(id: number) {
 
   const { companyId } = await getAuthContext()
 
+  const safeCompanyId = companyId ?? undefined
+
   const result = await db
     .select({
       id: events.id,
@@ -127,15 +148,30 @@ export async function getEventById(id: number) {
       eventDate: events.eventDate,
       location: events.location,
       notes: events.notes,
-      deleted: events.deletedAt,
 
       client: {
         id: clients.id,
         name: clients.name
+      },
+
+      contract: {
+        id: contracts.id,
+        status: contracts.status
       }
     })
     .from(events)
-    .leftJoin(clients, eq(events.clientId, clients.id))
+    .leftJoin(
+      clients,
+      eq(events.clientId, clients.id)
+    )
+
+    .leftJoin(
+      contracts,
+      and(
+        eq(contracts.eventId, events.id),
+        activeContracts(safeCompanyId)
+      )
+    )
     .where(
       and(
         eq(events.id, id),
