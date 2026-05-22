@@ -27,7 +27,6 @@ export default function EventsPage() {
     null,
   );
 
-  const [contracts, setContracts] = useState<any[]>([]);
 
   //para buscar clientes
   const [search, setSearch] = useState("");
@@ -243,60 +242,6 @@ export default function EventsPage() {
     }
   };
 
-  //consultar contracts
-  const fetchContracts = async () => {
-    try {
-      const res = await fetch("/api/company/contracts", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!res.ok) return;
-
-      const result = await res.json();
-      setContracts(result.data);
-    } catch { }
-  };
-  const getContractForEvent = (eventId: number) => {
-    return contracts.find((c) => c.event?.id === eventId);
-  };
-
-  const createContractForEvent = async (eventId: number) => {
-    try {
-      const res = await fetch("/api/company/contracts", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          eventId,
-          status: "draft",
-          totalAmount: 0,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-
-        setError(data?.error || "Failed to create contract");
-        setErrorCode(res.status);
-        return;
-      }
-
-      const newContract = await res.json();
-
-      router.push(`/company/contracts/${newContract.id}/services`);
-    } catch {
-      setError("Connection error");
-    }
-  };
-
-  // fetch inicial (clients + contracts)
-  useEffect(() => {
-    fetchContracts();
-  }, []);
-
   // fetch events con search + pagination
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -403,7 +348,7 @@ export default function EventsPage() {
           >
             {events.map((event) => {
               const date = new Date(event.eventDate);
-              const contract = getContractForEvent(event.id);
+              const contract = event.contract;
               //console.log("pagination:", pagination)
               return (
                 <ListCard
@@ -504,10 +449,10 @@ export default function EventsPage() {
                         },
                       ]
                       : [
-                        {
-                          label: "Create Contract",
-                          onClick: () => createContractForEvent(event.id),
-                        },
+                        // {
+                        //   label: "Create Contract",
+                        //   onClick: () => createContractForEvent(event.id),
+                        // },
                       ]),
 
                     {
