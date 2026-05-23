@@ -158,6 +158,10 @@ export const events = mysqlTable("events", {
 
   eventDate: datetime("event_date").notNull(),
 
+  eventStart: datetime("event_start"),
+
+  eventEnd: datetime("event_end"),
+
   location: varchar("location", { length: 255 }),
 
   notes: varchar("notes", { length: 500 }),
@@ -174,7 +178,7 @@ export const events = mysqlTable("events", {
 
   companyEventDateIdx:
     index("events_company_event_date_idx")
-      .on(table.companyId, table.eventDate),
+      .on(table.companyId, table.eventStart)
 
 
 }))

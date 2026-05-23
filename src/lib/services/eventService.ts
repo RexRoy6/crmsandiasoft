@@ -1,6 +1,7 @@
 import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
-import { events, clients } from "@/db/schema"
+import { events, clients, contracts } from "@/db/schema"
+import { activeContracts } from "@/db/filters"
 import { getAuthContext } from "@/lib/auth/getAuthContext"
 import { and, eq, isNotNull, isNull, or, like, desc } from "drizzle-orm"
 import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
@@ -17,10 +18,12 @@ export async function createEvent(data: CreateEventInput) {
     throw new Error("client not found")
   }
 
-  // 👇 SOLO ESTO
   const insertData = {
     ...data,
+
     eventDate: new Date(data.eventDate),
+    eventStart: new Date(data.eventStart),
+    eventEnd: new Date(data.eventEnd),
   }
 
   const [result] = await tdb.insert(events, insertData)
@@ -46,6 +49,7 @@ export async function getEvents({
   const { companyId } = await getAuthContext()
 
   const offset = (page - 1) * limit
+  const safeCompanyId = companyId ?? undefined
 
   const filters = [
     eq(events.companyId, companyId!),
@@ -78,16 +82,35 @@ export async function getEvents({
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
       location: events.location,
       notes: events.notes,
 
       client: {
         id: clients.id,
         name: clients.name
+      },
+
+      contract: {
+        id: contracts.id,
+        status: contracts.status
       }
     })
     .from(events)
-    .leftJoin(clients, eq(events.clientId, clients.id))
+
+    .leftJoin(
+      clients,
+      eq(events.clientId, clients.id)
+    )
+
+    .leftJoin(
+      contracts,
+      and(
+        eq(contracts.eventId, events.id),
+        activeContracts(safeCompanyId)
+      )
+    )
     .where(and(...filters))
     .orderBy(desc(events.eventDate))
     .limit(limit)
@@ -120,22 +143,41 @@ export async function getEventById(id: number) {
 
   const { companyId } = await getAuthContext()
 
+  const safeCompanyId = companyId ?? undefined
+
   const result = await db
     .select({
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
       location: events.location,
       notes: events.notes,
-      deleted: events.deletedAt,
 
       client: {
         id: clients.id,
         name: clients.name
+      },
+
+      contract: {
+        id: contracts.id,
+        status: contracts.status
       }
     })
     .from(events)
-    .leftJoin(clients, eq(events.clientId, clients.id))
+    .leftJoin(
+      clients,
+      eq(events.clientId, clients.id)
+    )
+
+    .leftJoin(
+      contracts,
+      and(
+        eq(contracts.eventId, events.id),
+        activeContracts(safeCompanyId)
+      )
+    )
     .where(
       and(
         eq(events.id, id),
@@ -158,6 +200,8 @@ export async function getEventsByClient(clientId: number) {
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
       location: events.location
     })
     .from(events)
@@ -189,6 +233,15 @@ export async function updateEvent(
     ...data,
     ...(data.eventDate && {
       eventDate: new Date(data.eventDate),
+    }),
+
+
+    ...(data.eventStart && {
+      eventStart: new Date(data.eventStart),
+    }),
+
+    ...(data.eventEnd && {
+      eventEnd: new Date(data.eventEnd),
     }),
   }
 

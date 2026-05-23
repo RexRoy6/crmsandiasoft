@@ -13,13 +13,12 @@ export const createEventSchema = z.object({
     .min(2, "name must be at least 2 characters")
     .max(255),
 
-  // eventDate: z
-  //   .string()
-  //   .refine((val) => !isNaN(Date.parse(val)), {
-  //     message: "invalid date format"
-  //   }),
 
-  eventDate: z.string().datetime().or(z.string()),
+  //eventDate: z.string().datetime().or(z.string()),
+  eventDate: z.string(),
+  eventStart: z.string(),
+
+eventEnd: z.string(),
 
   location: z
     .string()
