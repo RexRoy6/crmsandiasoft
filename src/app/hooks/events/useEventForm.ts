@@ -58,16 +58,31 @@ export function useEventForm(
       setErrorCode(undefined);
 
       /* ---------- CREATE EVENT ---------- */
-
       const eventStart = combineDateTime(
         form.eventDate,
         form.eventStart
       );
 
-      const eventEnd = combineDateTime(
+      let eventEnd = combineDateTime(
         form.eventDate,
         form.eventEnd
       );
+
+      /* ---------- OVERNIGHT EVENT ---------- */
+
+      if (
+        eventStart &&
+        eventEnd &&
+        new Date(eventEnd) < new Date(eventStart)
+      ) {
+        const nextDay = new Date(eventEnd);
+
+        nextDay.setDate(
+          nextDay.getDate() + 1
+        );
+
+        eventEnd = nextDay.toISOString();
+      }
 
       if (!eventStart || !eventEnd) {
         throw new Error(

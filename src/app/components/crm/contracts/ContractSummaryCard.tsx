@@ -1,7 +1,9 @@
 "use client";
 
-import { formatDateTime }
-from "@/lib/utils/date";
+import {
+    formatDate,
+    formatTime,
+} from "@/lib/utils/date";
 
 type Props = {
     contract: any;
@@ -83,12 +85,18 @@ export default function ContractSummaryCard({
                     {contract.event?.name}
                 </div>
 
+
                 <div>
                     <strong>Date:</strong>{" "}
-                    {formatDateTime(
-                        contract.event?.eventDate
-                    )}
+                    {formatDate(contract.event?.eventDate)}
+                    {" · "}
+                    {formatTime(contract.event?.eventStart)}
+                    {" - "}
+                    {formatTime(contract.event?.eventEnd)}
                 </div>
+
+
+
 
                 <div>
                     <strong>Location:</strong>{" "}
