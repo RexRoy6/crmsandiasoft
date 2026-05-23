@@ -130,7 +130,11 @@ export async function getCompanyContracts({
 
       eventId: events.id,
       eventName: events.name,
+
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
+
       eventLocation: events.location,
       eventNote: events.notes
     })
@@ -186,15 +190,21 @@ export async function getCompanyContracts({
         ? { id: row.clientId, name: row.clientName }
         : null,
 
+
       event: row.eventId
         ? {
           id: row.eventId,
           name: row.eventName,
+
           eventDate: row.eventDate,
+          eventStart: row.eventStart,
+          eventEnd: row.eventEnd,
+
           location: row.eventLocation,
           notes: row.eventNote
         }
         : null
+
     }
   })
 
@@ -230,7 +240,11 @@ export async function getContract(id: number) {
 
       eventId: events.id,
       eventName: events.name,
+
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
+
       eventLocation: events.location,
       eventNote: events.notes
     })
@@ -296,15 +310,22 @@ export async function getContract(id: number) {
       }
       : null,
 
+
     event: row.eventId
       ? {
         id: row.eventId,
         name: row.eventName,
+
         eventDate: row.eventDate,
+        eventStart: row.eventStart,
+        eventEnd: row.eventEnd,
+
         location: row.eventLocation,
         notes: row.eventNote
       }
       : null
+
+
   }
 }
 

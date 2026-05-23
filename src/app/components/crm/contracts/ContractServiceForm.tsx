@@ -187,7 +187,7 @@ export default function ContractServiceForm({
                     >
                         📅 Event date:
                         {" "}
-                       {formatDate(contract?.event?.eventDate)}
+                        {formatDate(contract?.event?.eventDate)}
                     </p>
 
                     <p

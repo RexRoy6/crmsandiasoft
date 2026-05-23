@@ -6,12 +6,6 @@ import CreateForm, {
     Field,
 } from "@/app/components/crm/CreateForm";
 
-import ClientSearch
-    from "@/app/components/crm/ClientSearch";
-
-import InlineClientForm
-    from "@/app/components/crm/InlineClientForm";
-
 import ErrorBox
     from "@/app/components/ErrorBox";
 
@@ -37,10 +31,22 @@ import ContractServicesList
 import ContractSummaryCard
     from "@/app/components/crm/contracts/ContractSummaryCard";
 
+
+import {
+    getEventFields,
+} from "@/app/components/crm/events/getEventFields";
+
+import {
+    useEventForm,
+} from "@/app/hooks/events/useEventForm";
+
+import {
+    useContract,
+} from "@/app/hooks/contracts/useContract";
+
+
 export default function NewContractPage() {
 
-    const [clientError, setClientError] =
-        useState("");
 
     const [error, setError] =
         useState("");
@@ -82,10 +88,6 @@ export default function NewContractPage() {
         return fallback;
     };
 
-    // client
-    const [showClientForm, setShowClientForm] =
-        useState(false);
-
     // services
     const [services, setServices] =
         useState<any[]>([]);
@@ -108,36 +110,46 @@ export default function NewContractPage() {
     const [contractId, setContractId] =
         useState<number | null>(null);
 
-    const [contract, setContract] =
-        useState<any>(null);
 
-    // event form
-    const [form, setForm] = useState({
-        clientId: "",
-        client: undefined as
-            | {
-                id: number;
-                name: string;
-                phone: string;
-            }
-            | undefined,
-        name: "",
-        eventDate: "",
-        eventTime: "",
-        location: "",
-        notes: "",
+    const {
+        contract,
+        setContract,
+
+        fetchContract,
+
+    } = useContract(contractId);
+
+
+    const {
+        form,
+        setForm,
+
+        resetForm,
+
+        createEvent,
+
+        error: eventError,
+        errorCode: eventErrorCode,
+
+    } = useEventForm({
+
+        onSuccess: ({ event, contract }) => {
+
+            setContract(contract);
+
+            setContractId(contract.id);
+
+            setEventDateTime(
+                event.eventDate
+            );
+
+            setStep("services");
+        },
     });
-
-    // new client form
-    const [clientForm, setClientForm] =
-        useState({
-            name: "",
-            phone: "",
-            email: "",
-        });
 
     const [eventDateTime, setEventDateTime] =
         useState<string | null>(null);
+
 
     const resetAll = () => {
 
@@ -150,23 +162,7 @@ export default function NewContractPage() {
             "activeContractDraft"
         );
 
-        setForm({
-            clientId: "",
-            client: undefined,
-            name: "",
-            eventDate: "",
-            eventTime: "",
-            location: "",
-            notes: "",
-        });
-
-        setClientForm({
-            name: "",
-            phone: "",
-            email: "",
-        });
-
-        setShowClientForm(false);
+        resetForm();
 
         setServices([]);
         setCompanyServices([]);
@@ -174,271 +170,10 @@ export default function NewContractPage() {
         setPayments([]);
 
         setError("");
-        setClientError("");
 
         setEventDateTime(null);
     };
 
-    const resetForm = () => {
-
-        setForm({
-            clientId: "",
-            client: undefined,
-            name: "",
-            eventDate: "",
-            eventTime: "",
-            location: "",
-            notes: "",
-        });
-
-        setClientForm({
-            name: "",
-            phone: "",
-            email: "",
-        });
-
-        setShowClientForm(false);
-
-        setClientError("");
-    };
-
-    const createClientInline = async () => {
-
-        try {
-
-            if (
-                !clientForm.name ||
-                !clientForm.phone
-            ) {
-
-                setClientError(
-                    "All client fields are required"
-                );
-
-                return;
-            }
-
-            const res = await fetch(
-                "/api/company/clients",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(clientForm),
-                }
-            );
-
-            if (!res.ok) {
-
-                setClientError(
-                    "Failed to create client"
-                );
-
-                setErrorCode(res.status);
-
-                return;
-            }
-
-            setClientError("");
-
-            const newClient =
-                await res.json();
-
-            setForm((prev) => ({
-                ...prev,
-                clientId: String(newClient.id),
-                client: {
-                    id: newClient.id,
-                    name: newClient.name,
-                    phone: newClient.phone,
-                },
-            }));
-
-            setShowClientForm(false);
-
-            setClientForm({
-                name: "",
-                phone: "",
-                email: "",
-            });
-
-        } catch {
-
-            setError("Connection error");
-        }
-    };
-
-    const createAll = async () => {
-
-        try {
-
-            const dateTime =
-                new Date(
-                    `${form.eventDate}T${form.eventTime}`
-                );
-
-            const pad = (n: number) =>
-                String(n).padStart(2, "0");
-
-            const formatted =
-                `${dateTime.getFullYear()}-${pad(
-                    dateTime.getMonth() + 1
-                )}-${pad(dateTime.getDate())} ${pad(
-                    dateTime.getHours()
-                )}:${pad(
-                    dateTime.getMinutes()
-                )}:00`;
-
-            setEventDateTime(formatted);
-
-            const payload = {
-                clientId: Number(form.clientId),
-                name: form.name,
-                eventDate: formatted,
-                location: form.location,
-                notes: form.notes,
-            };
-
-            if (!form.clientId) {
-
-                setError("Client is required");
-                return;
-            }
-
-            if (!form.name) {
-
-                setError("Event name is required");
-                return;
-            }
-
-            if (
-                !form.eventDate ||
-                !form.eventTime
-            ) {
-
-                setError(
-                    "Event date and time are required"
-                );
-
-                return;
-            }
-
-            const eventRes = await fetch(
-                "/api/company/events",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                }
-            );
-
-            if (!eventRes.ok) {
-
-                setError("Error creating event");
-
-                setErrorCode(eventRes.status);
-
-                return;
-            }
-
-            const event =
-                await eventRes.json();
-
-            const contractRes = await fetch(
-                "/api/company/contracts",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        eventId: event.id,
-                        status: "draft",
-                        totalAmount: 0,
-                    }),
-                }
-            );
-
-            if (!contractRes.ok) {
-
-                const data =
-                    await contractRes.json();
-
-                if (
-                    contractRes.status === 409
-                ) {
-
-                    setError(
-                        "Contract already exists for this event"
-                    );
-
-                    setErrorCode(409);
-
-                    return;
-                }
-
-                setError(
-                    parseError(
-                        data?.error,
-                        "Error creating contract"
-                    )
-                );
-
-                return;
-            }
-
-            const contract =
-                await contractRes.json();
-
-            resetForm();
-
-            setContract(contract);
-
-            setContractId(contract.id);
-
-            setStep("services");
-
-        } catch (e) {
-
-            console.error(e);
-
-            setError("Connection error");
-        }
-    };
-
-    const fetchContract = async () => {
-
-        if (!contractId) return;
-
-        try {
-
-            const res = await fetch(
-                `/api/company/contracts/${contractId}`,
-                {
-                    credentials: "include",
-                }
-            );
-
-            if (!res.ok) return;
-
-            const data =
-                await res.json();
-
-            setContract(data);
-
-        } catch {
-
-            setError(
-                "Failed to load contract"
-            );
-        }
-    };
 
     const fetchServices = async () => {
 
@@ -659,159 +394,11 @@ export default function NewContractPage() {
 
     }, [step, contractId]);
 
-    const fields: Field[] = [
-        {
-            name: "clientId",
-            label: "Client",
-            readOnly: true,
-            after: (
-                <>
-                    {form.client && (
-                        <div
-                            style={{
-                                fontSize: 14,
-                                marginBottom: 6,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontWeight: 600,
-                                }}
-                            >
-                                ✅ {form.client.name}
-                            </div>
-
-                            <div
-                                style={{
-                                    fontSize: 12,
-                                    color:
-                                        "var(--text-secondary)",
-                                }}
-                            >
-                                {form.client.phone}
-                            </div>
-                        </div>
-                    )}
-
-                    <ClientSearch
-                        selected={form.clientId}
-                        onSelect={(client) => {
-
-                            setForm((prev) => ({
-                                ...prev,
-                                clientId:
-                                    String(client.id),
-                                client: {
-                                    id: client.id,
-                                    name: client.name,
-                                    phone: client.phone,
-                                },
-                            }));
-                        }}
-                    />
-
-                    {form.clientId && (
-                        <button
-                            onClick={() =>
-                                setForm((prev) => ({
-                                    ...prev,
-                                    clientId: "",
-                                    client: undefined,
-                                }))
-                            }
-                            style={{
-                                marginTop: 6,
-                                fontSize: 12,
-                                color:
-                                    "var(--error-color)",
-                                cursor: "pointer",
-                                background: "none",
-                                border: "none",
-                            }}
-                        >
-                            Change client
-                        </button>
-                    )}
-
-                    <div
-                        style={{
-                            marginTop: 10,
-                        }}
-                    >
-                        {!showClientForm && (
-                            <button
-                                onClick={() =>
-                                    setShowClientForm(true)
-                                }
-                                style={{
-                                    padding: "4px 8px",
-                                    fontSize: 12,
-                                    borderRadius: 6,
-                                    border: "none",
-                                    background:
-                                        "transparent",
-                                    color:
-                                        "var(--primary-color)",
-                                    cursor: "pointer",
-                                    textAlign: "left",
-                                }}
-                            >
-                                + Create new client
-                            </button>
-                        )}
-
-                        {showClientForm && (
-                            <InlineClientForm
-                                form={clientForm}
-                                setForm={setClientForm}
-                                onSubmit={
-                                    createClientInline
-                                }
-                                onCancel={() =>
-                                    setShowClientForm(false)
-                                }
-                            />
-                        )}
-
-                        {clientError && (
-                            <p
-                                style={{
-                                    color:
-                                        "var(--error-color)",
-                                    fontSize: 12,
-                                }}
-                            >
-                                {clientError}
-                            </p>
-                        )}
-                    </div>
-                </>
-            ),
-        },
-        {
-            name: "name",
-            label: "Event name",
-        },
-        {
-            name: "eventDate",
-            label: "Date",
-            type: "date",
-        },
-        {
-            name: "eventTime",
-            label: "Time",
-            type: "time",
-        },
-        {
-            name: "location",
-            label: "Location",
-        },
-        {
-            name: "notes",
-            label: "Notes",
-            type: "textarea",
-        },
-    ];
+    const fields =
+        getEventFields({
+            form,
+            setForm,
+        });
 
     return (
         <div style={{ padding: 20 }}>
@@ -827,12 +414,68 @@ export default function NewContractPage() {
             {step === "event" && (
 
                 <>
+                    <div
+                        style={{
+                            marginBottom: 16,
+                            padding: "12px 14px",
+                            borderRadius: 10,
+                            background: "rgba(59,130,246,0.08)",
+                            border: "1px solid rgba(59,130,246,0.2)",
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            color: "var(--text-primary)",
+                        }}
+                    >
+                        <strong>
+                            ℹ️ Información sobre el formato de fecha
+                        </strong>
+
+                        <p
+                            style={{
+                                marginTop: 6,
+                                marginBottom: 0,
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            Al crear el evento, las fechas se ingresan usando el
+                            formato inglés:
+                            <strong> MM/DD/YYYY </strong>
+                            (Mes/Día/Año).
+                        </p>
+
+                        <p
+                            style={{
+                                marginTop: 6,
+                                marginBottom: 0,
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            Después de guardar, el sistema mostrará las fechas en formato:
+                            <strong> DD/MM/YYYY </strong>
+                            (Día/Mes/Año).
+                        </p>
+
+                        <p
+                            style={{
+                                marginTop: 6,
+                                marginBottom: 0,
+                                fontSize: 12,
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            Ejemplo:
+                            <strong> 05/24/2026 </strong>
+                            se mostrará como
+                            <strong> 24/05/2026 </strong>
+                        </p>
+                    </div>
+
                     <CreateForm
                         title="1. Create Event"
                         fields={fields}
                         form={form}
                         setForm={setForm}
-                        onSubmit={createAll}
+                        onSubmit={createEvent}
                         onCancel={resetForm}
                     />
 
@@ -880,10 +523,10 @@ export default function NewContractPage() {
                 </>
             )}
 
-            {error && (
+            {(error || eventError) && (
                 <ErrorBox
-                    message={error}
-                    code={errorCode}
+                    message={error || eventError}
+                    code={errorCode || eventErrorCode}
                 />
             )}
 
@@ -971,13 +614,15 @@ export default function NewContractPage() {
 
                                             return false;
                                         }
-
+                                        //add service
                                         setError("");
 
                                         await fetchServices();
 
-                                        return true;
+                                        await fetchContract();
 
+                                        return true;
+                                        //add service
                                     } catch (e) {
 
                                         console.error(e);
@@ -1025,10 +670,14 @@ export default function NewContractPage() {
 
                                             return;
                                         }
-
+                                        //delete service
                                         setError("");
 
-                                        fetchServices();
+                                        await fetchServices();
+
+                                        await fetchContract();
+
+                                        //delete service
 
                                     } catch {
 
@@ -1072,10 +721,13 @@ export default function NewContractPage() {
 
                                             return;
                                         }
-
+                                        //update service
                                         setError("");
 
-                                        fetchServices();
+                                        await fetchServices();
+
+                                        await fetchContract();
+                                        //update service
 
                                     } catch {
 
@@ -1117,13 +769,16 @@ export default function NewContractPage() {
                                 />
                             )}
                             <p>
-                                ⚠️ Este es el paso final de el registro rapido ⚠️
+                                ⚠️ Despues de agregar un pago a un servicio, se concidera iniciado el contrato ⚠️
                             </p>
                             <p>
-                                ⚠️ si deseas continuar con un registro nuevo refrezca la pagina 🔄
+                                ⚠️ Siendo este es el paso final de el registro rapido ⚠️
                             </p>
                             <p>
-                                ⚠️ o darle click al boton de abajo ⬇️
+                                ℹ️ si deseas continuar con un registro nuevo refrezca la pagina 🔄
+                            </p>
+                            <p>
+                                ℹ️ o darle click al boton de abajo ⬇️
                             </p>
 
                         </div>
