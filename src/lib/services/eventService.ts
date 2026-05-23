@@ -18,10 +18,12 @@ export async function createEvent(data: CreateEventInput) {
     throw new Error("client not found")
   }
 
-  // 👇 SOLO ESTO
   const insertData = {
     ...data,
+
     eventDate: new Date(data.eventDate),
+    eventStart: new Date(data.eventStart),
+    eventEnd: new Date(data.eventEnd),
   }
 
   const [result] = await tdb.insert(events, insertData)
@@ -223,8 +225,17 @@ export async function updateEvent(
 
   const formattedData = {
     ...data,
-    ...(data.eventDate && {
+  ...(data.eventDate && {
       eventDate: new Date(data.eventDate),
+    }),
+
+
+    ...(data.eventStart && {
+      eventStart: new Date(data.eventStart),
+    }),
+
+    ...(data.eventEnd && {
+      eventEnd: new Date(data.eventEnd),
     }),
   }
 

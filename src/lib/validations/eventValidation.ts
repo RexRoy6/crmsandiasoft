@@ -14,7 +14,11 @@ export const createEventSchema = z.object({
     .max(255),
 
 
-  eventDate: z.string().datetime().or(z.string()),
+  //eventDate: z.string().datetime().or(z.string()),
+  eventDate: z.string(),
+  eventStart: z.string(),
+
+eventEnd: z.string(),
 
   location: z
     .string()
