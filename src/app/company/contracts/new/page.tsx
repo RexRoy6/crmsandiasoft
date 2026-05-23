@@ -558,13 +558,15 @@ export default function NewContractPage() {
 
                                             return false;
                                         }
-
+                                        //add service
                                         setError("");
 
                                         await fetchServices();
 
-                                        return true;
+                                        await fetchContract();
 
+                                        return true;
+                                        //add service
                                     } catch (e) {
 
                                         console.error(e);
@@ -612,10 +614,14 @@ export default function NewContractPage() {
 
                                             return;
                                         }
-
+                                        //delete service
                                         setError("");
 
-                                        fetchServices();
+                                        await fetchServices();
+
+                                        await fetchContract();
+
+                                        //delete service
 
                                     } catch {
 
@@ -659,10 +665,13 @@ export default function NewContractPage() {
 
                                             return;
                                         }
-
+                                        //update service
                                         setError("");
 
-                                        fetchServices();
+                                        await fetchServices();
+
+                                        await fetchContract();
+                                        //update service
 
                                     } catch {
 
