@@ -31,9 +31,10 @@ import ContractServicesList
 import ContractSummaryCard
     from "@/app/components/crm/contracts/ContractSummaryCard";
 
-import ClientSelector
-    from "@/app/components/crm/clients/ClientSelector";
 
+import {
+  getEventFields,
+} from "@/app/components/crm/events/getEventFields";
 
 import {
     useEventForm,
@@ -401,59 +402,11 @@ export default function NewContractPage() {
 
     }, [step, contractId]);
 
-    const fields: Field[] = [
-        {
-            name: "clientId",
-            label: "Client",
-            readOnly: true,
-            after: (
-                <ClientSelector
-                    selected={form.client}
-                    onSelect={(client) => {
-                        setForm((prev) => ({
-                            ...prev,
-                            clientId: String(client.id),
-                            client: {
-                                id: client.id,
-                                name: client.name,
-                                phone: client.phone,
-                            },
-                        }));
-                    }}
-                    onClear={() => {
-                        setForm((prev) => ({
-                            ...prev,
-                            clientId: "",
-                            client: undefined,
-                        }));
-                    }}
-                />
-            ),
-        },
-        {
-            name: "name",
-            label: "Event name",
-        },
-        {
-            name: "eventDate",
-            label: "Date",
-            type: "date",
-        },
-        {
-            name: "eventTime",
-            label: "Time",
-            type: "time",
-        },
-        {
-            name: "location",
-            label: "Location",
-        },
-        {
-            name: "notes",
-            label: "Notes",
-            type: "textarea",
-        },
-    ];
+const fields =
+  getEventFields({
+    form,
+    setForm,
+  });
 
     return (
         <div style={{ padding: 20 }}>
