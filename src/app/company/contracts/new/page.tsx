@@ -34,6 +34,16 @@ import ContractSummaryCard
 import ClientSelector
     from "@/app/components/crm/clients/ClientSelector";
 
+
+import {
+    useEventForm,
+} from "@/app/hooks/events/useEventForm";
+
+import {
+    useContract,
+} from "@/app/hooks/contracts/useContract";
+
+
 export default function NewContractPage() {
 
 
@@ -99,29 +109,46 @@ export default function NewContractPage() {
     const [contractId, setContractId] =
         useState<number | null>(null);
 
-    const [contract, setContract] =
-        useState<any>(null);
 
-    // event form
-    const [form, setForm] = useState({
-        clientId: "",
-        client: undefined as
-            | {
-                id: number;
-                name: string;
-                phone: string;
-            }
-            | undefined,
-        name: "",
-        eventDate: "",
-        eventTime: "",
-        location: "",
-        notes: "",
+    const {
+        contract,
+        setContract,
+
+        fetchContract,
+
+    } = useContract(contractId);
+
+
+    const {
+        form,
+        setForm,
+
+        resetForm,
+
+        createEvent,
+
+        error,
+        errorCode,
+
+    } = useEventForm({
+
+        onSuccess: ({ event, contract }) => {
+
+            setContract(contract);
+
+            setContractId(contract.id);
+
+            setEventDateTime(
+                event.eventDate
+            );
+
+            setStep("services");
+        },
     });
-
 
     const [eventDateTime, setEventDateTime] =
         useState<string | null>(null);
+
 
     const resetAll = () => {
 
@@ -154,189 +181,6 @@ export default function NewContractPage() {
         setEventDateTime(null);
     };
 
-    const resetForm = () => {
-
-        setForm({
-            clientId: "",
-            client: undefined,
-            name: "",
-            eventDate: "",
-            eventTime: "",
-            location: "",
-            notes: "",
-        });
-    };
-
-
-    const createAll = async () => {
-
-        try {
-
-            const dateTime =
-                new Date(
-                    `${form.eventDate}T${form.eventTime}`
-                );
-
-            const pad = (n: number) =>
-                String(n).padStart(2, "0");
-
-            const formatted =
-                `${dateTime.getFullYear()}-${pad(
-                    dateTime.getMonth() + 1
-                )}-${pad(dateTime.getDate())} ${pad(
-                    dateTime.getHours()
-                )}:${pad(
-                    dateTime.getMinutes()
-                )}:00`;
-
-            setEventDateTime(formatted);
-
-            const payload = {
-                clientId: Number(form.clientId),
-                name: form.name,
-                eventDate: formatted,
-                location: form.location,
-                notes: form.notes,
-            };
-
-            if (!form.clientId) {
-
-                setError("Client is required");
-                return;
-            }
-
-            if (!form.name) {
-
-                setError("Event name is required");
-                return;
-            }
-
-            if (
-                !form.eventDate ||
-                !form.eventTime
-            ) {
-
-                setError(
-                    "Event date and time are required"
-                );
-
-                return;
-            }
-
-            const eventRes = await fetch(
-                "/api/company/events",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                }
-            );
-
-            if (!eventRes.ok) {
-
-                setError("Error creating event");
-
-                setErrorCode(eventRes.status);
-
-                return;
-            }
-
-            const event =
-                await eventRes.json();
-
-            const contractRes = await fetch(
-                "/api/company/contracts",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        eventId: event.id,
-                        status: "draft",
-                        totalAmount: 0,
-                    }),
-                }
-            );
-
-            if (!contractRes.ok) {
-
-                const data =
-                    await contractRes.json();
-
-                if (
-                    contractRes.status === 409
-                ) {
-
-                    setError(
-                        "Contract already exists for this event"
-                    );
-
-                    setErrorCode(409);
-
-                    return;
-                }
-
-                setError(
-                    parseError(
-                        data?.error,
-                        "Error creating contract"
-                    )
-                );
-
-                return;
-            }
-
-            const contract =
-                await contractRes.json();
-
-            resetForm();
-
-            setContract(contract);
-
-            setContractId(contract.id);
-
-            setStep("services");
-
-        } catch (e) {
-
-            console.error(e);
-
-            setError("Connection error");
-        }
-    };
-
-    const fetchContract = async () => {
-
-        if (!contractId) return;
-
-        try {
-
-            const res = await fetch(
-                `/api/company/contracts/${contractId}`,
-                {
-                    credentials: "include",
-                }
-            );
-
-            if (!res.ok) return;
-
-            const data =
-                await res.json();
-
-            setContract(data);
-
-        } catch {
-
-            setError(
-                "Failed to load contract"
-            );
-        }
-    };
 
     const fetchServices = async () => {
 
@@ -630,7 +474,7 @@ export default function NewContractPage() {
                         fields={fields}
                         form={form}
                         setForm={setForm}
-                        onSubmit={createAll}
+                        onSubmit={createEvent}
                         onCancel={resetForm}
                     />
 

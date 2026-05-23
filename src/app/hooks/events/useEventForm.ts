@@ -43,7 +43,17 @@ const initialForm: EventFormState = {
   notes: "",
 };
 
-export function useEventForm() {
+
+interface UseEventFormOptions {
+  onSuccess?: (data: {
+    event: any;
+    contract: any;
+  }) => void;
+}
+
+export function useEventForm(
+  options?: UseEventFormOptions
+) {
   const [form, setForm] =
     useState<EventFormState>(initialForm);
 
@@ -108,15 +118,18 @@ export function useEventForm() {
 
       /* ---------- CREATE CONTRACT ---------- */
 
-      const contract = await createContract({
-        eventId: event.id,
-
-        status: "draft",
-
-        totalAmount: 0,
-      });
-
+      const contract =
+        await createContract({
+          eventId: event.id,
+          status: "draft",
+          totalAmount: 0,
+        });
       /* ---------- SUCCESS ---------- */
+
+      options?.onSuccess?.({
+        event,
+        contract,
+      });
 
       setCreatedContractId(contract.id);
 

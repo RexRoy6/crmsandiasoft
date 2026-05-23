@@ -1,24 +1,84 @@
-import type { ContractStatus } from "@/db/schema";
+import type {
+  Contract,
+} from "@/types/contract";
 
-export interface CreateContractPayload {
-  eventId: number;
+/* ---------- GET CONTRACT ---------- */
 
-  status: ContractStatus;
+export async function getContract(
+  contractId: number
+): Promise<Contract> {
 
-  totalAmount: number;
+  const res = await fetch(
+    `/api/company/contracts/${contractId}`,
+    {
+      credentials: "include",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      "Failed to fetch contract"
+    );
+  }
+
+  return res.json();
 }
 
-export interface ContractResponse {
-  id: number;
+/* ---------- GET CONTRACT SERVICES ---------- */
 
-  status: ContractStatus;
+export async function getContractServices(
+  contractId: number
+) {
+
+  const res = await fetch(
+    `/api/company/contracts/${contractId}/services`,
+    {
+      credentials: "include",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      "Failed to fetch services"
+    );
+  }
+
+  return res.json();
+}
+
+/* ---------- GET CONTRACT PAYMENTS ---------- */
+
+export async function getContractPayments(
+  contractId: number
+) {
+
+  const res = await fetch(
+    `/api/company/contracts/${contractId}/payments`,
+    {
+      credentials: "include",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(
+      "Failed to fetch payments"
+    );
+  }
+
+  return res.json();
 }
 
 /* ---------- CREATE CONTRACT ---------- */
 
+interface CreateContractPayload {
+  eventId: number;
+  status: "draft" | "active" | "cancelled" | "completed";
+  totalAmount: number;
+}
+
 export async function createContract(
   payload: CreateContractPayload
-): Promise<ContractResponse> {
+) {
 
   const res = await fetch(
     "/api/company/contracts",
@@ -36,7 +96,11 @@ export async function createContract(
   );
 
   if (!res.ok) {
+
+    const data = await res.json();
+
     throw new Error(
+      data?.error ||
       "Failed to create contract"
     );
   }
