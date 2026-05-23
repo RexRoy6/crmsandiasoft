@@ -95,7 +95,7 @@ export function useEventForm(
 
         name: form.name,
 
-        eventDate: form.eventDate,
+        eventDate: eventStart,
 
         eventStart,
 
