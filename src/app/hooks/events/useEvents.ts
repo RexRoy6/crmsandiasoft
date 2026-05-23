@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 
 import type {
-  Event,
+  EventListItem,
   EventsResponse,
   EventPagination,
 } from "@/types/event";
 
 export function useEvents() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] =
+  useState<EventListItem[]>([]);
 
   const [loading, setLoading] = useState(true);
 
