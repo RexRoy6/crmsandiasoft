@@ -127,8 +127,8 @@ export default function NewContractPage() {
 
         createEvent,
 
-        error,
-        errorCode,
+        error: eventError,
+        errorCode: eventErrorCode,
 
     } = useEventForm({
 
@@ -522,10 +522,10 @@ export default function NewContractPage() {
                 </>
             )}
 
-            {error && (
+            {(error || eventError) && (
                 <ErrorBox
-                    message={error}
-                    code={errorCode}
+                    message={error || eventError}
+                    code={errorCode || eventErrorCode}
                 />
             )}
 
@@ -759,13 +759,16 @@ export default function NewContractPage() {
                                 />
                             )}
                             <p>
-                                ⚠️ Este es el paso final de el registro rapido ⚠️
+                                ⚠️ Despues de agregar un pago a un servicio, se concidera iniciado el contrato ⚠️
                             </p>
                             <p>
-                                ⚠️ si deseas continuar con un registro nuevo refrezca la pagina 🔄
+                                ⚠️ Siendo este es el paso final de el registro rapido ⚠️
                             </p>
                             <p>
-                                ⚠️ o darle click al boton de abajo ⬇️
+                                ℹ️ si deseas continuar con un registro nuevo refrezca la pagina 🔄
+                            </p>
+                            <p>
+                                ℹ️ o darle click al boton de abajo ⬇️
                             </p>
 
                         </div>
