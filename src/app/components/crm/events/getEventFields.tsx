@@ -1,107 +1,111 @@
 import type { Field }
-  from "@/app/components/crm/CreateForm";
+    from "@/app/components/crm/CreateForm";
 
 import ClientSelector
-  from "@/app/components/crm/clients/ClientSelector";
+    from "@/app/components/crm/clients/ClientSelector";
 
 import {
-  formatDate,
+    formatDate,
 } from "@/lib/utils/date";
+import type {
+    EventFormState,
+} from "@/types/forms/eventForm";
+
 
 interface Props {
-  form: any;
+    form: EventFormState;
 
-  setForm: React.Dispatch<
-    React.SetStateAction<any>
-  >;
+    setForm: React.Dispatch<
+        React.SetStateAction<EventFormState>
+    >;
 }
 
 export function getEventFields({
-  form,
-  setForm,
+    form,
+    setForm,
 }: Props): Field[] {
 
-  return [
-    {
-      name: "clientId",
+    return [
+        {
+            name: "clientId",
 
-      label: "Client",
+            label: "Client",
 
-      readOnly: true,
+            readOnly: true,
 
-      after: (
-        <ClientSelector
-          selected={form.client}
+            after: (
+                <ClientSelector
+                    selected={form.client}
 
-          onSelect={(client) => {
-            setForm((prev: any) => ({
-              ...prev,
+                    onSelect={(client) => {
+                        setForm((prev) => ({
+                            ...prev,
 
-              clientId: String(client.id),
+                            clientId: String(client.id),
 
-              client: {
-                id: client.id,
-                name: client.name,
-                phone: client.phone,
-              },
-            }));
-          }}
+                            client: {
+                                id: client.id,
+                                name: client.name,
+                                phone: client.phone,
+                            },
+                        }));
+                    }}
 
-          onClear={() => {
-            setForm((prev: any) => ({
-              ...prev,
+                    onClear={() => {
+                        setForm((prev) => ({
+                            ...prev,
 
-              clientId: "",
+                            clientId: "",
 
-              client: undefined,
-            }));
-          }}
-        />
-      ),
-    },
+                            client: undefined,
+                        }));
+                    }}
+                />
+            ),
+        },
 
-    {
-      name: "name",
-      label: "Event Name",
-    },
+        {
+            name: "name",
+            label: "Event Name",
+        },
 
-    {
-      name: "eventDate",
+        {
+            name: "eventDate",
 
-      label: "Event Date",
+            label: "Event Date",
 
-      type: "date",
+            type: "date",
 
-      after: (
-        <p
-          style={{
-            fontSize: 12,
-            color: "var(--text-secondary)",
-            marginTop: 4,
-          }}
-        >
-          {form.eventDate
-            ? `📅 Fecha seleccionada: ${formatDate(form.eventDate)}`
-            : "📅 Selecciona una fecha"}
-        </p>
-      ),
-    },
+            after: (
+                <p
+                    style={{
+                        fontSize: 12,
+                        color: "var(--text-secondary)",
+                        marginTop: 4,
+                    }}
+                >
+                    {form.eventDate
+                        ? `📅 Fecha seleccionada: ${formatDate(form.eventDate)}`
+                        : "📅 Selecciona una fecha"}
+                </p>
+            ),
+        },
 
-    {
-      name: "eventTime",
-      label: "Event Time",
-      type: "time",
-    },
+        {
+            name: "eventTime",
+            label: "Event Time",
+            type: "time",
+        },
 
-    {
-      name: "location",
-      label: "Location",
-    },
+        {
+            name: "location",
+            label: "Location",
+        },
 
-    {
-      name: "notes",
-      label: "Notes",
-      type: "textarea",
-    },
-  ];
+        {
+            name: "notes",
+            label: "Notes",
+            type: "textarea",
+        },
+    ];
 }

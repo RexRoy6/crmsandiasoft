@@ -4,45 +4,10 @@ import { useState } from "react";
 
 import { createEvent } from "@/lib/api/events";
 import { createContract } from "@/lib/api/contracts";
-
-export interface EventFormClient {
-  id: number;
-  name: string;
-  phone: string;
-}
-
-export interface EventFormState {
-  clientId: string;
-
-  client?: EventFormClient;
-
-  name: string;
-
-  eventDate: string;
-
-  eventTime: string;
-
-  location: string;
-
-  notes: string;
-}
-
-const initialForm: EventFormState = {
-  clientId: "",
-
-  client: undefined,
-
-  name: "",
-
-  eventDate: "",
-
-  eventTime: "",
-
-  location: "",
-
-  notes: "",
-};
-
+import {
+  EventFormState,
+  initialEventForm,
+} from "@/types/forms/eventForm";
 
 interface UseEventFormOptions {
   onSuccess?: (data: {
@@ -55,7 +20,9 @@ export function useEventForm(
   options?: UseEventFormOptions
 ) {
   const [form, setForm] =
-    useState<EventFormState>(initialForm);
+    useState<EventFormState>(
+      initialEventForm
+    );
 
   const [showForm, setShowForm] =
     useState(false);
@@ -75,7 +42,7 @@ export function useEventForm(
   /* ---------- RESET ---------- */
 
   const resetForm = () => {
-    setForm(initialForm);
+    setForm(initialEventForm);
   };
 
   /* ---------- CREATE EVENT ---------- */
