@@ -1,37 +1,42 @@
 export interface EventFormClient {
-  id: number;
-  name: string;
-  phone: string;
+    id: number;
+    name: string;
+    phone: string;
 }
 
 export interface EventFormState {
-  clientId: string;
+    clientId: string;
 
-  client?: EventFormClient;
+    client?: EventFormClient;
 
-  name: string;
+    name: string;
 
-  eventDate: string;
+    eventDate: string;
 
-  eventTime: string;
+    //   eventTime: string;
+    eventStart: string;
 
-  location: string;
+    eventEnd: string;
 
-  notes: string;
+    location: string;
+
+    notes: string;
 }
 
 export const initialEventForm: EventFormState = {
-  clientId: "",
+    clientId: "",
 
-  client: undefined,
+    client: undefined,
 
-  name: "",
+    name: "",
 
-  eventDate: "",
+    eventDate: "",
+    eventStart: "",
+    eventEnd: "",
 
-  eventTime: "",
+    //eventTime: "",
 
-  location: "",
+    location: "",
 
-  notes: "",
+    notes: "",
 };
