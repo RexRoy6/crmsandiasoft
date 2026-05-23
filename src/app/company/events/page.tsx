@@ -10,18 +10,9 @@ import SearchBar from "@/app/components/crm/SearchBar";
 
 import Pagination from "@/app/components/crm/Pagination";
 
-import ClientSelector
-  from "@/app/components/crm/clients/ClientSelector";
-
 import EventCard
   from "@/app/components/crm/events/EventCard";
 
-import type { Field }
-  from "@/app/components/crm/CreateForm";
-
-import {
-  formatDate,
-} from "@/lib/utils/date";
 
 import {
   useEventForm,
@@ -33,6 +24,10 @@ import {
 
 import { useRouter }
   from "next/navigation";
+
+import {
+  getEventFields,
+} from "@/app/components/crm/events/getEventFields";
 
 export default function EventsPage() {
 
@@ -81,89 +76,10 @@ export default function EventsPage() {
 
   /* ---------- FIELDS ---------- */
 
-  const eventFields: Field[] = [
-    {
-      name: "clientId",
-
-      label: "Client",
-
-      readOnly: true,
-
-      after: (
-        <ClientSelector
-          selected={form.client}
-
-          onSelect={(client) => {
-            setForm((prev) => ({
-              ...prev,
-
-              clientId: String(client.id),
-
-              client: {
-                id: client.id,
-                name: client.name,
-                phone: client.phone,
-              },
-            }));
-          }}
-
-          onClear={() => {
-            setForm((prev) => ({
-              ...prev,
-
-              clientId: "",
-
-              client: undefined,
-            }));
-          }}
-        />
-      ),
-    },
-
-    {
-      name: "name",
-      label: "Event Name",
-    },
-
-    {
-      name: "eventDate",
-
-      label: "Event Date",
-
-      type: "date",
-
-      after: (
-        <p
-          style={{
-            fontSize: 12,
-            color: "var(--text-secondary)",
-            marginTop: 4,
-          }}
-        >
-          {form.eventDate
-            ? `📅 Fecha seleccionada: ${formatDate(form.eventDate)}`
-            : "📅 Selecciona una fecha"}
-        </p>
-      ),
-    },
-
-    {
-      name: "eventTime",
-      label: "Event Time",
-      type: "time",
-    },
-
-    {
-      name: "location",
-      label: "Location",
-    },
-
-    {
-      name: "notes",
-      label: "Notes",
-      type: "textarea",
-    },
-  ];
+  const eventFields = getEventFields({
+    form,
+    setForm,
+  });
 
   return (
     <div>
