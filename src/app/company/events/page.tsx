@@ -24,6 +24,10 @@ import {
 import {
   useEventForm,
 } from "@/app/hooks/events/useEventForm";
+import {
+  useEvents,
+} from "@/app/hooks/events/useEvents";
+
 
 import type {
   EventListItem,
@@ -33,23 +37,6 @@ import type {
 export default function EventsPage() {
 
   const router = useRouter();
-
-  /* ---------- EVENTS ---------- */
-
-  const [events, setEvents] =
-    useState<EventListItem[]>([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [page, setPage] =
-    useState(1);
-
-  const [pagination, setPagination] =
-    useState<EventsResponse["pagination"] | null>(null);
 
   /* ---------- FORM HOOK ---------- */
 
@@ -72,6 +59,25 @@ export default function EventsPage() {
     setError,
     setErrorCode,
   } = useEventForm();
+
+
+  const {
+    events,
+    loading,
+
+    error: eventsError,
+    errorCode: eventsErrorCode,
+
+    search,
+    setSearch,
+
+    page,
+    setPage,
+
+    pagination,
+
+    fetchEvents,
+  } = useEvents();
 
   /* ---------- FORM FIELDS ---------- */
 
@@ -159,57 +165,6 @@ export default function EventsPage() {
     },
   ];
 
-  /* ---------- FETCH EVENTS ---------- */
-
-  const fetchEvents = async () => {
-    try {
-
-      setLoading(true);
-
-      const res = await fetch(
-        `/api/company/events?search=${search}&page=${page}&limit=8`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!res.ok) {
-
-        setError("Failed to fetch events");
-
-        setErrorCode(res.status);
-
-        return;
-      }
-
-      const result: EventsResponse =
-        await res.json();
-
-      setEvents(result.data);
-
-      setPagination(result.pagination);
-
-    } catch {
-
-      setError("Connection error");
-
-    } finally {
-
-      setLoading(false);
-    }
-  };
-
-  /* ---------- EFFECT ---------- */
-
-  useEffect(() => {
-
-    const timeout = setTimeout(() => {
-      fetchEvents();
-    }, 300);
-
-    return () => clearTimeout(timeout);
-
-  }, [search, page]);
 
   /* ---------- UI ---------- */
 
@@ -316,6 +271,13 @@ export default function EventsPage() {
       )}
 
       {/* ---------- ERROR ---------- */}
+
+      {eventsError && (
+        <ErrorBox
+          message={eventsError}
+          code={eventsErrorCode}
+        />
+      )}
 
       {error && (
         <ErrorBox
