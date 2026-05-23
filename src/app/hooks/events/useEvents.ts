@@ -2,19 +2,21 @@
 
 import { useEffect, useState } from "react";
 
+import { getEvents } from "@/lib/api/events";
+
 import type {
   EventListItem,
-  EventsResponse,
   EventPagination,
 } from "@/types/event";
 
 export function useEvents() {
   const [events, setEvents] =
-  useState<EventListItem[]>([]);
+    useState<EventListItem[]>([]);
 
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
+
   const [errorCode, setErrorCode] =
     useState<number | undefined>();
 
@@ -29,22 +31,14 @@ export function useEvents() {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        `/api/company/events?search=${search}&page=${page}&limit=8`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!res.ok) {
-        setError("Failed to fetch events");
-        setErrorCode(res.status);
-        return;
-      }
-
-      const result: EventsResponse = await res.json();
+      const result = await getEvents({
+        search,
+        page,
+        limit: 8,
+      });
 
       setEvents(result.data);
+
       setPagination(result.pagination);
 
     } catch {
@@ -64,6 +58,7 @@ export function useEvents() {
 
   return {
     events,
+
     loading,
 
     error,

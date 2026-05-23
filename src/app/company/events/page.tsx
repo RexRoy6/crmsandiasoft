@@ -29,11 +29,6 @@ import {
 } from "@/app/hooks/events/useEvents";
 
 
-import type {
-  EventListItem,
-  EventsResponse,
-} from "@/types/event";
-
 export default function EventsPage() {
 
   const router = useRouter();
@@ -56,8 +51,6 @@ export default function EventsPage() {
     error,
     errorCode,
 
-    setError,
-    setErrorCode,
   } = useEventForm();
 
 

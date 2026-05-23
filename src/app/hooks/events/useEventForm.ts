@@ -2,33 +2,44 @@
 
 import { useState } from "react";
 
+import { createEvent } from "@/lib/api/events";
+import { createContract } from "@/lib/api/contracts";
+
+export interface EventFormClient {
+  id: number;
+  name: string;
+  phone: string;
+}
+
 export interface EventFormState {
   clientId: string;
 
-  client:
-    | {
-        id: number;
-        name: string;
-        phone: string;
-      }
-    | undefined;
+  client?: EventFormClient;
 
   name: string;
+
   eventDate: string;
+
   eventTime: string;
+
   location: string;
+
   notes: string;
 }
 
 const initialForm: EventFormState = {
   clientId: "",
+
   client: undefined,
 
   name: "",
+
   eventDate: "",
+
   eventTime: "",
 
   location: "",
+
   notes: "",
 };
 
@@ -42,7 +53,11 @@ export function useEventForm() {
   const [createdContractId, setCreatedContractId] =
     useState<number | null>(null);
 
-  const [error, setError] = useState("");
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
 
   const [errorCode, setErrorCode] =
     useState<number | undefined>();
@@ -55,10 +70,14 @@ export function useEventForm() {
 
   /* ---------- CREATE EVENT ---------- */
 
-  const createEvent = async () => {
+  const handleCreateEvent = async () => {
     try {
+      setLoading(true);
+
       setError("");
       setErrorCode(undefined);
+
+      /* ---------- DATETIME ---------- */
 
       const dateTime = new Date(
         `${form.eventDate}T${form.eventTime}`
@@ -75,7 +94,7 @@ export function useEventForm() {
 
       /* ---------- CREATE EVENT ---------- */
 
-      const payload = {
+      const event = await createEvent({
         clientId: Number(form.clientId),
 
         name: form.name,
@@ -85,82 +104,32 @@ export function useEventForm() {
         location: form.location,
 
         notes: form.notes,
-      };
-
-      const res = await fetch(
-        "/api/company/events",
-        {
-          method: "POST",
-
-          credentials: "include",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!res.ok) {
-        setError("Failed to create event");
-        setErrorCode(res.status);
-        return null;
-      }
-
-      const newEvent = await res.json();
+      });
 
       /* ---------- CREATE CONTRACT ---------- */
 
-      const contractRes = await fetch(
-        "/api/company/contracts",
-        {
-          method: "POST",
+      const contract = await createContract({
+        eventId: event.id,
 
-          credentials: "include",
+        status: "draft",
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            eventId: Number(newEvent.id),
-
-            status: "draft",
-
-            totalAmount: 0,
-          }),
-        }
-      );
-
-      if (!contractRes.ok) {
-        setError(
-          "Event created, but failed to create contract"
-        );
-
-        return null;
-      }
-
-      const newContract =
-        await contractRes.json();
+        totalAmount: 0,
+      });
 
       /* ---------- SUCCESS ---------- */
 
-      setCreatedContractId(newContract.id);
+      setCreatedContractId(contract.id);
 
       setShowForm(false);
 
       resetForm();
 
-      return {
-        event: newEvent,
-        contract: newContract,
-      };
-
-    } catch {
-      setError("Connection error");
-
-      return null;
+    } catch (err: any) {
+      setError(
+        err?.message || "Failed to create event"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,13 +143,13 @@ export function useEventForm() {
     createdContractId,
     setCreatedContractId,
 
-    createEvent,
+    loading,
+
+    createEvent: handleCreateEvent,
+
     resetForm,
 
     error,
     errorCode,
-
-    setError,
-    setErrorCode,
   };
 }
