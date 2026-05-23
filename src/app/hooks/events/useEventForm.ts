@@ -8,6 +8,9 @@ import {
   EventFormState,
   initialEventForm,
 } from "@/types/forms/eventForm";
+import {
+  combineDateTime,
+} from "@/lib/utils/date";
 
 interface UseEventFormOptions {
   onSuccess?: (data: {
@@ -54,29 +57,34 @@ export function useEventForm(
       setError("");
       setErrorCode(undefined);
 
-      /* ---------- DATETIME ---------- */
+      /* ---------- CREATE EVENT ---------- */
 
-      const dateTime = new Date(
-        `${form.eventDate}T${form.eventTime}`
+      const eventStart = combineDateTime(
+        form.eventDate,
+        form.eventStart
       );
 
-      const pad = (n: number) =>
-        String(n).padStart(2, "0");
+      const eventEnd = combineDateTime(
+        form.eventDate,
+        form.eventEnd
+      );
 
-      const formatted = `${dateTime.getFullYear()}-${pad(
-        dateTime.getMonth() + 1
-      )}-${pad(dateTime.getDate())} ${pad(
-        dateTime.getHours()
-      )}:${pad(dateTime.getMinutes())}:00`;
-
-      /* ---------- CREATE EVENT ---------- */
+      if (!eventStart || !eventEnd) {
+        throw new Error(
+          "Invalid event date/time"
+        );
+      }
 
       const event = await createEvent({
         clientId: Number(form.clientId),
 
         name: form.name,
 
-        eventDate: formatted,
+        eventDate: form.eventDate,
+
+        eventStart,
+
+        eventEnd,
 
         location: form.location,
 

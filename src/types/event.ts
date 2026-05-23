@@ -16,6 +16,8 @@ export interface EventListItem {
   name: string;
 
   eventDate: string;
+  eventStart: string;
+  eventEnd: string;
 
   location: string | null;
 

@@ -67,7 +67,9 @@ export default function EventCard({
             >
               {formatDate(event.eventDate)}
               {" · "}
-              {formatTime(event.eventDate)}
+              {formatTime(event.eventStart)}
+              {" - "}
+              {formatTime(event.eventEnd)}
             </span>
           </div>
 
@@ -124,15 +126,15 @@ export default function EventCard({
       actions={[
         ...(contract
           ? [
-              {
-                label: "View Contract",
+            {
+              label: "View Contract",
 
-                onClick: () =>
-                  router.push(
-                    `/company/contracts/${contract.id}/services`
-                  ),
-              },
-            ]
+              onClick: () =>
+                router.push(
+                  `/company/contracts/${contract.id}/services`
+                ),
+            },
+          ]
           : []),
 
         {

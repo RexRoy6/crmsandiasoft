@@ -90,10 +90,15 @@ export function getEventFields({
                 </p>
             ),
         },
+        {
+            name: "eventStart",
+            label: "Hora Inicio",
+            type: "time",
+        },
 
         {
-            name: "eventTime",
-            label: "Event Time",
+            name: "eventEnd",
+            label: "Hora Final",
             type: "time",
         },
 

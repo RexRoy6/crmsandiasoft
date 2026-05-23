@@ -10,6 +10,10 @@ export interface CreateEventPayload {
 
   eventDate: string;
 
+  eventStart: string;
+
+  eventEnd: string;
+
   location: string;
 
   notes: string;

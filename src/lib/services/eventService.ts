@@ -82,6 +82,8 @@ export async function getEvents({
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
       location: events.location,
       notes: events.notes,
 
@@ -148,6 +150,8 @@ export async function getEventById(id: number) {
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
       location: events.location,
       notes: events.notes,
 
@@ -196,6 +200,8 @@ export async function getEventsByClient(clientId: number) {
       id: events.id,
       name: events.name,
       eventDate: events.eventDate,
+      eventStart: events.eventStart,
+      eventEnd: events.eventEnd,
       location: events.location
     })
     .from(events)
@@ -225,7 +231,7 @@ export async function updateEvent(
 
   const formattedData = {
     ...data,
-  ...(data.eventDate && {
+    ...(data.eventDate && {
       eventDate: new Date(data.eventDate),
     }),
 

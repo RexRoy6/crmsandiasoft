@@ -33,7 +33,7 @@ import ContractSummaryCard
 
 
 import {
-  getEventFields,
+    getEventFields,
 } from "@/app/components/crm/events/getEventFields";
 
 import {
@@ -162,15 +162,7 @@ export default function NewContractPage() {
             "activeContractDraft"
         );
 
-        setForm({
-            clientId: "",
-            client: undefined,
-            name: "",
-            eventDate: "",
-            eventTime: "",
-            location: "",
-            notes: "",
-        });
+        resetForm();
 
         setServices([]);
         setCompanyServices([]);
@@ -402,11 +394,11 @@ export default function NewContractPage() {
 
     }, [step, contractId]);
 
-const fields =
-  getEventFields({
-    form,
-    setForm,
-  });
+    const fields =
+        getEventFields({
+            form,
+            setForm,
+        });
 
     return (
         <div style={{ padding: 20 }}>
