@@ -414,6 +414,62 @@ export default function NewContractPage() {
             {step === "event" && (
 
                 <>
+                    <div
+                        style={{
+                            marginBottom: 16,
+                            padding: "12px 14px",
+                            borderRadius: 10,
+                            background: "rgba(59,130,246,0.08)",
+                            border: "1px solid rgba(59,130,246,0.2)",
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            color: "var(--text-primary)",
+                        }}
+                    >
+                        <strong>
+                            ℹ️ Información sobre el formato de fecha
+                        </strong>
+
+                        <p
+                            style={{
+                                marginTop: 6,
+                                marginBottom: 0,
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            Al crear el evento, las fechas se ingresan usando el
+                            formato inglés:
+                            <strong> MM/DD/YYYY </strong>
+                            (Mes/Día/Año).
+                        </p>
+
+                        <p
+                            style={{
+                                marginTop: 6,
+                                marginBottom: 0,
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            Después de guardar, el sistema mostrará las fechas en formato:
+                            <strong> DD/MM/YYYY </strong>
+                            (Día/Mes/Año).
+                        </p>
+
+                        <p
+                            style={{
+                                marginTop: 6,
+                                marginBottom: 0,
+                                fontSize: 12,
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            Ejemplo:
+                            <strong> 05/24/2026 </strong>
+                            se mostrará como
+                            <strong> 24/05/2026 </strong>
+                        </p>
+                    </div>
+
                     <CreateForm
                         title="1. Create Event"
                         fields={fields}
