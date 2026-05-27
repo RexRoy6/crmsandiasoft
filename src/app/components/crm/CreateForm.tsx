@@ -19,7 +19,7 @@ export type Field = {
   onChange?: (value: string) => void;
 
   readOnly?: boolean;
-
+  hideInput?: boolean;
   after?: ReactNode;
 };
 
@@ -94,7 +94,7 @@ export default function CreateForm({
 
       {fields.map((field) => {
 
-      
+
 
         /* ---------- SELECT ---------- */
 
@@ -215,24 +215,28 @@ export default function CreateForm({
             >
               {field.label}
             </label>
-            <input
-              type={field.type || "text"}
-              value={form[field.name] ?? ""}
-              readOnly={field.readOnly}
-              onChange={(e) =>
-                handleFieldChange(field, e.target.value)
-              }
-              style={{
-                padding: "8px 10px",
-                fontSize: 12,
-                borderRadius: 8,
-                border: "1px solid var(--border-color)",
-                background: field.readOnly
-                  ? "var(--bg-primary)"
-                  : "var(--bg-secondary)",
-                color: "var(--text-primary)",
-              }}
-            />
+
+
+            {!field.hideInput && (
+              <input
+                type={field.type || "text"}
+                value={form[field.name] ?? ""}
+                readOnly={field.readOnly}
+                onChange={(e) =>
+                  handleFieldChange(field, e.target.value)
+                }
+                style={{
+                  padding: "8px 10px",
+                  fontSize: 12,
+                  borderRadius: 8,
+                  border: "1px solid var(--border-color)",
+                  background: field.readOnly
+                    ? "var(--bg-primary)"
+                    : "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                }}
+              />
+            )}
 
             {field.after && (
               <div style={{ marginTop: 4 }}>

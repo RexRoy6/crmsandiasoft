@@ -30,7 +30,7 @@ export function getEventFields({
             name: "clientId",
 
             label: "Client",
-
+            hideInput: true,
             readOnly: true,
 
             after: (
