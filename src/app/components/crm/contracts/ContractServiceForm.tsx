@@ -66,11 +66,14 @@ export default function ContractServiceForm({
                         `${s.name} ($${s.priceBase})`,
                 })),
             onChange: handleServiceChange,
+
+            required: true,
         },
         {
             name: "quantity",
             label: "Quantity",
             type: "number",
+            required: true,
         },
         {
             name: "unitPrice",
@@ -86,11 +89,13 @@ export default function ContractServiceForm({
             name: "operationStart",
             label: "Start Time",
             type: "time",
+            required: true,
         },
         {
             name: "operationEnd",
             label: "End Time",
             type: "time",
+            required: true,
         },
     ];
 

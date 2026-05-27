@@ -19,7 +19,8 @@ export type Field = {
   onChange?: (value: string) => void;
 
   readOnly?: boolean;
-
+  hideInput?: boolean;
+  required?: boolean;
   after?: ReactNode;
 };
 
@@ -94,7 +95,7 @@ export default function CreateForm({
 
       {fields.map((field) => {
 
-      
+
 
         /* ---------- SELECT ---------- */
 
@@ -115,10 +116,24 @@ export default function CreateForm({
                   color: "var(--text-secondary)",
                 }}
               >
-                {field.label}
+                <>
+                  {field.label}
+
+                  {field.required && (
+                    <span
+                      style={{
+                        color: "red",
+                        marginLeft: 4,
+                      }}
+                    >
+                      *
+                    </span>
+                  )}
+                </>
               </label>
 
               <select
+                required={field.required}
                 value={form[field.name] ?? ""}
                 onChange={(e) => {
                   handleFieldChange(field, e.target.value);
@@ -173,10 +188,24 @@ export default function CreateForm({
                   color: "var(--text-secondary)",
                 }}
               >
-                {field.label}
+                <>
+                  {field.label}
+
+                  {field.required && (
+                    <span
+                      style={{
+                        color: "red",
+                        marginLeft: 4,
+                      }}
+                    >
+                      *
+                    </span>
+                  )}
+                </>
               </label>
 
               <textarea
+                required={field.required}
                 value={form[field.name] ?? ""}
                 rows={4}
                 onChange={(e) => {
@@ -213,26 +242,44 @@ export default function CreateForm({
                 color: "var(--text-secondary)",
               }}
             >
-              {field.label}
+              <>
+                {field.label}
+
+                {field.required && (
+                  <span
+                    style={{
+                      color: "red",
+                      marginLeft: 4,
+                    }}
+                  >
+                    *
+                  </span>
+                )}
+              </>
             </label>
-            <input
-              type={field.type || "text"}
-              value={form[field.name] ?? ""}
-              readOnly={field.readOnly}
-              onChange={(e) =>
-                handleFieldChange(field, e.target.value)
-              }
-              style={{
-                padding: "8px 10px",
-                fontSize: 12,
-                borderRadius: 8,
-                border: "1px solid var(--border-color)",
-                background: field.readOnly
-                  ? "var(--bg-primary)"
-                  : "var(--bg-secondary)",
-                color: "var(--text-primary)",
-              }}
-            />
+
+
+            {!field.hideInput && (
+              <input
+                required={field.required}
+                type={field.type || "text"}
+                value={form[field.name] ?? ""}
+                readOnly={field.readOnly}
+                onChange={(e) =>
+                  handleFieldChange(field, e.target.value)
+                }
+                style={{
+                  padding: "8px 10px",
+                  fontSize: 12,
+                  borderRadius: 8,
+                  border: "1px solid var(--border-color)",
+                  background: field.readOnly
+                    ? "var(--bg-primary)"
+                    : "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                }}
+              />
+            )}
 
             {field.after && (
               <div style={{ marginTop: 4 }}>
