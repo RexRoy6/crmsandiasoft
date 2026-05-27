@@ -20,6 +20,7 @@ export type Field = {
 
   readOnly?: boolean;
   hideInput?: boolean;
+  required?: boolean;
   after?: ReactNode;
 };
 
@@ -115,10 +116,24 @@ export default function CreateForm({
                   color: "var(--text-secondary)",
                 }}
               >
-                {field.label}
+                <>
+                  {field.label}
+
+                  {field.required && (
+                    <span
+                      style={{
+                        color: "red",
+                        marginLeft: 4,
+                      }}
+                    >
+                      *
+                    </span>
+                  )}
+                </>
               </label>
 
               <select
+                required={field.required}
                 value={form[field.name] ?? ""}
                 onChange={(e) => {
                   handleFieldChange(field, e.target.value);
@@ -173,10 +188,24 @@ export default function CreateForm({
                   color: "var(--text-secondary)",
                 }}
               >
-                {field.label}
+                <>
+                  {field.label}
+
+                  {field.required && (
+                    <span
+                      style={{
+                        color: "red",
+                        marginLeft: 4,
+                      }}
+                    >
+                      *
+                    </span>
+                  )}
+                </>
               </label>
 
               <textarea
+                required={field.required}
                 value={form[field.name] ?? ""}
                 rows={4}
                 onChange={(e) => {
@@ -213,12 +242,26 @@ export default function CreateForm({
                 color: "var(--text-secondary)",
               }}
             >
-              {field.label}
+              <>
+                {field.label}
+
+                {field.required && (
+                  <span
+                    style={{
+                      color: "red",
+                      marginLeft: 4,
+                    }}
+                  >
+                    *
+                  </span>
+                )}
+              </>
             </label>
 
 
             {!field.hideInput && (
               <input
+                required={field.required}
                 type={field.type || "text"}
                 value={form[field.name] ?? ""}
                 readOnly={field.readOnly}

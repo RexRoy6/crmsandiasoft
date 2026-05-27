@@ -32,7 +32,7 @@ export function getEventFields({
             label: "Client",
             hideInput: true,
             readOnly: true,
-
+            required: true,
             after: (
                 <ClientSelector
                     selected={form.client}
@@ -67,6 +67,7 @@ export function getEventFields({
         {
             name: "name",
             label: "Event Name",
+            required: true,
         },
 
         {
@@ -75,6 +76,7 @@ export function getEventFields({
             label: "Event Date",
 
             type: "date",
+            required: true,
 
             after: (
                 <p
@@ -105,6 +107,7 @@ export function getEventFields({
         {
             name: "location",
             label: "Location",
+            required: true,
         },
 
         {
