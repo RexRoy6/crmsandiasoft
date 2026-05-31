@@ -38,7 +38,7 @@ export default function CompanyTeamTab({ users, onCreateOwner, onDeactivateUser,
 
   return (
     <>
-      <h4 style={companyStyles.sectionTitle}>OWNERS ({owners.length})</h4>
+      <h4 style={companyStyles.sectionTitle}>Owners ({owners.length})</h4>
 
       {owners.length > 0 ? (
         <div style={companyStyles.userGrid}>
@@ -50,13 +50,8 @@ export default function CompanyTeamTab({ users, onCreateOwner, onDeactivateUser,
         <p style={companyStyles.emptyText}>No owners assigned</p>
       )}
 
-      <h4 style={companyStyles.sectionTitle}>
-        EMPLOYEES ({staff.length})
-      </h4>
-      <p style={companyStyles.emptyText}>
-  No employees assigned
-</p>
 
+      <h4 style={companyStyles.sectionTitle}>Staff ({staff.length})</h4>
       {staff.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {staff.map((u) => (
@@ -64,11 +59,11 @@ export default function CompanyTeamTab({ users, onCreateOwner, onDeactivateUser,
           ))}
         </div>
       ) : (
-        <p style={companyStyles.emptyText}>No managers or staff</p>
+        <p style={companyStyles.emptyText}>  No employees assigned</p>
       )}
 
       <div style={{ marginBottom: 20 }}>
-        <h4>Crear Owner</h4>
+        <h4>Crear usuario</h4>
 
         <input
           placeholder="Email"
