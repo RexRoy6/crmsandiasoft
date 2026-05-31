@@ -13,6 +13,8 @@ import {
   Settings,
   Star
 } from "lucide-react";
+import { UserRole } from "@/db/schema";
+import { canAccessRoute } from "@/lib/auth/canAccessRoute";
 
 const menu = [
   { label: "Home", href: "/company", icon: Home },
@@ -26,9 +28,21 @@ const menu = [
   { label: "Settings", href: "/company/settings", icon: Settings },
 ];
 
-export default function Sidebar({ collapsed }: { collapsed: boolean }) {
+
+export default function Sidebar({
+  collapsed,
+  role,
+}: {
+  collapsed: boolean;
+  role: UserRole;
+}) {
   const pathname = usePathname();
   const width = collapsed ? 70 : 220;
+
+  const visibleMenu = menu.filter(item =>
+  canAccessRoute(item.href, role)
+);
+
 
   return (
     <aside
@@ -52,7 +66,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
           gap: 6,
         }}
       >
-        {menu.map((item) => {
+        {visibleMenu.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
 

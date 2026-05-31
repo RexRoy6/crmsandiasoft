@@ -1,5 +1,7 @@
 import { UserRole } from "@/db/schema"
 
+
+//es para controlar los accesos del back
 export type RbacRoute = {
   pattern: string
   methods: Partial<Record<string, UserRole[]>>
@@ -52,16 +54,16 @@ export const RBAC_CONFIG: RbacRoute[] = [
    {
     pattern: "/api/company.*",
     methods: {
-      GET: ["admin","owner"],
-      POST: ["owner"],
-      PATCH: ["owner"],
+      GET: ["admin","owner","employee"],
+      POST: ["owner","employee"],
+      PATCH: ["owner","employee"],
       DELETE: ["owner"]
     }
   },
   {
   pattern: "/api/auth/change-password",
   methods: {
-    PATCH: ["admin", "owner", "user"]
+    PATCH: ["admin", "owner", "employee"]
   }
 }
 ]
