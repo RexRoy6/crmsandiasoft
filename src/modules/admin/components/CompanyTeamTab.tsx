@@ -4,26 +4,37 @@ import UserCard from "./UserCard";
 import { useState } from "react";
 
 
-export default function CompanyTeamTab({ users,onCreateOwner,onDeactivateUser, onReactivateUser, }:
-   { users: User[] ,
-     onCreateOwner: (email: string, password: string) => void;
-     onDeactivateUser: (userId: number) => void;
-      onReactivateUser: (userId: number) => void;
-    
-    }) {
+export default function CompanyTeamTab({ users, onCreateOwner, onDeactivateUser, onReactivateUser, }:
+  {
+    users: User[],
+    onCreateOwner: (
+      email: string,
+      password: string,
+      role: "owner" | "employee"
+    ) => void;
+    onDeactivateUser: (userId: number) => void;
+    onReactivateUser: (userId: number) => void;
+
+  }) {
   const owners = users.filter((u) => u.role === "owner");
-  const staff = users.filter((u) => u.role === "manager" || u.role === "staff");
+  const staff = users.filter(
+    (u) => u.role === "employee"
+  );
 
 
   const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"owner" | "employee">("employee");
 
-const handleSubmit = () => {
-  if (!email || !password) return;
-  onCreateOwner(email, password);
-  setEmail("");
-  setPassword("");
-};
+  const handleSubmit = () => {
+    if (!email || !password) return;
+
+    onCreateOwner(email, password, role);
+
+    setEmail("");
+    setPassword("");
+    setRole("employee");
+  };
 
   return (
     <>
@@ -32,7 +43,7 @@ const handleSubmit = () => {
       {owners.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {owners.map((u) => (
-            <UserCard key={u.id} user={u} onDeactivate={onDeactivateUser}  onReactivate={onReactivateUser} />
+            <UserCard key={u.id} user={u} onDeactivate={onDeactivateUser} onReactivate={onReactivateUser} />
           ))}
         </div>
       ) : (
@@ -40,13 +51,16 @@ const handleSubmit = () => {
       )}
 
       <h4 style={companyStyles.sectionTitle}>
-        MANAGERS & STAFF ({staff.length})
+        EMPLOYEES ({staff.length})
       </h4>
+      <p style={companyStyles.emptyText}>
+  No employees assigned
+</p>
 
       {staff.length > 0 ? (
         <div style={companyStyles.userGrid}>
           {staff.map((u) => (
-            <UserCard key={u.id} user={u}  onDeactivate={onDeactivateUser}  onReactivate={onReactivateUser} />
+            <UserCard key={u.id} user={u} onDeactivate={onDeactivateUser} onReactivate={onReactivateUser} />
           ))}
         </div>
       ) : (
@@ -54,28 +68,41 @@ const handleSubmit = () => {
       )}
 
       <div style={{ marginBottom: 20 }}>
-  <h4>Crear Owner</h4>
+        <h4>Crear Owner</h4>
 
-  <input
-    placeholder="Email"
-    value={email}
-    onChange={(e) => setEmail(e.target.value)}
-  />
+        <input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-  <input
-    type="password"
-    placeholder="Password"
-    value={password}
-    onChange={(e) => setPassword(e.target.value)}
-  />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-  <button onClick={handleSubmit}>
-    Crear
-  </button>
-</div>
+
+        <select
+          value={role}
+          onChange={(e) =>
+            setRole(e.target.value as "owner" | "employee")
+          }
+        >
+          <option value="employee">Employee</option>
+          <option value="owner">Owner</option>
+        </select>
+
+
+
+        <button onClick={handleSubmit}>
+          Crear
+        </button>
+      </div>
 
     </>
 
-    
+
   );
 }
