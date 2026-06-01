@@ -7,12 +7,12 @@ export function checkPermission(
   role: UserRole
 ) {
 
-  // if (process.env.NODE_ENV === "development") {
-  //   console.log("---- CHECK PERMISSION ----")
-  //   console.log("pathname:", pathname)
-  //   console.log("method:", method)
-  //   console.log("role:", role)
-  // }
+  if (process.env.NODE_ENV === "development") {
+    console.log("---- CHECK PERMISSION ----")
+    console.log("pathname:", pathname)
+    console.log("method:", method)
+    console.log("role:", role)
+  }
 
   for (const route of RBAC_CONFIG) {
     //console.log("checking route:", route.pattern)

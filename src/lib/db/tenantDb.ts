@@ -7,27 +7,27 @@ export async function tenantDb() {
 
   const isGlobalAdmin = role === "admin" && companyId === null
 
-function buildWhere(table: any, extraWhere?: any) {
+  function buildWhere(table: any, extraWhere?: any) {
 
-  /* admin global → sin filtro tenant */
-  if (isGlobalAdmin) {
-    return extraWhere ?? undefined
+    /* admin global → sin filtro tenant */
+    if (isGlobalAdmin) {
+      return extraWhere ?? undefined
+    }
+
+    if (!companyId) {
+      throw new Error("Tenant required")
+    }
+
+    /* tabla sin companyId → no aplicar filtro tenant */
+    if (!("companyId" in table)) {
+      return extraWhere ?? undefined
+    }
+
+    /* tabla con companyId */
+    return extraWhere
+      ? and(eq(table.companyId, companyId), extraWhere)
+      : eq(table.companyId, companyId)
   }
-
-  if (!companyId) {
-    throw new Error("Tenant required")
-  }
-
-  /* tabla sin companyId → no aplicar filtro tenant */
-  if (!("companyId" in table)) {
-    return extraWhere ?? undefined
-  }
-
-  /* tabla con companyId */
-  return extraWhere
-    ? and(eq(table.companyId, companyId), extraWhere)
-    : eq(table.companyId, companyId)
-}
 
   return {
     /* ---------- SELECT ---------- */
@@ -38,22 +38,25 @@ function buildWhere(table: any, extraWhere?: any) {
         .select()
         .from(table)
         .where(
-          extraWhere
-            ? and(baseWhere, buildWhere(table, extraWhere))
-            : baseWhere
+          buildWhere(
+            table,
+            extraWhere
+              ? and(baseWhere, extraWhere)
+              : baseWhere
+          )
         )
     },
     /* ---------- SELECT (including soft deleted) ---------- */
-findManyRaw(table: any, extraWhere?: any) {
-  return db
-    .select()
-    .from(table)
-    .where(
-      extraWhere
-        ? buildWhere(table, extraWhere)
-        : undefined
-    )
-},
+    findManyRaw(table: any, extraWhere?: any) {
+      return db
+        .select()
+        .from(table)
+        .where(
+          extraWhere
+            ? buildWhere(table, extraWhere)
+            : undefined
+        )
+    },
 
     /* ---------- FIND ONE ---------- */
     findFirst(table: any, extraWhere?: any) {
@@ -63,26 +66,29 @@ findManyRaw(table: any, extraWhere?: any) {
         .select()
         .from(table)
         .where(
-          extraWhere
-            ? and(baseWhere, buildWhere(table, extraWhere))
-            : baseWhere
+          buildWhere(
+            table,
+            extraWhere
+              ? and(baseWhere, extraWhere)
+              : baseWhere
+          )
         )
         .limit(1)
         .then((rows) => rows[0] ?? null)
     },
     /* ---------- FIND ONE (including soft deleted) ---------- */
-findFirstRaw(table: any, extraWhere?: any) {
-  return db
-    .select()
-    .from(table)
-    .where(
-      extraWhere
-        ? buildWhere(table, extraWhere)
-        : undefined
-    )
-    .limit(1)
-    .then((rows) => rows[0] ?? null)
-},
+    findFirstRaw(table: any, extraWhere?: any) {
+      return db
+        .select()
+        .from(table)
+        .where(
+          extraWhere
+            ? buildWhere(table, extraWhere)
+            : undefined
+        )
+        .limit(1)
+        .then((rows) => rows[0] ?? null)
+    },
 
     /* ---------- INSERT ---------- */
     insert(table: any, values: any) {
@@ -98,17 +104,61 @@ findFirstRaw(table: any, extraWhere?: any) {
       })
     },
 
+
     /* ---------- UPDATE ---------- */
     update(table: any, values: any, extraWhere?: any) {
-      return db.update(table)
+
+      const baseWhere = isNull(table.deletedAt)
+
+      return db
+        .update(table)
         .set(values)
-        .where(buildWhere(table, extraWhere))
+        .where(
+          buildWhere(
+            table,
+            extraWhere
+              ? and(baseWhere, extraWhere)
+              : baseWhere
+          )
+        )
     },
 
     /* ---------- DELETE ---------- */
     delete(table: any, extraWhere?: any) {
-      return db.delete(table)
-        .where(buildWhere(table, extraWhere))
-    }
+
+      if (!table.deletedAt) {
+        throw new Error("Soft delete not supported on this table")
+      }
+
+      const baseWhere = isNull(table.deletedAt)
+
+      return db
+        .update(table)
+        .set({
+          deletedAt: new Date()
+        })
+        .where(
+          buildWhere(
+            table,
+            extraWhere
+              ? and(baseWhere, extraWhere)
+              : baseWhere
+          )
+        )
+    },
+    /* ---------- delete admin ---------- */
+
+    /* ---------- FORCE DELETE ---------- */
+    forceDelete(table: any, extraWhere?: any) {
+
+      if (!isGlobalAdmin) {
+        throw new Error("Force delete requires global admin")
+      }
+
+      return db
+        .delete(table)
+        .where(extraWhere)
+    },
+
   }
 }

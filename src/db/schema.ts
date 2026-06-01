@@ -34,7 +34,11 @@ export const contractStatusEnum = mysqlEnum("status", CONTRACT_STATUS)
 
 /* ---------- USER ROLES (single source of truth) ---------- */
 
-export const USER_ROLES = ["admin", "owner", "user"] as const
+export const USER_ROLES = [
+  "admin",
+  "owner",
+  "employee"
+] as const
 
 export type UserRole = typeof USER_ROLES[number]
 
