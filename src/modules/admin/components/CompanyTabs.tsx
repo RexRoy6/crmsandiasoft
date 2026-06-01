@@ -7,7 +7,12 @@ interface Props {
   contracts: Contract[];
   activeTab: "team" | "events" | "services";
   setActiveTab: (v: "team" | "events" | "services") => void;
-  onCreateOwner: (email: string, password: string) => void;
+  // onCreateOwner: (email: string, password: string) => void;
+  onCreateOwner: (
+  email: string,
+  password: string,
+  role: "owner" | "employee"
+) => void;
   onDeactivateUser: (userId: number) => void;
    onReactivateUser: (userId: number) => void;
 }
