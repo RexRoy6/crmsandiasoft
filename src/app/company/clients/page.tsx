@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth/requireRole";
 
 export default async function ClientsPage() {
 
-  await requireRole(["owner"]);
+  await requireRole(["owner","employee"]);
 
   return <ClientsModule />;
 }

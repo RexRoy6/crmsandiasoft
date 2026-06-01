@@ -38,16 +38,16 @@ export const RBAC_CONFIG: RbacRoute[] = [
   {
     pattern: "/api/clients",
     methods: {
-      GET: ["admin", "owner"],
-      POST: ["admin", "owner"]
+      GET: ["admin", "owner","employee"],
+      POST: ["admin", "owner","employee"]
     }
   },
 
   {
     pattern: "/api/clients/:id",
     methods: {
-      GET: ["admin", "owner"],
-      PATCH: ["admin", "owner"]
+         GET: ["admin", "owner","employee"],
+      POST: ["admin", "owner","employee"]
     }
   },
   //rutas para negocios, solo puede modificar owner y ver admin

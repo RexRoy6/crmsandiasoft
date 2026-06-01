@@ -5,7 +5,26 @@ export type RoutePermission = {
   roles: UserRole[]
 }
 
-export const FRONTEND_PERMISSIONS: RoutePermission[] = [
+export const FRONTEND_PERMISSIONS = [
+  {
+    path: "/company",
+    roles: ["owner"]
+  },
+
+  {
+    path: "/company/service",
+    roles: ["owner"]
+  },
+
+  {
+    path: "/company/events",
+    roles: ["owner"]
+  },
+
+  {
+    path: "/company/calendar",
+    roles: ["owner", "employee"]
+  },
 
   {
     path: "/company/contracts",
