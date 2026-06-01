@@ -11,7 +11,7 @@ export async function GET() {
   try {
 
     await requireAuth({
-      roles: ["owner", "user"]
+      roles: ["owner", "employee"]
     })
 
     const data = await getCompanyDashboard()

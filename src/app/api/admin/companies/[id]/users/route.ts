@@ -3,12 +3,19 @@ import { users, companies } from "@/db/schema"
 import { hashPassword } from "@/lib/auth/password"
 import { eq, isNull, and } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth/requireAuth"
+import { USER_ROLES } from "@/db/schema"
+
+
+
+const ALLOWED_ROLES = ["owner", "employee"] as const
+
+type AllowedRole = typeof ALLOWED_ROLES[number]
 export async function POST(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-         /* ---------- AUTH ---------- */
+        /* ---------- AUTH ---------- */
         await requireAuth({ roles: ["admin"] })
         /* ---------- unwrap params ---------- */
         const { id } = await params
@@ -30,17 +37,36 @@ export async function POST(
                 { status: 400 }
             )
         }
+        //lo del rol
 
         const email = body.email?.trim().toLowerCase()
         const password = body.password
+        //aqui debemos de agregar rol solo admin o employee
+        const role = body.role
+        if (typeof role !== "string") {
+            return Response.json(
+                { error: "role must be a string" },
+                { status: 400 }
+            )
+        }
+
 
         /* ---------- validate input ---------- */
-        if (!email || !password) {
+        if (!email || !password || !role) {
             return Response.json(
                 { error: "email and password required" },
                 { status: 400 }
             )
         }
+        if (!ALLOWED_ROLES.includes(role as AllowedRole)) {
+            return Response.json(
+                {
+                    error: "invalid role. Allowed values: owner, employee"
+                },
+                { status: 400 }
+            )
+        }
+
 
         /* ---------- check company exists & active ---------- */
         const company = await db.query.companies.findFirst({
@@ -71,13 +97,14 @@ export async function POST(
 
         /* ---------- create user ---------- */
         const passwordHash = await hashPassword(password)
-
+        const validatedRole = role as AllowedRole
         const result = await db.insert(users)
             .values({
                 email,
                 passwordHash,
                 companyId,
-                role: "owner"
+                //role: "owner"
+                role: validatedRole
             })
             .$returningId()
 
@@ -141,7 +168,7 @@ export async function GET(
                 role: users.role,
                 createdAt: users.createdAt,
                 updatedAt: users.updatedAt,
-                deletedAt:users.deletedAt
+                deletedAt: users.deletedAt
             })
             .from(users)
             .where(

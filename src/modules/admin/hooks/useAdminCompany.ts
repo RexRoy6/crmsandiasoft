@@ -87,14 +87,18 @@ export function useAdminCompany(companyId: string) {
 
 
   //crear users:
-  const createOwner = async (email: string, password: string) => {
+  const createOwner = async (
+    email: string,
+    password: string,
+    role: "owner" | "employee"
+  ) => {
     try {
       const res = await fetch(`/api/admin/companies/${companyId}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password,role }),
       });
 
       if (!res.ok) throw new Error("Error creando usuario");
@@ -104,8 +108,8 @@ export function useAdminCompany(companyId: string) {
       const usersData = await usersRes.json();
       setUsers(usersData);
     } catch (err: any) {
-  setActionError(err.message);
-}
+      setActionError(err.message);
+    }
 
   };
 
@@ -116,12 +120,12 @@ export function useAdminCompany(companyId: string) {
         method: "DELETE",
       });
 
-       if (res.status === 409) {
-      setActionError("El usuario ya estaba desactivado");
-      return;
-    }
+      if (res.status === 409) {
+        setActionError("El usuario ya estaba desactivado");
+        return;
+      }
 
-         if (!res.ok) throw new Error("Error desactivando usuario");
+      if (!res.ok) throw new Error("Error desactivando usuario");
 
 
       // refrescar
@@ -129,56 +133,56 @@ export function useAdminCompany(companyId: string) {
       const usersData = await usersRes.json();
       setUsers(usersData);
     } catch (err: any) {
-    setActionError(err.message);
-  }
+      setActionError(err.message);
+    }
   };
 
 
   /// reacticar user
   const reactivateUser = async (userId: number) => {
-  try {
-    const res = await fetch(
-      `/api/admin/users/${userId}?reactivate=true`,
-      {
-        method: "PATCH",
+    try {
+      const res = await fetch(
+        `/api/admin/users/${userId}?reactivate=true`,
+        {
+          method: "PATCH",
+        }
+      );
+
+      if (res.status === 409) {
+        setActionError("El usuario ya estaba activo");
+        return;
       }
-    );
 
-    if (res.status === 409) {
-      setActionError("El usuario ya estaba activo");
-      return;
+      if (!res.ok) throw new Error("Error reactivando usuario");
+
+      // refrescar lista
+      const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
+      const usersData = await usersRes.json();
+      setUsers(usersData);
+
+    } catch (err: any) {
+      setActionError(err.message);
     }
-
-    if (!res.ok) throw new Error("Error reactivando usuario");
-
-    // refrescar lista
-    const usersRes = await fetch(`/api/admin/companies/${companyId}/users`);
-    const usersData = await usersRes.json();
-    setUsers(usersData);
-
-  } catch (err: any) {
-    setActionError(err.message);
-  }
-};
+  };
 
   const clearActionError = () => setActionError(null);
 
-return {
-  company,
-  users,
-  contracts,
-  activeTab,
-  setActiveTab,
-  loading,
-  loadError,
-  actionError,
-  clearActionError,
-  suspendConfirm,
-  setSuspendConfirm,
-  handleEdit,
-  handleSuspend,
-  createOwner,
-  deactivateUser,
-   reactivateUser,
-};
+  return {
+    company,
+    users,
+    contracts,
+    activeTab,
+    setActiveTab,
+    loading,
+    loadError,
+    actionError,
+    clearActionError,
+    suspendConfirm,
+    setSuspendConfirm,
+    handleEdit,
+    handleSuspend,
+    createOwner,
+    deactivateUser,
+    reactivateUser,
+  };
 }
