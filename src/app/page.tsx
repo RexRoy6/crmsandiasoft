@@ -55,7 +55,7 @@ const AdminLogin: React.FC = () => {
         return;
       }
 
-      if (user.role === "owner") {
+      if (user.role === "owner" || user.role === "employee") {
         router.replace("/company");
         return;
       }

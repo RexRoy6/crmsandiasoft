@@ -13,7 +13,7 @@ export async function GET() {
   try {
 
     const auth = await requireAuth({
-      roles: ["admin","owner", "user"]
+      roles: ["admin","owner", "employee"]
     })
 
     const { userId, companyId } = auth
