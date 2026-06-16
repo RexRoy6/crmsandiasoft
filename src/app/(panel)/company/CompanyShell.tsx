@@ -18,25 +18,15 @@ export default function CompanyShell({
   children: React.ReactNode;
   role: UserRole;
 }) {
-
   const [collapsed, setCollapsed] = useState(false);
 
-  const sidebarWidth =
-    collapsed
-      ? SIDEBAR_COLLAPSED_WIDTH
-      : SIDEBAR_WIDTH;
+  const sidebarWidth = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
 
   return (
     <>
-      <Topbar
-        collapsed={collapsed}
-        onToggle={() => setCollapsed(!collapsed)}
-      />
+      <Topbar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
-      <Sidebar
-        collapsed={collapsed}
-        role={role}
-      />
+      <Sidebar collapsed={collapsed} role={role} />
 
       <div
         style={{

@@ -6,14 +6,7 @@ export default async function CompanyLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   const auth = await getAuthContext();
 
-  return (
-    <CompanyShell
-      role={auth.role}
-    >
-      {children}
-    </CompanyShell>
-  );
+  return <CompanyShell role={auth.role}>{children}</CompanyShell>;
 }

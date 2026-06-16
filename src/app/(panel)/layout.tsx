@@ -35,8 +35,8 @@ export default function PanelLayout({
         logout={logout}
       />
       <div style={styles.body}>
-        <Sidebar user={user} />
-        <main style={styles.main}>{children}</main>
+        {/* <Sidebar user={user} /> */}
+        <main>{children}</main>
       </div>
     </div>
   );

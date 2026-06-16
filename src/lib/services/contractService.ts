@@ -1,31 +1,32 @@
-import { db } from "@/db"
-import { tenantDb } from "@/lib/db/tenantDb"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
-import { contracts, events, clients, payments, ContractStatus } from "@/db/schema"
-import { sql } from "drizzle-orm"
+import { db } from "@/db";
+import { tenantDb } from "@/lib/db/tenantDb";
+import { getAuthContext } from "@/lib/auth/getAuthContext";
+import {
+  contracts,
+  events,
+  clients,
+  payments,
+  ContractStatus,
+} from "@/db/schema";
+import { sql } from "drizzle-orm";
 
-import { eq, and, isNull, like, or, desc } from "drizzle-orm"
+import { eq, and, isNull, like, or, desc } from "drizzle-orm";
 import type {
   CreateContractInput,
-  UpdateContractInput
-} from "@/lib/validations/contractValidation"
+  UpdateContractInput,
+} from "@/lib/validations/contractValidation";
 
-class ConflictError extends Error { }
-
-
+class ConflictError extends Error {}
 
 /* ---------- CREATE CONTRACT ---------- */
 
 export async function createContract(data: CreateContractInput) {
-  const tdb = await tenantDb()
+  const tdb = await tenantDb();
 
-  const event = await tdb.findFirst(
-    events,
-    eq(events.id, data.eventId)
-  )
+  const event = await tdb.findFirst(events, eq(events.id, data.eventId));
 
   if (!event) {
-    throw new Error("Event not found")
+    throw new Error("Event not found");
   }
 
   // 🔥 check si ya existe contrato
@@ -34,9 +35,9 @@ export async function createContract(data: CreateContractInput) {
     and(
       eq(contracts.eventId, data.eventId),
       eq(contracts.companyId, event.companyId),
-      isNull(contracts.deletedAt)
-    )
-  )
+      isNull(contracts.deletedAt),
+    ),
+  );
 
   // if (existing) {
   //   return existing // o throw error si prefieres
@@ -45,24 +46,17 @@ export async function createContract(data: CreateContractInput) {
   //   throw new Error("Contract already exists for this event")
   // }
   if (existing) {
-    throw new ConflictError("Contract already exists for this event")
+    throw new ConflictError("Contract already exists for this event");
   }
-  const [result] = await tdb.insert(
-    contracts,
-    {
-      eventId: data.eventId,
-      clientId: event.clientId,
-      status: data.status,
-      totalAmount: data.totalAmount
-    }
-  )
+  const [result] = await tdb.insert(contracts, {
+    eventId: data.eventId,
+    clientId: event.clientId,
+    status: data.status,
+    totalAmount: data.totalAmount,
+  });
 
-  return tdb.findFirst(
-    contracts,
-    eq(contracts.id, result.insertId)
-  )
+  return tdb.findFirst(contracts, eq(contracts.id, result.insertId));
 }
-
 
 /* ---------- GET COMPANY CONTRACTS ---------- */
 
@@ -71,49 +65,46 @@ export async function getCompanyContracts({
   page = 1,
   limit = 10,
   eventId,
-  status
+  status,
 }: {
-  search?: string
-  page?: number
-  limit?: number
-  eventId?: number
-  status?: ContractStatus
+  search?: string;
+  page?: number;
+  limit?: number;
+  eventId?: number;
+  status?: ContractStatus;
 }) {
+  const { companyId } = await getAuthContext();
 
-  const { companyId } = await getAuthContext()
-
-  const offset = (page - 1) * limit
+  const offset = (page - 1) * limit;
 
   /* ---------- WHERE dinámico ---------- */
 
-  const conditions: any[] = [
-    isNull(contracts.deletedAt)
-  ]
+  const conditions: any[] = [isNull(contracts.deletedAt)];
 
   if (companyId) {
-    conditions.push(eq(contracts.companyId, companyId))
+    conditions.push(eq(contracts.companyId, companyId));
   }
   if (eventId) {
-    conditions.push(eq(contracts.eventId, eventId))
+    conditions.push(eq(contracts.eventId, eventId));
   }
   if (status) {
-    conditions.push(eq(contracts.status, status))
+    conditions.push(eq(contracts.status, status));
   }
 
   if (search) {
-    const term = `%${search}%`
+    const term = `%${search}%`;
 
     conditions.push(
       or(
         like(contracts.status, term),
         like(clients.name, term),
         like(events.name, term),
-        like(events.location, term)
-      )!
-    )
+        like(events.location, term),
+      )!,
+    );
   }
 
-  const whereClause = and(...conditions)
+  const whereClause = and(...conditions);
 
   /* ---------- QUERY PRINCIPAL ---------- */
 
@@ -136,7 +127,7 @@ export async function getCompanyContracts({
       eventEnd: events.eventEnd,
 
       eventLocation: events.location,
-      eventNote: events.notes
+      eventNote: events.notes,
     })
     .from(contracts)
     .leftJoin(clients, eq(contracts.clientId, clients.id))
@@ -144,10 +135,7 @@ export async function getCompanyContracts({
     //.leftJoin(payments, eq(payments.contractId, contracts.id))
     .leftJoin(
       payments,
-      and(
-        eq(payments.contractId, contracts.id),
-        isNull(payments.deletedAt)
-      )
+      and(eq(payments.contractId, contracts.id), isNull(payments.deletedAt)),
     )
     .where(whereClause)
     .groupBy(
@@ -155,11 +143,11 @@ export async function getCompanyContracts({
       clients.id,
       events.id,
       events.eventDate,
-      events.location
+      events.location,
     )
     .orderBy(desc(contracts.id))
     .limit(limit)
-    .offset(offset)
+    .offset(offset);
 
   /* ---------- TOTAL ---------- */
 
@@ -168,16 +156,15 @@ export async function getCompanyContracts({
     .from(contracts)
     .leftJoin(clients, eq(contracts.clientId, clients.id))
     .leftJoin(events, eq(contracts.eventId, events.id))
-    .where(whereClause)
+    .where(whereClause);
 
-  const total = totalResult.length
+  const total = totalResult.length;
 
   /* ---------- MAP ---------- */
 
   const data = rows.map((row) => {
-
-    const totalAmount = Number(row.totalAmount)
-    const paid = Number(row.paidAmount)
+    const totalAmount = Number(row.totalAmount);
+    const paid = Number(row.paidAmount);
 
     return {
       id: row.id,
@@ -186,27 +173,23 @@ export async function getCompanyContracts({
       paidAmount: paid,
       remainingAmount: totalAmount - paid,
 
-      client: row.clientId
-        ? { id: row.clientId, name: row.clientName }
-        : null,
-
+      client: row.clientId ? { id: row.clientId, name: row.clientName } : null,
 
       event: row.eventId
         ? {
-          id: row.eventId,
-          name: row.eventName,
+            id: row.eventId,
+            name: row.eventName,
 
-          eventDate: row.eventDate,
-          eventStart: row.eventStart,
-          eventEnd: row.eventEnd,
+            eventDate: row.eventDate,
+            eventStart: row.eventStart,
+            eventEnd: row.eventEnd,
 
-          location: row.eventLocation,
-          notes: row.eventNote
-        }
-        : null
-
-    }
-  })
+            location: row.eventLocation,
+            notes: row.eventNote,
+          }
+        : null,
+    };
+  });
 
   return {
     data,
@@ -214,18 +197,15 @@ export async function getCompanyContracts({
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
-    }
-  }
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 }
-
-
 
 /* ---------- GET SINGLE CONTRACT ---------- */
 
 export async function getContract(id: number) {
-
-  const { companyId } = await getAuthContext()
+  const { companyId } = await getAuthContext();
 
   const rows = await db
     .select({
@@ -246,19 +226,13 @@ export async function getContract(id: number) {
       eventEnd: events.eventEnd,
 
       eventLocation: events.location,
-      eventNote: events.notes
+      eventNote: events.notes,
     })
     .from(contracts)
 
-    .leftJoin(
-      clients,
-      eq(contracts.clientId, clients.id)
-    )
+    .leftJoin(clients, eq(contracts.clientId, clients.id))
 
-    .leftJoin(
-      events,
-      eq(contracts.eventId, events.id)
-    )
+    .leftJoin(events, eq(contracts.eventId, events.id))
 
     // .leftJoin(
     //   payments,
@@ -266,19 +240,13 @@ export async function getContract(id: number) {
     // )
     .leftJoin(
       payments,
-      and(
-        eq(payments.contractId, contracts.id),
-        isNull(payments.deletedAt)
-      )
+      and(eq(payments.contractId, contracts.id), isNull(payments.deletedAt)),
     )
 
     .where(
       companyId
-        ? and(
-          eq(contracts.id, id),
-          eq(contracts.companyId, companyId)
-        )
-        : eq(contracts.id, id)
+        ? and(eq(contracts.id, id), eq(contracts.companyId, companyId))
+        : eq(contracts.id, id),
     )
 
     .groupBy(
@@ -286,15 +254,15 @@ export async function getContract(id: number) {
       clients.id,
       events.id,
       events.eventDate,
-      events.location
-    )
+      events.location,
+    );
 
-  const row = rows[0]
+  const row = rows[0];
 
-  if (!row) return null
+  if (!row) return null;
 
-  const total = Number(row.totalAmount)
-  const paid = Number(row.paidAmount)
+  const total = Number(row.totalAmount);
+  const paid = Number(row.paidAmount);
 
   return {
     id: row.id,
@@ -305,107 +273,65 @@ export async function getContract(id: number) {
 
     client: row.clientId
       ? {
-        id: row.clientId,
-        name: row.clientName
-      }
+          id: row.clientId,
+          name: row.clientName,
+        }
       : null,
-
 
     event: row.eventId
       ? {
-        id: row.eventId,
-        name: row.eventName,
+          id: row.eventId,
+          name: row.eventName,
 
-        eventDate: row.eventDate,
-        eventStart: row.eventStart,
-        eventEnd: row.eventEnd,
+          eventDate: row.eventDate,
+          eventStart: row.eventStart,
+          eventEnd: row.eventEnd,
 
-        location: row.eventLocation,
-        notes: row.eventNote
-      }
-      : null
-
-
-  }
+          location: row.eventLocation,
+          notes: row.eventNote,
+        }
+      : null,
+  };
 }
-
-
 
 /* ---------- UPDATE CONTRACT ---------- */
 
-export async function updateContract(
-  id: number,
-  data: UpdateContractInput
-) {
+export async function updateContract(id: number, data: UpdateContractInput) {
+  const tdb = await tenantDb();
 
-  const tdb = await tenantDb()
+  const existing = await tdb.findFirst(contracts, eq(contracts.id, id));
 
-  const existing = await tdb.findFirst(
-    contracts,
-    eq(contracts.id, id)
-  )
+  if (!existing) return null;
 
-  if (!existing) return null
+  await tdb.update(contracts, data, eq(contracts.id, id));
 
-  await tdb.update(
-    contracts,
-    data,
-    eq(contracts.id, id)
-  )
-
-  return tdb.findFirst(
-    contracts,
-    eq(contracts.id, id)
-  )
-
+  return tdb.findFirst(contracts, eq(contracts.id, id));
 }
-
-
 
 /* ---------- SOFT DELETE ---------- */
 
 export async function deleteContract(id: number) {
+  const tdb = await tenantDb();
 
-  const tdb = await tenantDb()
+  const existing = await tdb.findFirst(contracts, eq(contracts.id, id));
 
-  const existing = await tdb.findFirst(
-    contracts,
-    eq(contracts.id, id)
-  )
+  if (!existing) return null;
 
-  if (!existing) return null
+  await tdb.update(contracts, { deletedAt: new Date() }, eq(contracts.id, id));
 
-  await tdb.update(
-    contracts,
-    { deletedAt: new Date() },
-    eq(contracts.id, id)
-  )
-
-  return true
-
+  return true;
 }
-
-
 
 /* ---------- REACTIVATE ---------- */
 
 export async function reactivateContract(id: number) {
+  const tdb = await tenantDb();
 
-  const tdb = await tenantDb()
+  const existing = await tdb.findFirstRaw(contracts, eq(contracts.id, id));
 
-  const existing = await tdb.findFirstRaw(
-    contracts,
-    eq(contracts.id, id)
-  )
+  if (!existing) return null;
 
-  if (!existing) return null
+  await tdb.update(contracts, { deletedAt: null }, eq(contracts.id, id));
 
-  await tdb.update(
-    contracts,
-    { deletedAt: null },
-    eq(contracts.id, id)
-  )
-
-  return true
-
+  return true;
 }
