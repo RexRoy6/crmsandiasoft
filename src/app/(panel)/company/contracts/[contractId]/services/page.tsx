@@ -8,22 +8,16 @@ import PageHeader from "@/app/components/crm/PageHeader";
 
 import ErrorBox from "@/app/components/ErrorBox";
 
-import ContractServiceForm
-from "@/app/components/crm/contracts/ContractServiceForm";
+import ContractServiceForm from "@/features/contracts/components/ContractServiceForm";
 
-import ContractServicesList
-from "@/app/components/crm/contracts/ContractServicesList";
+import ContractServicesList from "@/features/contracts/components/ContractServicesList";
 
-import {
-  useContractServices
-} from "@/app/hooks/contracts/useContractServices";
+import { useContractServices } from "@/features/contracts/hooks";
 
 export default function ContractServicesPage() {
-
   const params = useParams();
 
-  const contractId =
-    Number(params.contractId);
+  const contractId = Number(params.contractId);
 
   const {
     services,
@@ -40,44 +34,25 @@ export default function ContractServicesPage() {
     updateItem,
   } = useContractServices(contractId);
 
-  const contractTotal =
-    services.reduce((sum, item) => {
-      return (
-        sum +
-        Number(item.quantity) *
-        Number(item.unitPrice)
-      );
-    }, 0);
+  const contractTotal = services.reduce((sum, item) => {
+    return sum + Number(item.quantity) * Number(item.unitPrice);
+  }, 0);
 
   return (
     <div>
+      {contract?.eventId && <EventInfoCard eventId={contract.eventId} />}
 
-      {contract?.eventId && (
-        <EventInfoCard
-          eventId={contract.eventId}
-        />
-      )}
+      <PageHeader title={`Contract ${contractId} Services`} />
 
-      <PageHeader
-        title={`Contract ${contractId} Services`}
+      <p>Contract Total: ${contractTotal}</p>
+
+      <ContractServiceForm
+        companyServices={companyServices}
+        contract={contract}
+        onSubmit={createService}
       />
 
-      <p>
-        Contract Total: ${contractTotal}
-      </p>
-
-  <ContractServiceForm
-    companyServices={companyServices}
-    contract={contract}
-    onSubmit={createService}
-/>
-
-      {error && (
-        <ErrorBox
-          message={error}
-          code={errorCode}
-        />
-      )}
+      {error && <ErrorBox message={error} code={errorCode} />}
 
       <ContractServicesList
         services={services}
@@ -85,7 +60,6 @@ export default function ContractServicesPage() {
         onDelete={deleteItem}
         onUpdate={updateItem}
       />
-
     </div>
   );
 }

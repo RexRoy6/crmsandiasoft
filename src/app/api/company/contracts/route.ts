@@ -1,12 +1,16 @@
-import { contractService } from "@/lib/modules/contracts/contract.service";
+import {
+  createContract,
+  getCompanyContracts,
+} from "@/lib/services/contractService";
+
 import { createContractSchema } from "@/lib/validations/contractValidation";
 import { requireAuth } from "@/lib/auth/requireAuth";
-import {
-  ContractConflictError,
-  EventNotFoundError,
-} from "@/lib/modules/contracts/domain/contract.errors";
 
+import { CONTRACT_STATUS, ContractStatus } from "@/db/schema";
 /* ---------- POST (create contract) ---------- */
+
+class ConflictError extends Error {}
+
 export async function POST(req: Request) {
   const auth = await requireAuth();
 
@@ -19,22 +23,26 @@ export async function POST(req: Request) {
       return Response.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const created = await contractService.create({
-      ...parsed.data,
-      companyId: auth.companyId, // 🔥 multi-tenant obligatorio
-    });
+    const created = await createContract(parsed.data);
 
     return Response.json(created, { status: 201 });
   } catch (error: any) {
-    if (error instanceof EventNotFoundError) {
-      return Response.json({ error: error.message }, { status: 404 });
+    console.error(error);
+
+    if (error.message === "Event not found") {
+      return Response.json({ error: "Event not found" }, { status: 404 });
     }
 
-    if (error instanceof ContractConflictError) {
+    // if (error.message === "Contract already exists for this event") {
+    //   return Response.json(
+    //     { error: error.message },
+    //     { status: 400 }
+    //   )
+    // }
+
+    if (error instanceof ConflictError) {
       return Response.json({ error: error.message }, { status: 409 });
     }
-
-    console.error(error);
 
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -48,21 +56,26 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const result = await contractService.getAll({
-      search: searchParams.get("search") ?? undefined,
-      page: Number(searchParams.get("page") ?? 1),
-      limit: Number(searchParams.get("limit") ?? 10),
-      eventId: searchParams.get("eventId")
-        ? Number(searchParams.get("eventId"))
-        : undefined,
-      status: searchParams.get("status") ?? undefined,
-      companyId: auth.companyId, // 🔥 filtro obligatorio
+    const search = searchParams.get("search") ?? undefined;
+    const eventId = searchParams.get("eventId");
+    const statusParam = searchParams.get("status");
+
+    const status = CONTRACT_STATUS.includes(statusParam as any)
+      ? (statusParam as ContractStatus)
+      : undefined;
+    const page = Number(searchParams.get("page") ?? 1);
+    const limit = Number(searchParams.get("limit") ?? 10);
+
+    const result = await getCompanyContracts({
+      search,
+      page,
+      limit,
+      eventId: eventId ? Number(eventId) : undefined,
+      status,
     });
 
     return Response.json(result);
   } catch (error) {
-    console.error(error);
-
     return Response.json({ error: "internal server error" }, { status: 500 });
   }
 }
