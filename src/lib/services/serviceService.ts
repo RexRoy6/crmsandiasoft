@@ -2,6 +2,7 @@ import { tenantDb } from "@/lib/db/tenantDb"
 import { services } from "@/db/schema"
 import { eq,isNull } from "drizzle-orm"
 import type { UpdateServiceInput } from "@/lib/validations/serviceValidation"
+import { getAuthContext } from "@/lib/auth/getAuthContext"
 
 
 export async function createService(data: {
@@ -28,9 +29,11 @@ export async function createService(data: {
 
 export async function getCompanyServices() {
 
+
   const tdb = await tenantDb()
 
-  return tdb.findManyRaw(services)
+  //return tdb.findManyRaw(services)
+  return tdb.findMany(services)
 }
 
 export async function getActiveCompanyServices() {
