@@ -2,20 +2,25 @@ export const formatDate = (
   value: string | Date
 ) => {
 
-  const date = new Date(value)
+  let date: Date;
 
-  if (isNaN(date.getTime())) {
-    return ""
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+
+    date = new Date(y, m - 1, d);
+  } else {
+    date = new Date(value);
   }
 
-  return date.toLocaleDateString(
-    "es-MX",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }
-  )
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export const formatTime = (
@@ -94,20 +99,28 @@ export const combineDateTime = (
   baseDate?: string | Date,
   time?: string
 ) => {
-  if (!baseDate || !time) {
-    return undefined;
+  if (!baseDate || !time) return;
+
+  let date: Date;
+
+  if (
+    typeof baseDate === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(baseDate)
+  ) {
+    const [y, m, d] = baseDate
+      .split("-")
+      .map(Number);
+
+    date = new Date(y, m - 1, d);
+  } else {
+    date = new Date(baseDate);
   }
 
-  const date = new Date(baseDate);
+  const [hours, minutes] =
+    time.split(":").map(Number);
 
-  if (isNaN(date.getTime())) {
-    return undefined;
-  }
-
-  const [hours, minutes] = time.split(":");
-
-  date.setHours(Number(hours));
-  date.setMinutes(Number(minutes));
+  date.setHours(hours);
+  date.setMinutes(minutes);
   date.setSeconds(0);
   date.setMilliseconds(0);
 
