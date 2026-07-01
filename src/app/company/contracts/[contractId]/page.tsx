@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBox from "@/app/components/ErrorBox";
 import DetailCard from "@/app/components/crm/DetailCard";
-import { formatDate, formatTime } from "@/lib/utils/date";
+import {
+  formatDate,
+  formatTime,
+  replaceDateKeepTime,
+} from "@/lib/utils/date";
 
 export default function ContractDetailPage() {
 
@@ -18,6 +22,13 @@ export default function ContractDetailPage() {
   const [form, setForm] = useState({
     status: "",
     totalAmount: "",
+
+
+    eventDate: "",
+    eventStart: "",
+    eventEnd: "",
+
+    eventLocation: "",
     eventNote: "",
   });
 
@@ -41,8 +52,8 @@ export default function ContractDetailPage() {
 
 
     { name: "eventName", label: "🎉 Event", readOnly: true },
-    { name: "eventDate", label: "📅 Date", readOnly: true },
-    { name: "eventLocation", label: "📍 Location", readOnly: true },
+    { name: "eventDate", label: "📅 Date", type: "date", readOnly: false },
+    { name: "eventLocation", label: "📍 Location", readOnly: false },
     { name: "eventNote", label: "📝 Note", type: "textarea", readOnly: false },
   ];
 
@@ -74,6 +85,15 @@ export default function ContractDetailPage() {
       setForm({
         status: data.status ?? "",
         totalAmount: data.totalAmount ?? 0,
+
+        eventDate: data.event?.eventDate
+          ? data.event.eventDate.slice(0, 10)
+          : "",
+
+        eventStart: data.event?.eventStart ?? "",
+        eventEnd: data.event?.eventEnd ?? "",
+
+        eventLocation: data.event?.location ?? "",
         eventNote: data.event?.notes ?? "",
       });
 
@@ -135,6 +155,22 @@ export default function ContractDetailPage() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
+              eventDate: replaceDateKeepTime(
+                form.eventDate,
+                form.eventStart
+              ),
+
+              eventStart: replaceDateKeepTime(
+                form.eventDate,
+                form.eventStart
+              ),
+
+              eventEnd: replaceDateKeepTime(
+                form.eventDate,
+                form.eventEnd
+              ),
+
+              location: form.eventLocation,
               notes: form.eventNote,
             }),
           }
