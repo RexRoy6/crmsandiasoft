@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ErrorBox from "@/app/components/ErrorBox";
 import DetailCard from "@/app/components/crm/DetailCard";
-import { formatDate, formatTime } from "@/lib/utils/date";
+import {
+  formatDate,
+  formatTime,
+  replaceDateKeepTime,
+} from "@/lib/utils/date";
 
 export default function ContractDetailPage() {
 
@@ -18,7 +22,17 @@ export default function ContractDetailPage() {
   const [form, setForm] = useState({
     status: "",
     totalAmount: "",
+
+
+    eventDate: "",
+    eventStart: "",
+    eventEnd: "",
+
+    eventLocation: "",
+    eventNote: "",
   });
+
+  const [eventId, setEventId] = useState<number | null>(null);
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -35,10 +49,12 @@ export default function ContractDetailPage() {
     { name: "remainingAmount", label: "🧾 Remaining Amount", readOnly: true },
 
     { name: "clientName", label: "👤 Client", readOnly: true },
+
+
     { name: "eventName", label: "🎉 Event", readOnly: true },
-    { name: "eventDate", label: "📅 Date", readOnly: true },
-    { name: "eventLocation", label: "📍 Location", readOnly: true },
-    { name: "eventNote", label: "📝 Note", readOnly: true },
+    { name: "eventDate", label: "📅 Date", type: "date", readOnly: false },
+    { name: "eventLocation", label: "📍 Location", readOnly: false },
+    { name: "eventNote", label: "📝 Note", type: "textarea", readOnly: false },
   ];
 
   /* ---------- FETCH ---------- */
@@ -63,9 +79,22 @@ export default function ContractDetailPage() {
 
       setContract(data);
 
+
+      setEventId(data.event?.id ?? null);
+
       setForm({
         status: data.status ?? "",
         totalAmount: data.totalAmount ?? 0,
+
+        eventDate: data.event?.eventDate
+          ? data.event.eventDate.slice(0, 10)
+          : "",
+
+        eventStart: data.event?.eventStart ?? "",
+        eventEnd: data.event?.eventEnd ?? "",
+
+        eventLocation: data.event?.location ?? "",
+        eventNote: data.event?.notes ?? "",
       });
 
     } catch {
@@ -76,29 +105,30 @@ export default function ContractDetailPage() {
   };
 
   /* ---------- UPDATE ---------- */
-
   const updateContract = async () => {
-
     try {
-
       setSaving(true);
       setError("");
 
-      const res = await fetch(`/api/company/contracts/${contractId}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: form.status,
-          totalAmount: Number(form.totalAmount),
-        }),
-      });
+      /* ---------- UPDATE CONTRACT ---------- */
 
-      if (!res.ok) {
+      const contractRes = await fetch(
+        `/api/company/contracts/${contractId}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: form.status,
+            totalAmount: Number(form.totalAmount),
+          }),
+        }
+      );
 
-        const data = await res.json();
+      if (!contractRes.ok) {
+        const data = await contractRes.json();
 
         if (data?.error?.fieldErrors) {
           const messages = Object.values(data.error.fieldErrors)
@@ -111,6 +141,45 @@ export default function ContractDetailPage() {
         }
 
         return;
+      }
+
+      /* ---------- UPDATE EVENT ---------- */
+
+      if (eventId) {
+        const eventRes = await fetch(
+          `/api/company/events/${eventId}`,
+          {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              eventDate: replaceDateKeepTime(
+                form.eventDate,
+                form.eventStart
+              ),
+
+              eventStart: replaceDateKeepTime(
+                form.eventDate,
+                form.eventStart
+              ),
+
+              eventEnd: replaceDateKeepTime(
+                form.eventDate,
+                form.eventEnd
+              ),
+
+              location: form.eventLocation,
+              notes: form.eventNote,
+            }),
+          }
+        );
+
+        if (!eventRes.ok) {
+          setError("Failed to update event.");
+          return;
+        }
       }
 
       await fetchContract();

@@ -261,7 +261,7 @@ export default function DetailCard({
                   {field.label}
                 </label>
 
-                {field.name === "notes" ? (
+                {field.type === "textarea" ? (
                   <textarea
                     value={form[field.name] || ""}
                     onChange={(e) =>
