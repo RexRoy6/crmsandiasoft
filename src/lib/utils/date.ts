@@ -1,16 +1,67 @@
+export const parseLocalDate = (
+  value: string | Date
+) => {
+  if (value instanceof Date) {
+    return new Date(value);
+  }
+
+  if (
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    const [y, m, d] = value.split("-").map(Number);
+
+    return new Date(y, m - 1, d);
+  }
+
+  return new Date(value);
+};
+
+export const replaceDateKeepTime = (
+  newDate: string,
+  originalDateTime?: string | Date
+) => {
+  if (!newDate || !originalDateTime) {
+    return undefined;
+  }
+
+  const baseDate = parseLocalDate(newDate);
+  const original = new Date(originalDateTime);
+
+  if (
+    isNaN(baseDate.getTime()) ||
+    isNaN(original.getTime())
+  ) {
+    return undefined;
+  }
+
+  baseDate.setHours(
+    original.getHours(),
+    original.getMinutes(),
+    original.getSeconds(),
+    original.getMilliseconds()
+  );
+
+  return baseDate.toISOString();
+};
+
+
 export const formatDate = (
   value: string | Date
 ) => {
 
-  let date: Date;
+  // let date: Date;
 
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [y, m, d] = value.split("-").map(Number);
+  // if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  //   const [y, m, d] = value.split("-").map(Number);
 
-    date = new Date(y, m - 1, d);
-  } else {
-    date = new Date(value);
-  }
+  //   date = new Date(y, m - 1, d);
+  // } else {
+  //   date = new Date(value);
+  // }
+
+
+  const date = parseLocalDate(value);
 
   if (isNaN(date.getTime())) {
     return "";
@@ -101,20 +152,22 @@ export const combineDateTime = (
 ) => {
   if (!baseDate || !time) return;
 
-  let date: Date;
+  // let date: Date;
 
-  if (
-    typeof baseDate === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(baseDate)
-  ) {
-    const [y, m, d] = baseDate
-      .split("-")
-      .map(Number);
+  // if (
+  //   typeof baseDate === "string" &&
+  //   /^\d{4}-\d{2}-\d{2}$/.test(baseDate)
+  // ) {
+  //   const [y, m, d] = baseDate
+  //     .split("-")
+  //     .map(Number);
 
-    date = new Date(y, m - 1, d);
-  } else {
-    date = new Date(baseDate);
-  }
+  //   date = new Date(y, m - 1, d);
+  // } else {
+  //   date = new Date(baseDate);
+  // }
+
+  const date = parseLocalDate(baseDate);
 
   const [hours, minutes] =
     time.split(":").map(Number);
