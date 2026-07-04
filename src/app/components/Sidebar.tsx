@@ -3,101 +3,116 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
-  Users,
-  Calendar,
-  FileText,
-  CreditCard,
-  Briefcase,
-  AlarmClock,
-  Settings,
-  Star
+  Home, Users, Calendar, FileText, CreditCard,
+  Briefcase, AlarmClock, Settings, Star,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { UserRole } from "@/db/schema";
 import { canAccessRoute } from "@/lib/auth/canAccessRoute";
 
 const menu = [
-  { label: "Home", href: "/company", icon: Home },
-  { label: "Registro Rapido", href: "/company/contracts/new", icon: Star },
-  { label: "Services", href: "/company/service", icon: Briefcase },
-  { label: "Clients", href: "/company/clients", icon: Users },
-  { label: "Events", href: "/company/events", icon: AlarmClock },
-  { label: "Contracts", href: "/company/contracts", icon: FileText },
-  { label: "Payments", href: "/company/payments", icon: CreditCard },
-  { label: "Calendar", href: "/company/calendar", icon: Calendar },
-  { label: "Settings", href: "/company/settings", icon: Settings },
+  { label: "Inicio", href: "/company", icon: Home },
+  { label: "Registro Rápido", href: "/company/contracts/new", icon: Star },
+  { label: "Servicios", href: "/company/service", icon: Briefcase },
+  { label: "Clientes", href: "/company/clients", icon: Users },
+  { label: "Eventos", href: "/company/events", icon: AlarmClock },
+  { label: "Contratos", href: "/company/contracts", icon: FileText },
+  { label: "Pagos", href: "/company/payments", icon: CreditCard },
+  { label: "Calendario", href: "/company/calendar", icon: Calendar },
+  { label: "Configuración", href: "/company/settings", icon: Settings },
 ];
 
-
-export default function Sidebar({
-  collapsed,
+export default function Sidebar({ 
+  collapsed, 
   role,
-}: {
-  collapsed: boolean;
+  onToggle
+}: { 
+  collapsed: boolean; 
   role: UserRole;
+  onToggle: () => void;
 }) {
   const pathname = usePathname();
-  const width = collapsed ? 70 : 220;
-
-  const visibleMenu = menu.filter(item =>
-  canAccessRoute(item.href, role)
-);
-
+  const visibleMenu = menu.filter((item) => canAccessRoute(item.href, role));
 
   return (
     <aside
-      className="sidebar-container"
-      style={{
-        width: width,
-        padding: collapsed ? "15px" : "15px",
-      }}
+      className={`
+        fixed top-0 left-0 h-screen z-50 
+        bg-white border-r border-[var(--border)]
+        transition-all duration-300 ease-in-out
+        flex flex-col overflow-hidden
+        w-[250px] 
+        ${collapsed 
+          ? "-translate-x-full md:translate-x-0 md:w-[80px]" 
+          : "translate-x-0"
+        }
+      `}
     >
-      {collapsed ? (
-        <h2 style={{ fontSize: 16, margin: 0, alignSelf: "left" }}>Menu</h2>
-      ) : (
-        <h2 style={{ fontSize: 16, margin: 0, alignSelf: "left" }}>
-          Options menu
-        </h2>
-      )}
-      <nav
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-        }}
+      {/* Cabecera del Sidebar: Isotipo + Dashboard + Colapsar */} 
+      <div 
+        className={`h-[60px] flex items-center shrink-0 border-b border-[var(--border)] transition-all duration-300 ${
+          collapsed ? "justify-center gap-2 px-2" : "justify-between px-5"
+        }`}
       >
-        {visibleMenu.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href;
+        <div className={`flex items-center overflow-hidden transition-all duration-200 ${collapsed ? "gap-0" : "gap-3"}`}>
+          {/* Añadimos shrink-0 aquí para proteger el contenedor */}
+          <span className="shrink-0 flex items-center justify-center" title="Sandiasoft">
+            <img
+              src="/sandiasoft.png"
+              alt="Sandiasoft Logo"
+              // shrink-0 prohíbe que se comprima, object-contain protege la proporción
+              className="h-8 w-8 object-contain shrink-0 transition-transform duration-200"
+            />
+          </span>
+          <span 
+            className={`font-semibold text-[#111827] tracking-wide transition-all duration-200 ${
+              collapsed ? "opacity-0 w-0 hidden" : "opacity-100"
+            }`}
+          >
+            Dashboard
+          </span>
+        </div>
+        
+        {/* Botón discreto visible solo en escritorio (protegido con shrink-0) */}
+        <button
+          onClick={onToggle}
+          className="hidden md:flex p-1 rounded-md text-gray-400 hover:text-black hover:bg-gray-100 transition-colors shrink-0"
+          aria-label="Colapsar menú"
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: collapsed ? "center" : "flex-start",
-                gap: 10,
+      {/* Menú de Navegación */}
+      <div className="flex-1 py-6 px-3 overflow-y-auto">
+        <nav className="flex flex-col gap-2">
+          {visibleMenu.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href;
 
-                padding: "10px 12px",
-                borderRadius: 8,
-                textDecoration: "none",
-
-                color: active ? "white" : "var(--text-primary)",
-                background: active ? "#2563eb" : "transparent",
-
-                fontSize: 14,
-              }}
-            >
-              <span title={item.label}>
-                <Icon size={18} />
-              </span>
-              {!collapsed && item.label}
-            </Link>
-          );
-        })}
-      </nav>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group
+                  ${collapsed ? "justify-center md:px-0" : "justify-start"}
+                  ${active 
+                    ? "bg-[#111827] text-white" 
+                    : "bg-transparent text-gray-500 hover:text-black hover:bg-gray-100"
+                  }
+                `}
+              >
+                <Icon size={20} className={`shrink-0 ${active ? "text-white" : "text-gray-400 group-hover:text-black"}`} />
+                <span className={`text-sm font-medium tracking-tight whitespace-nowrap ${collapsed ? "md:hidden" : "block"}`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     </aside>
   );
 }

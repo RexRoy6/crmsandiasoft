@@ -1,15 +1,9 @@
 "use client";
 
 import { useState } from "react";
-
 import Sidebar from "@/app/components/Sidebar";
 import Topbar from "@/app/components/Topbar";
-
 import { UserRole } from "@/db/schema";
-
-const TOPBAR_HEIGHT = 60;
-const SIDEBAR_WIDTH = 220;
-const SIDEBAR_COLLAPSED_WIDTH = 70;
 
 export default function CompanyShell({
   children,
@@ -18,43 +12,40 @@ export default function CompanyShell({
   children: React.ReactNode;
   role: UserRole;
 }) {
-
   const [collapsed, setCollapsed] = useState(false);
 
-  const sidebarWidth =
-    collapsed
-      ? SIDEBAR_COLLAPSED_WIDTH
-      : SIDEBAR_WIDTH;
-
   return (
-    <>
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col font-sans">
       <Topbar
-        collapsed={collapsed}
         onToggle={() => setCollapsed(!collapsed)}
       />
 
+      {/* OVERLAY PARA MÓVILES: Se muestra si el menú no está colapsado */}
+      {!collapsed && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={() => setCollapsed(true)}
+        />
+      )}
+
       <Sidebar
         collapsed={collapsed}
+        onToggle={() => setCollapsed(!collapsed)}
         role={role}
       />
 
+      {/* Contenedor Principal */}
       <div
-        style={{
-          marginTop: TOPBAR_HEIGHT,
-          marginLeft: sidebarWidth,
-          minHeight: "100vh",
-          background: "var(--bg-secondary)",
-          transition: "margin-left 0.2s ease",
-        }}
+        className={`
+          flex-1 transition-all duration-300 ease-in-out
+          pt-[60px] 
+          ${collapsed ? "md:ml-[80px]" : "md:ml-[250px]"}
+        `}
       >
-        <main
-          style={{
-            padding: 40,
-          }}
-        >
+        <main className="p-6 md:p-10 max-w-7xl mx-auto">
           {children}
         </main>
       </div>
-    </>
+    </div>
   );
 }
