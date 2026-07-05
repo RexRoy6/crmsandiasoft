@@ -2,226 +2,158 @@
 
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/utils/date";
-import CreateForm, {
-    Field,
-} from "@/app/components/crm/CreateForm";
+import CreateForm, { Field } from "@/app/components/crm/CreateForm";
+import { Plus, PackageSearch } from "lucide-react";
 
 type Props = {
-    companyServices: any[];
-    contract: any;
-    onSubmit: (data: any) => Promise<boolean | void>;
+  companyServices: any[];
+  contract: any;
+  onSubmit: (data: any) => Promise<boolean | void>;
 };
 
 const initialForm = {
-    serviceId: "",
-    quantity: "",
-    unitPrice: "",
-    serviceNotes: "",
-    operationStart: "",
-    operationEnd: "",
+  serviceId: "",
+  quantity: "",
+  unitPrice: "",
+  serviceNotes: "",
+  operationStart: "",
+  operationEnd: "",
 };
 
 export default function ContractServiceForm({
-    companyServices,
-    contract,
-    onSubmit,
+  companyServices,
+  contract,
+  onSubmit,
 }: Props) {
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(initialForm);
 
-    const [showForm, setShowForm] =
-        useState(false);
+  const handleServiceChange = (serviceId: string) => {
+    const service = companyServices.find((s) => String(s.id) === serviceId);
+    if (!service) return;
 
-    const [form, setForm] =
-        useState(initialForm);
+    setForm((prev) => ({
+      ...prev,
+      serviceId,
+      unitPrice: String(service.priceBase),
+    }));
+  };
 
-    const handleServiceChange = (
-        serviceId: string
-    ) => {
+  const fields: Field[] = [
+    {
+      name: "serviceId",
+      label: "Servicio / Equipo",
+      type: "select",
+      fullWidth: true, // Ocupa las 2 columnas para que el nombre del servicio se lea bien
+      options: companyServices.map((s) => ({
+        value: String(s.id),
+        label: `${s.name} ($${s.priceBase})`,
+      })),
+      onChange: handleServiceChange,
+      required: true,
+    },
+    {
+      name: "quantity",
+      label: "Cantidad",
+      type: "number",
+      required: true,
+    },
+    {
+      name: "unitPrice",
+      label: "Precio Unitario",
+      type: "number",
+    },
+    {
+      name: "operationStart",
+      label: "Hora de Inicio (Montaje)",
+      type: "time",
+      required: true,
+    },
+    {
+      name: "operationEnd",
+      label: "Hora de Fin (Desmontaje)",
+      type: "time",
+      required: true,
+    },
+    {
+      name: "serviceNotes",
+      label: "Notas Adicionales",
+      type: "textarea",
+    },
+  ];
 
-        const service =
-            companyServices.find(
-                (s) =>
-                    String(s.id) === serviceId
-            );
+  const selectedService = useMemo(() => {
+    return companyServices.find((s) => String(s.id) === form.serviceId);
+  }, [companyServices, form.serviceId]);
 
-        if (!service) return;
+  const subtotal = Number(form.quantity || 0) * Number(form.unitPrice || 0);
 
-        setForm((prev) => ({
-            ...prev,
-            serviceId,
-            unitPrice: String(
-                service.priceBase
-            ),
-        }));
-    };
+  const formatMoney = (amount: number) => {
+    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(amount);
+  };
 
-    const fields: Field[] = [
-        {
-            name: "serviceId",
-            label: "Service",
-            type: "select",
-            options:
-                companyServices.map((s) => ({
-                    value: String(s.id),
-                    label:
-                        `${s.name} ($${s.priceBase})`,
-                })),
-            onChange: handleServiceChange,
+  async function handleSubmit() {
+    const success = await onSubmit(form);
+    if (!success) return;
+    setShowForm(false);
+    setForm(initialForm);
+  }
 
-            required: true,
-        },
-        {
-            name: "quantity",
-            label: "Quantity",
-            type: "number",
-            required: true,
-        },
-        {
-            name: "unitPrice",
-            label: "Unit Price",
-            type: "number",
-        },
-        {
-            name: "serviceNotes",
-            label: "Notes",
-            type: "textarea",
-        },
-        {
-            name: "operationStart",
-            label: "Start Time",
-            type: "time",
-            required: true,
-        },
-        {
-            name: "operationEnd",
-            label: "End Time",
-            type: "time",
-            required: true,
-        },
-    ];
+  function handleCancel() {
+    setShowForm(false);
+    setForm(initialForm);
+  }
 
-    const selectedService =
-        useMemo(() => {
-
-            return companyServices.find(
-                (s) =>
-                    String(s.id) ===
-                    form.serviceId
-            );
-
-        }, [
-            companyServices,
-            form.serviceId,
-        ]);
-
-    const subtotal =
-        Number(form.quantity || 0) *
-        Number(form.unitPrice || 0);
-
-    async function handleSubmit() {
-
-        const success =
-            await onSubmit(form);
-
-        if (!success) return;
-
-        setShowForm(false);
-
-        setForm(initialForm);
-    }
-
-    function handleCancel() {
-
-        setShowForm(false);
-
-        setForm(initialForm);
-    }
-
-    return (
-        <div
-            style={{
-                marginBottom: 20,
-            }}
+  return (
+    <div className="mb-6">
+      {!showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
         >
+          <Plus size={16} />
+          Agregar Servicio
+        </button>
+      )}
 
-            <button
-                onClick={() =>
-                    setShowForm(true)
-                }
-                style={{
-                    padding: "8px 12px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: "#2563eb",
-                    color: "white",
-                    cursor: "pointer",
-                    marginBottom: 10,
-                }}
-            >
-                + Add Service
-            </button>
-
-            {showForm && (
-                <CreateForm
-                    title="Add Service to Contract"
-                    fields={fields}
-                    form={form}
-                    setForm={setForm}
-                    onSubmit={handleSubmit}
-                    onCancel={handleCancel}
-                />
-            )}
-
-            {selectedService && (
-                <div
-                    style={{
-                        marginTop: 10,
-                        padding: 12,
-                        border:
-                            "1px solid var(--border-color)",
-                        borderRadius: 8,
-                    }}
-                >
-
-                    <p
-                        style={{
-                            fontSize: 12,
-                            color:
-                                "var(--text-secondary)",
-                            marginBottom: 6,
-                        }}
-                    >
-                        📅 Event date:
-                        {" "}
-                        {formatDate(contract?.event?.eventDate)}
-                    </p>
-
-                    <p
-                        style={{
-                            marginBottom: 6,
-                        }}
-                    >
-                        Stock available:
-                        {" "}
-                        {
-                            selectedService.stockTotal
-                        }
-                    </p>
-
-                    {subtotal > 0 && (
-                        <p
-                            style={{
-                                fontWeight: 600,
-                            }}
-                        >
-                            Subtotal:
-                            {" "}
-                            ${subtotal}
-                        </p>
-                    )}
-
+      {showForm && (
+        <div className="mt-4 bg-gray-50/50 p-1 md:p-4 rounded-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
+          <CreateForm
+            title="Detalles del Servicio"
+            fields={fields}
+            form={form}
+            setForm={setForm}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            submitLabel="Agregar al Contrato"
+          />
+          
+          {/* Tarjeta Informativa del Servicio Seleccionado */}
+          {selectedService && (
+            <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <PackageSearch size={16} className="text-blue-500" />
+                  Inventario y Disponibilidad
                 </div>
-            )}
+                <div className="text-xs text-gray-500">
+                  Fecha del evento: {formatDate(contract?.event?.eventDate)}
+                </div>
+                <div className="text-sm text-gray-700 mt-1">
+                  Stock base disponible: <strong>{selectedService.stockTotal} unidades</strong>
+                </div>
+              </div>
 
+              {subtotal > 0 && (
+                <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 text-right">
+                  <div className="text-xs font-medium text-blue-700 uppercase tracking-wider mb-0.5">Subtotal</div>
+                  <div className="text-lg font-bold text-gray-900">{formatMoney(subtotal)}</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-    );
+      )}
+    </div>
+  );
 }

@@ -5,7 +5,7 @@ import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import PaymentAllocationCard from "@/app/components/crm/payments/PaymentAllocationCard";
 import ErrorBox from "@/app/components/ErrorBox";
 import ContractSearch from "@/app/components/crm/ContractSearch";
-
+import { Plus } from "lucide-react";
 import { useContractItems } from "@/app/hooks/useContractItems";
 
 export default function PaymentForm({
@@ -16,14 +16,10 @@ export default function PaymentForm({
   onSuccess?: () => void;
 }) {
   const isGlobal = !contractId;
-
   const [selectedContractId, setSelectedContractId] = useState<string>("");
-
   const activeContractId = contractId || selectedContractId;
 
-  const { contractItems, fetchContractItems } =
-    useContractItems(activeContractId);
-
+  const { contractItems, fetchContractItems } = useContractItems(activeContractId);
   const [show, setShow] = useState(false);
 
   const [form, setForm] = useState({
@@ -40,15 +36,15 @@ export default function PaymentForm({
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number>();
 
-  /* ---------- fields dinámicos ---------- */
-
+  /* ---------- Campos Dinámicos (Traducidos y Estructurados) ---------- */
   const fields: Field[] = [
     ...(isGlobal
       ? [
           {
             name: "contractId",
-            label: "Contract",
+            label: "Contrato",
             readOnly: true,
+            fullWidth: true, // Aprovechamos la nueva cuadrícula inteligente
             after: (
               <ContractSearch
                 selected={selectedContractId}
@@ -63,7 +59,7 @@ export default function PaymentForm({
 
     {
       name: "currency",
-      label: "Currency",
+      label: "Moneda",
       type: "select",
       options: [
         { label: "MXN", value: "MXN" },
@@ -72,27 +68,26 @@ export default function PaymentForm({
     },
     {
       name: "paymentMethod",
-      label: "Payment Method",
+      label: "Método de Pago",
       type: "select",
       options: [
-        { label: "Cash", value: "cash" },
-        { label: "Transfer", value: "transfer" },
-        { label: "Card", value: "card" },
+        { label: "Efectivo", value: "cash" },
+        { label: "Transferencia", value: "transfer" },
+        { label: "Tarjeta", value: "card" },
       ],
     },
     {
       name: "paidAt",
-      label: "Payment Date",
+      label: "Fecha de Pago",
       type: "date",
     },
     {
       name: "ticketNumber",
-      label: "Ticket Number",
+      label: "Número de Ticket",
     },
   ];
 
-  /* ---------- lifecycle ---------- */
-
+  /* ---------- Ciclo de Vida ---------- */
   useEffect(() => {
     if (selectedContractId) {
       fetchContractItems().then((items) => {
@@ -104,14 +99,11 @@ export default function PaymentForm({
     }
   }, [selectedContractId]);
 
-  /* ---------- actions ---------- */
-
+  /* ---------- Acciones ---------- */
   async function openForm() {
     setShow(true);
-
     if (contractId) {
       const items = await fetchContractItems();
-
       setForm((prev) => ({
         ...prev,
         items,
@@ -121,7 +113,6 @@ export default function PaymentForm({
 
   function closeForm() {
     setShow(false);
-
     setForm({
       currency: "MXN",
       paymentMethod: "cash",
@@ -129,7 +120,6 @@ export default function PaymentForm({
       ticketNumber: "",
       items: [],
     });
-
     setSelectedContractId("");
     setError("");
   }
@@ -137,14 +127,14 @@ export default function PaymentForm({
   async function handleSubmit() {
     try {
       if (!activeContractId) {
-        setError("Select a contract");
+        setError("Por favor, selecciona un contrato.");
         return;
       }
 
       const total = form.items.reduce((sum, i) => sum + i.amount, 0);
 
       if (total <= 0) {
-        setError("Enter at least one amount");
+        setError("Ingresa al menos un monto mayor a cero.");
         return;
       }
 
@@ -164,72 +154,39 @@ export default function PaymentForm({
           headers: {
             "Content-Type": "application/json",
           },
-          // body: JSON.stringify({
-          //   currency: form.currency,
-          //   paymentMethod: form.paymentMethod,
-
-          //   // paidAt: form.paidAt
-          //   //   ? new Date(form.paidAt).toISOString()
-          //   //   : undefined,
-          //   paidAt: paidAt?.toISOString(),
-          //   ticketNumber: form.ticketNumber || undefined,
-          //   items: form.items.filter((i) => i.amount > 0),
-          // }),
           body: JSON.stringify(payload),
         },
       );
 
       if (!res.ok) {
         const data = await res.json();
-
-        setError(data.error || "Failed to create payment");
+        setError(data.error || "Error al registrar el pago.");
         setErrorCode(res.status);
         return;
       }
 
       closeForm();
-
       onSuccess?.();
     } catch {
-      setError("Connection error");
+      setError("Error de conexión con el servidor.");
     }
   }
 
-  /* ---------- UI ---------- */
-
+  /* ---------- Interfaz (UI) ---------- */
   return (
-    <>
-      <button
-        onClick={openForm}
-        style={{
-          padding: "8px 12px",
-          borderRadius: 6,
-          background: "#22c55e",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: 10,
-        }}
-      >
-        + Add Payment
-      </button>
+    <div className="mb-6">
+      {!show && (
+        <button
+          onClick={openForm}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
+        >
+          <Plus size={16} />
+          Registrar Pago
+        </button>
+      )}
 
       {show && (
-        <div
-          style={{
-            paddingTop: 16,
-            paddingRight: 16,
-            paddingBottom: 0,
-            paddingLeft: 16,
-            border: "1px solid var(--border-color)",
-            borderRadius: 12,
-            background: "var(--bg-primary)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
+        <div className="mt-4 bg-gray-50/50 p-1 md:p-4 rounded-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
           {contractItems.length > 0 && (
             <PaymentAllocationCard
               items={contractItems}
@@ -237,8 +194,9 @@ export default function PaymentForm({
               setForm={setForm}
             />
           )}
+          
           <CreateForm
-            title="Add Payment"
+            title="Detalles del Pago"
             fields={fields}
             form={form}
             setForm={setForm}
@@ -248,7 +206,7 @@ export default function PaymentForm({
         </div>
       )}
 
-      {error && <ErrorBox message={error} code={errorCode} />}
-    </>
+      {error && <div className="mt-4"><ErrorBox message={error} code={errorCode} /></div>}
+    </div>
   );
 }

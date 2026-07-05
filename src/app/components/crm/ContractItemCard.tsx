@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import ListCard from "./ListCard";
-
-import {
-  formatTime,
-  toLocalInput,
-} from "@/lib/utils/date";
+import { formatTime, toLocalInput } from "@/lib/utils/date";
+import { Clock, FileText, Wallet } from "lucide-react";
 
 type Props = {
   item: any;
@@ -15,11 +11,7 @@ type Props = {
   onDelete: (id: number) => void;
 };
 
-export default function ContractItemCard({
-  item,
-  onUpdate,
-  onDelete,
-}: Props) {
+export default function ContractItemCard({ item, onUpdate, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
 
   const [form, setForm] = useState({
@@ -41,528 +33,141 @@ export default function ContractItemCard({
   }, [item]);
 
   const service = item.service;
+  const subtotalView = Number(item.quantity || 0) * Number(item.unitPrice || 0);
+  const subtotalEdit = Number(form.quantity || 0) * Number(item.unitPrice || 0);
 
-  const subtotalView =
-    Number(item.quantity || 0) *
-    Number(item.unitPrice || 0);
-
-  const subtotalEdit =
-    Number(form.quantity || 0) *
-    Number(item.unitPrice || 0);
+  const formatMoney = (val: number) => new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(val);
 
   return (
     <>
       {!editing ? (
+        // MODO LECTURA
         <ListCard
-          title={service?.name || "Service"}
+          title={service?.name || "Servicio"}
           subtitle={service?.description}
+          actions={[
+            { label: "Editar", onClick: () => setEditing(true) },
+            { label: "Quitar", onClick: () => onDelete(item.id) },
+          ]}
           content={
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                marginTop: 6,
-              }}
-            >
-              {/* Quantity */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Quantity
-                </span>
-
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                  }}
-                >
-                  {item.quantity}
-                </span>
+            <div className="flex flex-col gap-2 mt-1">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 font-medium">Cantidad</span>
+                <span className="font-semibold text-gray-900">{item.quantity}</span>
               </div>
 
-              {/* Unit Price */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Unit Price
-                </span>
-
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                  }}
-                >
-                  ${item.unitPrice}
-                </span>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500 font-medium">Precio Unitario</span>
+                <span className="font-medium text-gray-900">{formatMoney(item.unitPrice)}</span>
               </div>
 
-              {/* Subtotal */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Subtotal
-                </span>
-
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                  }}
-                >
-                  ${subtotalView}
-                </span>
+              <div className="flex justify-between items-center text-sm bg-white p-2 rounded border border-gray-200 mt-1">
+                <span className="text-gray-600 font-semibold">Subtotal</span>
+                <span className="font-bold text-gray-900">{formatMoney(subtotalView)}</span>
               </div>
 
-              {/* Schedule */}
-              {item.operationStart &&
-                item.operationEnd && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent:
-                        "space-between",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color:
-                          "var(--text-secondary)",
-                      }}
-                    >
-                      Schedule
-                    </span>
+              {item.operationStart && item.operationEnd && (
+                <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 text-sm">
+                  <span className="flex items-center gap-1.5 text-gray-500">
+                    <Clock size={14} /> Horario
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    {formatTime(item.operationStart)} - {formatTime(item.operationEnd)}
+                  </span>
+                </div>
+              )}
 
-                    <span
-                      style={{
-                        fontSize: 13,
-                      }}
-                    >
-                      {formatTime(
-                        item.operationStart
-                      )}{" "}
-                      -{" "}
-                      {formatTime(
-                        item.operationEnd
-                      )}
-                    </span>
-                  </div>
-                )}
-
-              {/* Notes */}
               {item.serviceNotes && (
-                <div
-                  style={{
-                    marginTop: 4,
-                    padding: "8px 10px",
-                    background:
-                      "var(--bg-primary)",
-                    borderRadius: 8,
-                    border:
-                      "1px solid var(--border-color)",
-                    fontSize: 12,
-                  }}
-                >
+                <div className="mt-2 p-3 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 italic flex gap-2 items-start">
+                   <FileText size={14} className="text-gray-400 shrink-0 mt-0.5" />
                   {item.serviceNotes}
                 </div>
               )}
             </div>
           }
-          actions={[
-            {
-              label: "Edit",
-              onClick: () =>
-                setEditing(true),
-            },
-            {
-              label: "Remove",
-              onClick: () =>
-                onDelete(item.id),
-            },
-          ]}
         />
       ) : (
-        <div
-          style={{
-            border:
-              "1px solid var(--border-color)",
-            padding: 12,
-            borderRadius: 10,
-            background:
-              "var(--bg-primary)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-              background:
-                "var(--bg-secondary)",
-              padding: 16,
-              borderRadius: 10,
-              animation:
-                "fadeIn 0.2s ease",
-            }}
-          >
-            {/* Header */}
-            <div>
-              <h3 style={{ margin: 0 }}>
-                {service?.name}
-              </h3>
+        // MODO EDICIÓN
+        <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm mb-3 animate-in fade-in zoom-in-95 duration-200">
+          
+          <div className="mb-4 pb-3 border-b border-gray-100">
+            <h3 className="m-0 text-base font-bold text-gray-900">{service?.name}</h3>
+            <p className="m-0 text-sm text-gray-500 mt-1">{service?.description}</p>
+          </div>
 
-              <p
-                style={{
-                  margin: 0,
-                  color:
-                    "var(--text-secondary)",
-                  fontSize: 13,
-                }}
-              >
-                {service?.description}
-              </p>
-            </div>
-
-            {/* Quantity */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <label
-                style={{
-                  fontSize: 13,
-                  color:
-                    "var(--text-secondary)",
-                }}
-              >
-                Quantity
-              </label>
-
+          <div className="flex flex-col gap-4">
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-gray-700">Cantidad</label>
               <input
                 type="number"
                 value={form.quantity}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    quantity:
-                      e.target.value,
-                  })
-                }
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border:
-                    "1px solid var(--border-color)",
-                  background:
-                    "var(--bg-primary)",
-                  color:
-                    "var(--text-primary)",
-                }}
+                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                className="w-full md:w-1/3 px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all"
               />
             </div>
 
-            {/* Subtotal */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  "space-between",
-                fontSize: 14,
-                borderBottom:
-                  "1px solid var(--border-color)",
-                paddingBottom: 6,
-              }}
-            >
-              <span
-                style={{
-                  color:
-                    "var(--text-secondary)",
-                }}
-              >
-                💰 Subtotal
-              </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-gray-700 flex items-center gap-1"><Clock size={12}/> Inicio</label>
+                <input
+                  type="datetime-local"
+                  value={form.operationStart || ""}
+                  onChange={(e) => setForm({ ...form, operationStart: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                />
+              </div>
 
-              <strong>
-                ${subtotalEdit}
-              </strong>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-gray-700 flex items-center gap-1"><Clock size={12}/> Fin</label>
+                <input
+                  type="datetime-local"
+                  value={form.operationEnd || ""}
+                  onChange={(e) => setForm({ ...form, operationEnd: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                />
+              </div>
             </div>
 
-            {/* Notes */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <label
-                style={{
-                  fontSize: 13,
-                  color:
-                    "var(--text-secondary)",
-                }}
-              >
-                📝 Notes
-              </label>
-
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-gray-700 flex items-center gap-1"><FileText size={12}/> Notas Adicionales</label>
               <textarea
                 value={form.serviceNotes}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    serviceNotes:
-                      e.target.value,
-                  })
-                }
-                rows={3}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border:
-                    "1px solid var(--border-color)",
-                  background:
-                    "var(--bg-primary)",
-                  color:
-                    "var(--text-primary)",
-                  resize: "vertical",
-                }}
+                onChange={(e) => setForm({ ...form, serviceNotes: e.target.value })}
+                rows={2}
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-black resize-y"
               />
             </div>
 
-            {/* Schedule */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "1fr 1fr",
-                gap: 12,
-              }}
-            >
-              {/* Start */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection:
-                    "column",
-                  gap: 6,
-                }}
-              >
-                <label
-                  style={{
-                    fontSize: 13,
-                    color:
-                      "var(--text-secondary)",
-                  }}
-                >
-                  🕒 Start
-                </label>
-
-                <input
-                  type="datetime-local"
-                  value={
-                    form.operationStart ||
-                    ""
-                  }
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      operationStart:
-                        e.target.value,
-                    })
-                  }
-                  style={{
-                    padding:
-                      "10px 12px",
-                    borderRadius: 8,
-                    border:
-                      "1px solid var(--border-color)",
-                    background:
-                      "var(--bg-primary)",
-                    color:
-                      "var(--text-primary)",
-                  }}
-                />
-              </div>
-
-              {/* End */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection:
-                    "column",
-                  gap: 6,
-                }}
-              >
-                <label
-                  style={{
-                    fontSize: 13,
-                    color:
-                      "var(--text-secondary)",
-                  }}
-                >
-                  🕒 End
-                </label>
-
-                <input
-                  type="datetime-local"
-                  value={
-                    form.operationEnd ||
-                    ""
-                  }
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      operationEnd:
-                        e.target.value,
-                    })
-                  }
-                  style={{
-                    padding:
-                      "10px 12px",
-                    borderRadius: 8,
-                    border:
-                      "1px solid var(--border-color)",
-                    background:
-                      "var(--bg-primary)",
-                    color:
-                      "var(--text-primary)",
-                  }}
-                />
-              </div>
+            <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 mt-2">
+              <span className="text-sm font-semibold text-gray-600 flex items-center gap-1.5"><Wallet size={16}/> Subtotal</span>
+              <span className="text-lg font-bold text-gray-900">{formatMoney(subtotalEdit)}</span>
             </div>
 
-            {/* Preview */}
-            {form.operationStart &&
-              form.operationEnd && (
-                <div
-                  style={{
-                    fontSize: 13,
-                    background:
-                      "var(--bg-primary)",
-                    padding: 8,
-                    borderRadius: 8,
-                  }}
-                >
-                  🕒{" "}
-                  {formatTime(
-                    form.operationStart
-                  )}{" "}
-                  -{" "}
-                  {formatTime(
-                    form.operationEnd
-                  )}
-                </div>
-              )}
-
-            {/* Actions */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "1fr 1fr",
-                gap: 12,
-              }}
-            >
+            <div className="flex items-center gap-3 mt-2">
               <button
                 onClick={() => {
                   onUpdate(item.id, {
-                    quantity: Number(
-                      form.quantity
-                    ),
-                    serviceNotes:
-                      form.serviceNotes,
-                    operationEnd:
-                      form.operationEnd,
-                    operationStart:
-                      form.operationStart,
+                    quantity: Number(form.quantity),
+                    serviceNotes: form.serviceNotes,
+                    operationEnd: form.operationEnd,
+                    operationStart: form.operationStart,
                   });
-
                   setEditing(false);
                 }}
-                style={{
-                  padding:
-                    "10px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  background:
-                    "#2563eb",
-                  color: "white",
-                  cursor: "pointer",
-                  transition: "0.2s",
-                }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.opacity =
-                    "0.85")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.opacity =
-                    "1")
-                }
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 transition-colors focus:outline-none"
               >
-                Save
+                Guardar Cambios
               </button>
 
               <button
-                onClick={() =>
-                  setEditing(false)
-                }
-                style={{
-                  padding:
-                    "10px 16px",
-                  borderRadius: 8,
-                  border:
-                    "1px solid var(--border-color)",
-                  color: "white",
-                  cursor: "pointer",
-                  transition: "0.2s",
-                  backgroundColor:
-                    "#e33131",
-                }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.opacity =
-                    "0.85")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.opacity =
-                    "1")
-                }
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors focus:outline-none"
               >
-                Cancel
+                Cancelar
               </button>
             </div>
+
           </div>
         </div>
       )}
