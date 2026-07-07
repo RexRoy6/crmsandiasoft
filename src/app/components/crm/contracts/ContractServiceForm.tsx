@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/utils/date";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
-import { Plus, PackageSearch } from "lucide-react";
+import { Plus, PackageSearch, X } from "lucide-react";
 
 type Props = {
   companyServices: any[];
@@ -44,7 +44,7 @@ export default function ContractServiceForm({
       name: "serviceId",
       label: "Servicio / Equipo",
       type: "select",
-      fullWidth: true, // Ocupa las 2 columnas para que el nombre del servicio se lea bien
+      fullWidth: true,
       options: companyServices.map((s) => ({
         value: String(s.id),
         label: `${s.name} ($${s.priceBase})`,
@@ -52,34 +52,11 @@ export default function ContractServiceForm({
       onChange: handleServiceChange,
       required: true,
     },
-    {
-      name: "quantity",
-      label: "Cantidad",
-      type: "number",
-      required: true,
-    },
-    {
-      name: "unitPrice",
-      label: "Precio Unitario",
-      type: "number",
-    },
-    {
-      name: "operationStart",
-      label: "Hora de Inicio (Montaje)",
-      type: "time",
-      required: true,
-    },
-    {
-      name: "operationEnd",
-      label: "Hora de Fin (Desmontaje)",
-      type: "time",
-      required: true,
-    },
-    {
-      name: "serviceNotes",
-      label: "Notas Adicionales",
-      type: "textarea",
-    },
+    { name: "quantity", label: "Cantidad", type: "number", required: true },
+    { name: "unitPrice", label: "Precio Unitario", type: "number" },
+    { name: "operationStart", label: "Hora de Inicio (Montaje)", type: "time", required: true },
+    { name: "operationEnd", label: "Hora de Fin (Desmontaje)", type: "time", required: true },
+    { name: "serviceNotes", label: "Notas Adicionales", type: "textarea", fullWidth: true },
   ];
 
   const selectedService = useMemo(() => {
@@ -105,21 +82,28 @@ export default function ContractServiceForm({
   }
 
   return (
-    <div className="mb-6">
-      {!showForm && (
+    <div className="w-full mb-8">
+      {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
+          className="w-full flex flex-col items-center justify-center gap-2 py-8 bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
         >
-          <Plus size={16} />
-          Agregar Servicio
+          <div className="bg-white p-2 rounded-full shadow-sm">
+            <Plus size={20} className="text-gray-900" />
+          </div>
+          <span className="font-semibold text-sm">Añadir Nuevo Servicio</span>
         </button>
-      )}
+      ) : (
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex justify-between items-center mb-4">
+             <h3 className="text-lg font-bold text-gray-900">Configurar Servicio</h3>
+             <button onClick={handleCancel} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
+               <X size={20} />
+             </button>
+          </div>
 
-      {showForm && (
-        <div className="mt-4 bg-gray-50/50 p-1 md:p-4 rounded-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
           <CreateForm
-            title="Detalles del Servicio"
+            title="" // Quitamos el título interno para evitar redundancia
             fields={fields}
             form={form}
             setForm={setForm}
@@ -127,27 +111,30 @@ export default function ContractServiceForm({
             onCancel={handleCancel}
             submitLabel="Agregar al Contrato"
           />
-          
-          {/* Tarjeta Informativa del Servicio Seleccionado */}
+
           {selectedService && (
-            <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="mt-4 bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                  <PackageSearch size={16} className="text-blue-500" />
-                  Inventario y Disponibilidad
+                <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+                  <PackageSearch size={16} />
+                  Disponibilidad en Inventario
                 </div>
-                <div className="text-xs text-gray-500">
-                  Fecha del evento: {formatDate(contract?.event?.eventDate)}
+                <div className="text-xs text-blue-700">
+                  Fecha: {formatDate(contract?.event?.eventDate)}
                 </div>
-                <div className="text-sm text-gray-700 mt-1">
-                  Stock base disponible: <strong>{selectedService.stockTotal} unidades</strong>
+                <div className="text-sm text-blue-800 mt-1">
+                  Stock base: <strong>{selectedService.stockTotal} unidades</strong>
                 </div>
               </div>
 
               {subtotal > 0 && (
-                <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 text-right">
-                  <div className="text-xs font-medium text-blue-700 uppercase tracking-wider mb-0.5">Subtotal</div>
-                  <div className="text-lg font-bold text-gray-900">{formatMoney(subtotal)}</div>
+                <div className="bg-white px-4 py-2 rounded-lg border border-blue-100 text-right shadow-sm">
+                  <div className="text-xs font-medium text-blue-500 uppercase tracking-wider mb-0.5">
+                    Subtotal Estimado
+                  </div>
+                  <div className="text-lg font-black text-gray-900">
+                    {formatMoney(subtotal)}
+                  </div>
                 </div>
               )}
             </div>
