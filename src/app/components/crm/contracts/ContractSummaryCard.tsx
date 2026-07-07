@@ -1,25 +1,12 @@
 "use client";
 
 import { formatDate, formatTime } from "@/lib/utils/date";
-import ContractServicesList from "./ContractServicesList"; // Importamos la lista
 
 type Props = {
   contract: any;
-  services: any[];
-  companyServices: any[];
-  loadingServices: boolean;
-  onDeleteService: (id: number) => Promise<void>;
-  onUpdateService: (id: number, data: any) => Promise<void>;
 };
 
-export default function ContractSummaryCard({ 
-  contract, 
-  services, 
-  companyServices,
-  loadingServices, 
-  onDeleteService, 
-  onUpdateService 
-}: Props) {
+export default function ContractSummaryCard({ contract }: Props) {
   if (!contract) return null;
 
   const isDraft = contract.status === "draft";
@@ -50,7 +37,7 @@ export default function ContractSummaryCard({
       </div>
 
       {/* Cuadrícula de Datos Generales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm text-gray-700 mb-8">
+      <div className="grid grid-cols-1 gap-5 text-sm text-gray-700 mb-8">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Cliente</span>
           <span className="font-semibold text-gray-900">{contract.client?.name}</span>
@@ -77,24 +64,10 @@ export default function ContractSummaryCard({
         </div>
       </div>
 
-      {/* Desglose de Servicios (Inyectado aquí adentro) */}
-      <div className="mb-6">
-        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">
-          Desglose de Servicios
-        </h3>
-        <ContractServicesList 
-          services={services} 
-          companyServices={companyServices}
-          loading={loadingServices} 
-          onDelete={onDeleteService} 
-          onUpdate={onUpdateService} 
-        />
-      </div>
-
-      {/* Total Acumulado */}
+      {/* Total Acumulado (Sin la lista en medio) */}
       <div className="mt-2 pt-6 border-t-[3px] border-gray-900 flex justify-between items-end">
         <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-          Total del Contrato
+          Total
         </span>
         <span className="text-3xl font-black text-gray-900 tracking-tight">
           {formatMoney(Number(contract.totalAmount || 0))}

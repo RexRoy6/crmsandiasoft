@@ -28,6 +28,7 @@ export default function ContractServiceForm({
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const selectedService = useMemo(() => {
     return companyServices.find((s) => String(s.id) === form.serviceId);
@@ -46,11 +47,14 @@ export default function ContractServiceForm({
       quantity: "", 
     }));
     setError("");
+    setSubmitAttempted(false);
   };
 
+  // --- BUG SOLUCIONADO: Validación natural sin autocompletar ---
   const handleQuantityChange = (val: string) => {
+    setForm((prev) => ({ ...prev, quantity: val }));
+
     if (val === "") {
-      setForm((prev) => ({ ...prev, quantity: "" }));
       setError("La cantidad es requerida.");
       return;
     }
@@ -59,15 +63,32 @@ export default function ContractServiceForm({
 
     if (num > maxStock) {
       setError(`Solo hay ${maxStock} unidades disponibles en inventario.`);
-      setForm((prev) => ({ ...prev, quantity: String(maxStock) }));
     } else if (num < 1) {
       setError("La cantidad mínima es 1.");
-      setForm((prev) => ({ ...prev, quantity: "1" }));
     } else {
       setError("");
-      setForm((prev) => ({ ...prev, quantity: val }));
     }
   };
+
+  let startError = "";
+  let endError = "";
+
+  if (submitAttempted && !form.operationStart) {
+    startError = "Por favor, ingresa la hora de inicio (Montaje).";
+  }
+  if (submitAttempted && !form.operationEnd) {
+    endError = "Por favor, ingresa la hora de fin (Desmontaje).";
+  }
+
+  if (form.operationStart && form.operationEnd) {
+    const eventDate = contract?.event?.eventDate?.split("T")[0] || "2000-01-01";
+    const start = new Date(`${eventDate}T${form.operationStart}`);
+    const end = new Date(`${eventDate}T${form.operationEnd}`);
+    
+    if (end <= start) {
+      endError = "El fin (desmontaje) debe ser posterior al inicio.";
+    }
+  }
 
   const fields: Field[] = [
     {
@@ -88,29 +109,59 @@ export default function ContractServiceForm({
       type: "number",
       required: true,
       onChange: handleQuantityChange,
-      // INYECCIÓN DE UI: El error aparece debajo del input
       after: error ? (
         <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
           <AlertCircle size={14} /> {error}
         </span>
       ) : undefined,
     },
-    { name: "unitPrice", label: "Precio Unitario", type: "number" },
-    { name: "operationStart", label: "Hora de Inicio (Montaje)", type: "time", required: true },
-    { name: "operationEnd", label: "Hora de Fin (Desmontaje)", type: "time", required: true },
-    { name: "serviceNotes", label: "Notas Adicionales", type: "textarea", fullWidth: true },
+    { 
+      name: "unitPrice", 
+      label: "Precio Unitario", 
+      type: "number" 
+    },
+    { 
+      name: "operationStart", 
+      label: "Hora de Inicio (Montaje)", 
+      type: "time", 
+      after: startError ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> {startError}
+        </span>
+      ) : undefined,
+    },
+    { 
+      name: "operationEnd", 
+      label: "Hora de Fin (Desmontaje)", 
+      type: "time", 
+      after: endError ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> {endError}
+        </span>
+      ) : undefined,
+    },
+    { 
+      name: "serviceNotes", 
+      label: "Notas Adicionales", 
+      type: "textarea", 
+      fullWidth: true 
+    },
   ];
 
   const subtotal = Number(form.quantity || 0) * Number(form.unitPrice || 0);
-
+  
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(amount);
+    return new Intl.NumberFormat("es-MX", { 
+      style: "currency", 
+      currency: "MXN" 
+    }).format(amount);
   };
 
   async function handleSubmit() {
-    if (Number(form.quantity) > maxStock || Number(form.quantity) < 1) {
-      setError("Verifica la cantidad ingresada antes de guardar.");
-      return;
+    setSubmitAttempted(true); 
+
+    if (!form.operationStart || !form.operationEnd || startError || endError || error || !form.quantity) {
+      return; 
     }
 
     const success = await onSubmit(form);
@@ -119,12 +170,14 @@ export default function ContractServiceForm({
     setShowForm(false);
     setForm(initialForm);
     setError("");
+    setSubmitAttempted(false);
   }
 
   function handleCancel() {
     setShowForm(false);
     setForm(initialForm);
     setError("");
+    setSubmitAttempted(false);
   }
 
   return (
@@ -141,9 +194,15 @@ export default function ContractServiceForm({
         </button>
       ) : (
         <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+          
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-gray-900">Configurar Servicio</h3>
-            <button onClick={handleCancel} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
+            <h3 className="text-lg font-bold text-gray-900">
+              Configurar Servicio
+            </h3>
+            <button 
+              onClick={handleCancel} 
+              className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
+            >
               <X size={20} />
             </button>
           </div>
@@ -162,7 +221,7 @@ export default function ContractServiceForm({
             <div className="mt-4 bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
-                  <PackageSearch size={16} />
+                  <PackageSearch size={16} /> 
                   Disponibilidad en Inventario
                 </div>
                 <div className="text-xs text-blue-700">
