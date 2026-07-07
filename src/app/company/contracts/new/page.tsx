@@ -15,7 +15,15 @@ import { getEventFields } from "@/app/components/crm/events/getEventFields";
 import { useEventForm } from "@/app/hooks/events/useEventForm";
 import { useContract } from "@/app/hooks/contracts/useContract";
 
-import { Info, AlertCircle, FilePlus, ChevronRight, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+import {
+  Info,
+  AlertCircle,
+  FilePlus,
+  ChevronRight,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+} from "lucide-react";
 
 export default function NewContractPage() {
   const [error, setError] = useState("");
@@ -27,7 +35,9 @@ export default function NewContractPage() {
     if (Array.isArray(error)) return error.join(", ");
     if (typeof error === "object") {
       if (error.fieldErrors) {
-        const messages = Object.values(error.fieldErrors).flat().filter(Boolean);
+        const messages = Object.values(error.fieldErrors)
+          .flat()
+          .filter(Boolean);
         if (messages.length) return messages.join(", ");
       }
       if (error.message) return String(error.message);
@@ -35,20 +45,16 @@ export default function NewContractPage() {
     return fallback;
   };
 
-  // Servicios
   const [services, setServices] = useState<any[]>([]);
   const [companyServices, setCompanyServices] = useState<any[]>([]);
-
-  // Flujo de pasos
-  const [step, setStep] = useState<"event" | "services" | "payments" | "success">("event");
-
-  // Pagos
+  const [step, setStep] = useState<
+    "event" | "services" | "payments" | "success"
+  >("event");
   const [payments, setPayments] = useState<any[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
-
-  // Contrato
   const [contractId, setContractId] = useState<number | null>(null);
   const { contract, setContract, fetchContract } = useContract(contractId);
+  const [eventDateTime, setEventDateTime] = useState<string | null>(null);
 
   const {
     form,
@@ -66,8 +72,6 @@ export default function NewContractPage() {
     },
   });
 
-  const [eventDateTime, setEventDateTime] = useState<string | null>(null);
-
   const resetAll = () => {
     setStep("event");
     setContractId(null);
@@ -81,6 +85,80 @@ export default function NewContractPage() {
     setEventDateTime(null);
   };
 
+  // Sincronizar el formulario de entrada al recuperar o volver atrás
+  useEffect(() => {
+    if (contract && contract.event) {
+      setForm((prev: any) => ({
+        ...prev,
+        clientId: contract.client?.id
+          ? String(contract.client.id)
+          : prev.clientId,
+        name: contract.event.name || prev.name,
+        eventDate: contract.event.eventDate
+          ? contract.event.eventDate.split("T")[0]
+          : prev.eventDate,
+        eventStart: contract.event.eventStart || prev.eventStart,
+        eventEnd: contract.event.eventEnd || prev.eventEnd,
+        location: contract.event.location || prev.location,
+        eventType: contract.event.eventType || prev.eventType,
+        guests: contract.event.guests
+          ? String(contract.event.guests)
+          : prev.guests,
+      }));
+    }
+  }, [contract, setForm]);
+
+  // =======================================================================
+  // CORRECCIÓN 1: FILTRADO DE PAYLOAD PARA EVITAR ERROR DE EVENTO (PATCH)
+  // =======================================================================
+  const handleEventSubmit = async () => {
+    if (contractId && contract?.event?.id) {
+      try {
+        // Aislamos únicamente las propiedades que le corresponden a la tabla Eventos
+        const eventPayload = {
+          name: form.name,
+          eventDate: form.eventDate,
+          eventStart: form.eventStart,
+          eventEnd: form.eventEnd,
+          location: form.location,
+        };
+
+        const res = await fetch(`/api/company/events/${contract.event.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(eventPayload), // Envío limpio sin clientId
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          setError(
+            parseError(
+              errorData?.error,
+              "No se pudo actualizar los detalles del evento.",
+            ),
+          );
+          return; // Detiene el flujo si el backend rechaza los datos
+        }
+
+        // Refrescamos los datos completos del contrato para actualizar el ticket
+        const contractRes = await fetch(
+          `/api/company/contracts/${contractId}`,
+          { credentials: "include" },
+        );
+        if (contractRes.ok) {
+          setContract(await contractRes.json());
+        }
+
+        setError("");
+        setStep("services");
+      } catch (err) {
+        setError("Error de conexión al intentar actualizar el evento.");
+      }
+    } else {
+      createEvent();
+    }
+  };
+
   const fetchServices = async () => {
     if (!contractId) return;
     try {
@@ -88,8 +166,7 @@ export default function NewContractPage() {
         credentials: "include",
       });
       if (!res.ok) return;
-      const data = await res.json();
-      setServices(data);
+      setServices(await res.json());
     } catch {
       setError("Error al cargar los servicios");
     }
@@ -101,8 +178,7 @@ export default function NewContractPage() {
         credentials: "include",
       });
       if (!res.ok) return;
-      const data = await res.json();
-      setCompanyServices(data);
+      setCompanyServices(await res.json());
     } catch {
       setError("Error al cargar el catálogo de servicios");
     }
@@ -137,14 +213,24 @@ export default function NewContractPage() {
     }
   };
 
+  // Sincronizar el formulario de entrada al recuperar o volver atrás
   useEffect(() => {
-    if (!contractId || !contract) return;
-    if (contract.status !== "draft") {
-      localStorage.removeItem("activeContractDraft");
-      return;
+    if (contract && contract.event) {
+      setForm((prev: any) => ({
+        ...prev,
+        clientId: contract.client?.id
+          ? String(contract.client.id)
+          : prev.clientId,
+        name: contract.event.name || prev.name,
+        eventDate: contract.event.eventDate
+          ? contract.event.eventDate.split("T")[0]
+          : prev.eventDate,
+        eventStart: contract.event.eventStart || prev.eventStart,
+        eventEnd: contract.event.eventEnd || prev.eventEnd,
+        location: contract.event.location || prev.location,
+      }));
     }
-    localStorage.setItem("activeContractDraft", String(contractId));
-  }, [contractId, contract]);
+  }, [contract, setForm]);
 
   useEffect(() => {
     const saved = localStorage.getItem("activeContractDraft");
@@ -155,14 +241,14 @@ export default function NewContractPage() {
         const res = await fetch(`/api/company/contracts/${saved}`, {
           credentials: "include",
         });
-        const contract = await res.json();
-        if (contract.status !== "draft") {
+        const data = await res.json();
+        if (data.status !== "draft") {
           localStorage.removeItem("activeContractDraft");
           return;
         }
-        setContractId(contract.id);
-        setContract(contract);
-        setEventDateTime(contract.event?.eventDate || null);
+        setContractId(data.id);
+        setContract(data);
+        setEventDateTime(data.event?.eventDate || null);
         setStep("services");
         setError("");
       } catch (e) {
@@ -172,12 +258,30 @@ export default function NewContractPage() {
     restore();
   }, []);
 
+  // =======================================================================
+  // CORRECCIÓN 2: OBTENER EL CONTRATO RELACIONADO COMPLETO (CLIENTE VIVO)
+  // =======================================================================
   useEffect(() => {
     if ((step === "services" || step === "payments") && contractId) {
       fetchServices();
       fetchCompanyServices();
-      fetchContract();
       fetchPayments();
+
+      // Consulta directa y explícita para traer al cliente asociado al contrato
+      const refreshFullContract = async () => {
+        try {
+          const res = await fetch(`/api/company/contracts/${contractId}`, {
+            credentials: "include",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setContract(data); // Sobrescribe el estado con los datos poblados de la BD
+          }
+        } catch (e) {
+          console.error("Error al poblar relaciones del contrato:", e);
+        }
+      };
+      refreshFullContract();
     }
   }, [step, contractId]);
 
@@ -185,7 +289,6 @@ export default function NewContractPage() {
 
   return (
     <div className="w-full">
-      {/* TÍTULO Y STEPPER EN CABECERA */}
       <div className="mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-4 flex items-center gap-2">
           Registro Rápido
@@ -195,25 +298,33 @@ export default function NewContractPage() {
             </span>
           )}
         </h2>
-        
+
         <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm font-medium">
-          <span className={`${step === "event" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}>
+          <span
+            className={`${step === "event" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}
+          >
             1. Detalles del Evento
           </span>
           <ChevronRight size={16} className="text-gray-300" />
-          <span className={`${step === "services" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}>
+          <span
+            className={`${step === "services" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}
+          >
             2. Asignación de Servicios
           </span>
           <ChevronRight size={16} className="text-gray-300" />
-          <span className={`${step === "payments" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}>
+          <span
+            className={`${step === "payments" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}
+          >
             3. Registro de Pagos
           </span>
         </div>
       </div>
 
-      {/* TOAST DE ERRORES */}
       {(error || eventError) && (
-        <Toast message={(error || eventError) as string} onClose={() => setError("")} />
+        <Toast
+          message={(error || eventError) as string}
+          onClose={() => setError("")}
+        />
       )}
 
       {/* ---------------- PASO 1: DETALLES DEL EVENTO ---------------- */}
@@ -222,55 +333,89 @@ export default function NewContractPage() {
           <div className="mb-6 p-4 md:p-5 rounded-xl bg-gray-50 border border-gray-200 flex items-start gap-3 text-sm text-gray-600 leading-relaxed shadow-sm">
             <Info className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-gray-900 font-semibold block mb-1">Formato de Fecha</strong>
-              <p className="mb-1">Al crear el evento, ingresa las fechas en formato <strong>MM/DD/YYYY</strong>.</p>
-              <p>Tras guardar, el sistema las adaptará y mostrará como <strong>DD/MM/YYYY</strong>.</p>
+              <strong className="text-gray-900 font-semibold block mb-1">
+                Formato de Fecha
+              </strong>
+              <p className="mb-1">
+                Al crear el evento, ingresa las fechas en formato{" "}
+                <strong>MM/DD/YYYY</strong>.
+              </p>
+              <p>
+                Tras guardar, el sistema las adaptará y mostrará como{" "}
+                <strong>DD/MM/YYYY</strong>.
+              </p>
             </div>
           </div>
 
           <CreateForm
-            title="Detalles del Evento"
+            title={
+              contractId
+                ? "Editando Detalles del Evento"
+                : "Detalles del Evento"
+            }
             fields={fields}
             form={form}
             setForm={setForm}
-            onSubmit={createEvent}
+            onSubmit={handleEventSubmit}
             onCancel={resetForm}
-            submitLabel="Guardar y Continuar"
+            submitLabel={
+              contractId ? "Actualizar y Continuar" : "Guardar y Continuar"
+            }
           />
 
-          <div className="w-full h-px bg-gray-200 my-10" />
-
-          <div className="p-6 md:p-8 border border-gray-200 bg-white rounded-2xl shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 tracking-tight mb-2">Continuar Evento Existente</h3>
-            <p className="text-sm text-gray-500 mb-6">Busca un evento en borrador para continuar con su flujo.</p>
-            <EventSearch onSelect={continueExistingEvent} />
-          </div>
+          {!contractId && (
+            <>
+              <div className="w-full h-px bg-gray-200 my-10" />
+              <div className="p-6 md:p-8 border border-gray-200 bg-white rounded-2xl shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight mb-2">
+                  Continuar Evento Existente
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Busca un evento en borrador para continuar con su flujo.
+                </p>
+                <EventSearch onSelect={continueExistingEvent} />
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {/* ---------------- PASOS 2 Y 3: DISPOSICIÓN ASIMÉTRICA 2/3 - 1/3 ---------------- */}
       {(step === "services" || step === "payments") && contractId && (
         <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 items-start animate-in fade-in slide-in-from-right-4 duration-500 ease-out w-full">
-          
-          {/* COLUMNA IZQUIERDA (2/3): Área Activa de Trabajo */}
           <div className="w-full lg:w-2/3 flex flex-col gap-6">
-            
-            {/* --- FLUJO DE ASIGNACIÓN DE SERVICIOS --- */}
             {step === "services" && (
               <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 md:p-8 flex flex-col animate-in fade-in duration-300">
-                <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-6">
-                  2. Asignación de Servicios
-                </h3>
+                <div className="flex items-center gap-4 mb-6">
+                  <button
+                    onClick={() => setStep("event")}
+                    className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Volver a Detalles del Evento"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight m-0">
+                    2. Asignación de Servicios
+                  </h3>
+                </div>
 
-                {/* Formulario Inyector */}
                 <ContractServiceForm
                   companyServices={companyServices}
                   contract={contract}
                   onSubmit={async (data) => {
                     try {
-                      const eventDate = contract?.event?.eventDate?.split("T")[0];
-                      const operationStart = data.operationStart ? new Date(`${eventDate}T${data.operationStart}`).toISOString() : undefined;
-                      const operationEnd = data.operationEnd ? new Date(`${eventDate}T${data.operationEnd}`).toISOString() : undefined;
+                      const eventDate =
+                        contract?.event?.eventDate?.split("T")[0];
+                      const operationStart = data.operationStart
+                        ? new Date(
+                            `${eventDate}T${data.operationStart}`,
+                          ).toISOString()
+                        : undefined;
+                      const operationEnd = data.operationEnd
+                        ? new Date(
+                            `${eventDate}T${data.operationEnd}`,
+                          ).toISOString()
+                        : undefined;
 
                       const payload = {
                         serviceId: Number(data.serviceId),
@@ -281,16 +426,24 @@ export default function NewContractPage() {
                         operationEnd,
                       };
 
-                      const res = await fetch(`/api/company/contracts/${contractId}/services`, {
-                        method: "POST",
-                        credentials: "include",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
-                      });
+                      const res = await fetch(
+                        `/api/company/contracts/${contractId}/services`,
+                        {
+                          method: "POST",
+                          credentials: "include",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(payload),
+                        },
+                      );
 
                       if (!res.ok) {
                         const result = await res.json();
-                        setError(parseError(result?.error, "Error al agregar servicio"));
+                        setError(
+                          parseError(
+                            result?.error,
+                            "Error al agregar servicio",
+                          ),
+                        );
                         return false;
                       }
 
@@ -305,7 +458,6 @@ export default function NewContractPage() {
                   }}
                 />
 
-                {/* Lista de filas resumidas con edición en Modal incorporado */}
                 <div className="mt-4 border-t border-gray-100 pt-6">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
                     Servicios Añadidos al Listado
@@ -317,10 +469,15 @@ export default function NewContractPage() {
                     onDelete={async (id) => {
                       if (!confirm("¿Eliminar este servicio?")) return;
                       try {
-                        const res = await fetch(`/api/company/contract-items/${id}`, { method: "DELETE", credentials: "include" });
+                        const res = await fetch(
+                          `/api/company/contract-items/${id}`,
+                          { method: "DELETE", credentials: "include" },
+                        );
                         if (!res.ok) {
                           const data = await res.json();
-                          setError(parseError(data?.error, "Error al eliminar"));
+                          setError(
+                            parseError(data?.error, "Error al eliminar"),
+                          );
                           return;
                         }
                         setError("");
@@ -332,15 +489,20 @@ export default function NewContractPage() {
                     }}
                     onUpdate={async (id, data) => {
                       try {
-                        const res = await fetch(`/api/company/contract-items/${id}`, {
-                          method: "PATCH",
-                          credentials: "include",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(data),
-                        });
+                        const res = await fetch(
+                          `/api/company/contract-items/${id}`,
+                          {
+                            method: "PATCH",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(data),
+                          },
+                        );
                         if (!res.ok) {
                           const result = await res.json();
-                          setError(parseError(result?.error, "Error al actualizar"));
+                          setError(
+                            parseError(result?.error, "Error al actualizar"),
+                          );
                           return;
                         }
                         setError("");
@@ -353,7 +515,6 @@ export default function NewContractPage() {
                   />
                 </div>
 
-                {/* Navegación al paso 3 */}
                 <div className="mt-8 pt-6 border-t border-gray-200 flex justify-end">
                   <button
                     onClick={() => setStep("payments")}
@@ -366,11 +527,13 @@ export default function NewContractPage() {
               </div>
             )}
 
-            {/* --- FLUJO DE REGISTRO DE PAGOS --- */}
             {step === "payments" && (
               <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 md:p-8 flex flex-col animate-in fade-in duration-300">
                 <div className="flex items-center gap-4 mb-6">
-                  <button onClick={() => setStep("services")} className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+                  <button
+                    onClick={() => setStep("services")}
+                    className="p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                  >
                     <ArrowLeft size={18} />
                   </button>
                   <h3 className="text-xl font-bold text-gray-900 tracking-tight m-0">
@@ -378,11 +541,16 @@ export default function NewContractPage() {
                   </h3>
                 </div>
 
-                <PaymentForm contractId={String(contractId)} onSuccess={fetchPayments} />
+                <PaymentForm
+                  contractId={String(contractId)}
+                  onSuccess={fetchPayments}
+                />
 
                 <div className="mt-6">
                   {loadingPayments ? (
-                    <p className="text-sm text-gray-500 animate-pulse">Cargando historial de pagos...</p>
+                    <p className="text-sm text-gray-500 animate-pulse">
+                      Cargando historial de pagos...
+                    </p>
                   ) : (
                     <PaymentList payments={payments} />
                   )}
@@ -393,7 +561,11 @@ export default function NewContractPage() {
                     <AlertCircle className="w-5 h-5 text-gray-500" />
                     Finalizar Proceso
                   </div>
-                  <p>Al registrar el pago inicial, este borrador pasará a ser un contrato activo. Asegúrate de revisar el ticket de la derecha antes de cerrar.</p>
+                  <p>
+                    Al registrar el pago inicial, este borrador pasará a ser un
+                    contrato activo. Asegúrate de revisar el ticket de la
+                    derecha antes de cerrar.
+                  </p>
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
@@ -409,24 +581,26 @@ export default function NewContractPage() {
             )}
           </div>
 
-          {/* COLUMNA DERECHA (1/3): Recibo / Ticket Corporativo Flotante (Sticky) */}
           <div className="w-full lg:w-1/3 lg:sticky lg:top-6 z-10">
-            {/* Si modificaste ContractSummaryCard para recibir los servicios internos en el paso anterior, puedes remover los atributos adicionales de la etiqueta y dejarla simple: <ContractSummaryCard contract={contract} /> */}
             <ContractSummaryCard contract={contract} />
           </div>
-
         </div>
       )}
 
-      {/* ---------------- PASO 4: PANTALLA DE ÉXITO FINAL ---------------- */}
       {step === "success" && (
         <div className="flex flex-col items-center justify-center p-12 bg-white border border-gray-200 rounded-2xl shadow-sm animate-in fade-in zoom-in-95 duration-500 text-center max-w-2xl mx-auto mt-8">
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 size={32} />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">¡Registro Completado!</h2>
-          <p className="text-gray-500 mb-8 max-w-md">El contrato ha sido inicializado correctamente en el sistema. Ya puedes gestionar su logística desde el panel principal o imprimir su orden.</p>
-          
+          <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
+            ¡Registro Completado!
+          </h2>
+          <p className="text-gray-500 mb-8 max-w-md">
+            El contrato ha sido inicializado correctamente en el sistema. Ya
+            puedes gestionar su logística desde el panel principal o imprimir su
+            orden.
+          </p>
+
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
             <button
               onClick={resetAll}
