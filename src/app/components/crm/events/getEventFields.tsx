@@ -1,91 +1,106 @@
-import type { Field } from "@/app/components/crm/CreateForm";
-import ClientSelector from "@/app/components/crm/clients/ClientSelector";
+import { Calendar, AlertCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils/date";
-import type { EventFormState } from "@/types/forms/eventForm";
-import { Calendar } from "lucide-react";
 
-interface Props {
-  form: EventFormState;
-  setForm: React.Dispatch<React.SetStateAction<EventFormState>>;
-}
+// IMPORTACIONES CRÍTICAS (Ajusta las rutas si es necesario)
+import ClientSelector from "@/app/components/crm/clients/ClientSelector"; 
+import { Field } from "@/app/components/crm/CreateForm";
 
-export function getEventFields({ form, setForm }: Props): Field[] {
+type Props = {
+  form: any;
+  setForm: any;
+  errors?: Record<string, string>;
+};
+
+// Al forzar el tipo de retorno a : Field[], TypeScript dejará de quejarse
+export function getEventFields({ form, setForm, errors = {} }: Props): Field[] {
+  
+  const renderError = (field: string) => {
+    if (!errors[field]) return undefined; // Debe retornar undefined, no null, para que CreateForm lo acepte bien
+    return (
+      <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+        <AlertCircle size={14} /> {errors[field]}
+      </span>
+    );
+  };
+
   return [
     {
       name: "clientId",
       label: "Cliente",
       hideInput: true,
       readOnly: true,
-      required: true,
-      fullWidth: true, // Ocupa las 2 columnas (100%)
+      fullWidth: true,
       after: (
-        <ClientSelector
-          selected={form.client}
-          onSelect={(client) => {
-            setForm((prev) => ({
-              ...prev,
-              clientId: String(client.id),
-              client: {
-                id: client.id,
-                name: client.name,
-                phone: client.phone,
-              },
-            }));
-          }}
-          onClear={() => {
-            setForm((prev) => ({
-              ...prev,
-              clientId: "",
-              client: undefined,
-            }));
-          }}
-        />
+        <>
+          <ClientSelector
+            selected={form.client}
+            onSelect={(client: any) => {
+              setForm((prev: any) => ({
+                ...prev,
+                clientId: String(client.id),
+                client: {
+                  id: client.id,
+                  name: client.name,
+                  phone: client.phone,
+                },
+              }));
+            }}
+            onClear={() => {
+              setForm((prev: any) => ({
+                ...prev,
+                clientId: "",
+                client: undefined,
+              }));
+            }}
+          />
+          {renderError("clientId")}
+        </>
       ),
     },
     {
       name: "name",
       label: "Nombre del Evento",
-      required: true,
-      fullWidth: true, // Ocupa las 2 columnas para escribir nombres largos
+      fullWidth: true,
+      after: renderError("name"),
     },
     {
       name: "eventDate",
       label: "Fecha del Evento",
-      type: "date",
-      required: true,
-      // Al no tener fullWidth, ocupará 1 columna (50%)
+      type: "date", // Ahora TypeScript sabe que esto es estrictamente "date"
       after: (
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-gray-500">
-          <Calendar size={14} className="text-gray-400" />
-          {form.eventDate
-            ? `Fecha confirmada: ${formatDate(form.eventDate)}`
-            : "Selecciona un día en el calendario"}
-        </div>
+        <>
+          <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-gray-500">
+            <Calendar size={14} className="text-gray-400" />
+            {form.eventDate
+              ? `Fecha confirmada: ${formatDate(form.eventDate)}`
+              : "Selecciona un día en el calendario"}
+          </div>
+          {renderError("eventDate")}
+        </>
       ),
     },
     {
       name: "location",
       label: "Ubicación (Lugar)",
-      required: true,
-      // Ocupará la columna de al lado de la fecha (50%)
+      after: renderError("location"),
     },
     {
       name: "eventStart",
       label: "Hora de Inicio",
       type: "time",
-      // Ocupará 1 columna
+      after: renderError("eventStart"),
     },
     {
       name: "eventEnd",
       label: "Hora de Finalización",
       type: "time",
-      // Ocupará la otra columna
+      after: renderError("eventEnd"),
     },
     {
       name: "notes",
       label: "Notas Adicionales",
       type: "textarea",
-      fullWidth: true, // El textarea siempre debe ocupar 100%
+      fullWidth: true,
     },
   ];
 }

@@ -28,6 +28,7 @@ import {
 export default function NewContractPage() {
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number | undefined>();
+  const [eventSubmitAttempted, setEventSubmitAttempted] = useState(false);
 
   const parseError = (error: any, fallback = "Error inesperado") => {
     if (!error) return fallback;
@@ -108,13 +109,57 @@ export default function NewContractPage() {
     }
   }, [contract, setForm]);
 
-  // =======================================================================
-  // CORRECCIÓN 1: FILTRADO DE PAYLOAD PARA EVITAR ERROR DE EVENTO (PATCH)
-  // =======================================================================
+  // --- 1. CÁLCULO DE ERRORES DEL EVENTO EN TIEMPO REAL ---
+  const eventErrors: Record<string, string> = {};
+  if (eventSubmitAttempted) {
+    if (!form.clientId) eventErrors.clientId = "Debes seleccionar un cliente.";
+    if (!form.name?.trim()) eventErrors.name = "El nombre del evento es obligatorio.";
+    if (!form.eventDate) eventErrors.eventDate = "La fecha del evento es obligatoria.";
+    if (!form.location?.trim()) eventErrors.location = "La ubicación es obligatoria.";
+    if (!form.eventStart) eventErrors.eventStart = "La hora de inicio es obligatoria.";
+    if (!form.eventEnd) eventErrors.eventEnd = "La hora de finalización es obligatoria.";
+    
+    // Validación de horario cruzado
+    if (form.eventStart && form.eventEnd) {
+      const dateStr = form.eventDate || "2000-01-01";
+      const start = new Date(`${dateStr}T${form.eventStart}`);
+      const end = new Date(`${dateStr}T${form.eventEnd}`);
+      if (end <= start) {
+        eventErrors.eventEnd = "La hora de fin debe ser posterior al inicio.";
+      }
+    }
+  }
+
+  // Pasamos los errores a nuestra configuración de campos
+  const fields = getEventFields({ form, setForm, errors: eventErrors });
+
+  // --- 2. INTERCEPTOR DEL SUBMIT BLINDADO ---
   const handleEventSubmit = async () => {
+    setEventSubmitAttempted(true);
+
+    // Verificación final antes de ejecutar la petición
+    if (
+      !form.clientId ||
+      !form.name?.trim() ||
+      !form.eventDate ||
+      !form.location?.trim() ||
+      !form.eventStart ||
+      !form.eventEnd
+    ) {
+      setError("Por favor, completa todos los campos obligatorios marcados en rojo.");
+      return;
+    }
+
+    const start = new Date(`${form.eventDate}T${form.eventStart}`);
+    const end = new Date(`${form.eventDate}T${form.eventEnd}`);
+    if (end <= start) {
+      setError("Corrige las horas: el fin debe ser posterior al inicio.");
+      return;
+    }
+
+    // Flujo normal si todo está correcto
     if (contractId && contract?.event?.id) {
       try {
-        // Aislamos únicamente las propiedades que le corresponden a la tabla Eventos
         const eventPayload = {
           name: form.name,
           eventDate: form.eventDate,
@@ -126,24 +171,20 @@ export default function NewContractPage() {
         const res = await fetch(`/api/company/events/${contract.event.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(eventPayload), // Envío limpio sin clientId
+          body: JSON.stringify(eventPayload), 
         });
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
           setError(
-            parseError(
-              errorData?.error,
-              "No se pudo actualizar los detalles del evento.",
-            ),
+            parseError(errorData?.error, "No se pudo actualizar los detalles del evento.")
           );
-          return; // Detiene el flujo si el backend rechaza los datos
+          return; 
         }
 
-        // Refrescamos los datos completos del contrato para actualizar el ticket
         const contractRes = await fetch(
           `/api/company/contracts/${contractId}`,
-          { credentials: "include" },
+          { credentials: "include" }
         );
         if (contractRes.ok) {
           setContract(await contractRes.json());
@@ -284,8 +325,6 @@ export default function NewContractPage() {
       refreshFullContract();
     }
   }, [step, contractId]);
-
-  const fields = getEventFields({ form, setForm });
 
   return (
     <div className="w-full">
