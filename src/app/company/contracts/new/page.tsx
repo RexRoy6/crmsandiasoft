@@ -192,7 +192,7 @@ export default function NewContractPage() {
           Registro Rápido
           {(step === "services" || step === "payments") && (
             <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-md border border-gray-200 shadow-sm ml-2">
-              ☁️ Borrador guardado
+              Borrador guardado
             </span>
           )}
         </h2>

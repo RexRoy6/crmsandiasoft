@@ -235,10 +235,11 @@ export default function ContractItemCard({
                   onClick={() => {
                     const safeStart = form.operationStart
                       ? new Date(form.operationStart).toISOString()
-                      : null;
+                      : undefined;
                     const safeEnd = form.operationEnd
                       ? new Date(form.operationEnd).toISOString()
-                      : null;
+                      : undefined;
+
                     onUpdate(item.id, {
                       quantity: Number(form.quantity),
                       serviceNotes: form.serviceNotes,

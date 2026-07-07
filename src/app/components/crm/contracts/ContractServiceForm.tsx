@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/utils/date";
 import CreateForm, { Field } from "@/app/components/crm/CreateForm";
-import { Plus, PackageSearch, X } from "lucide-react";
+import { Plus, PackageSearch, X, AlertCircle } from "lucide-react";
 
 type Props = {
   companyServices: any[];
@@ -27,6 +27,13 @@ export default function ContractServiceForm({
 }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const [error, setError] = useState("");
+
+  const selectedService = useMemo(() => {
+    return companyServices.find((s) => String(s.id) === form.serviceId);
+  }, [companyServices, form.serviceId]);
+
+  const maxStock = selectedService?.stockTotal ?? 999;
 
   const handleServiceChange = (serviceId: string) => {
     const service = companyServices.find((s) => String(s.id) === serviceId);
@@ -36,7 +43,30 @@ export default function ContractServiceForm({
       ...prev,
       serviceId,
       unitPrice: String(service.priceBase),
+      quantity: "", 
     }));
+    setError("");
+  };
+
+  const handleQuantityChange = (val: string) => {
+    if (val === "") {
+      setForm((prev) => ({ ...prev, quantity: "" }));
+      setError("La cantidad es requerida.");
+      return;
+    }
+
+    let num = Number(val);
+
+    if (num > maxStock) {
+      setError(`Solo hay ${maxStock} unidades disponibles en inventario.`);
+      setForm((prev) => ({ ...prev, quantity: String(maxStock) }));
+    } else if (num < 1) {
+      setError("La cantidad mínima es 1.");
+      setForm((prev) => ({ ...prev, quantity: "1" }));
+    } else {
+      setError("");
+      setForm((prev) => ({ ...prev, quantity: val }));
+    }
   };
 
   const fields: Field[] = [
@@ -52,16 +82,24 @@ export default function ContractServiceForm({
       onChange: handleServiceChange,
       required: true,
     },
-    { name: "quantity", label: "Cantidad", type: "number", required: true },
+    {
+      name: "quantity",
+      label: "Cantidad",
+      type: "number",
+      required: true,
+      onChange: handleQuantityChange,
+      // INYECCIÓN DE UI: El error aparece debajo del input
+      after: error ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> {error}
+        </span>
+      ) : undefined,
+    },
     { name: "unitPrice", label: "Precio Unitario", type: "number" },
     { name: "operationStart", label: "Hora de Inicio (Montaje)", type: "time", required: true },
     { name: "operationEnd", label: "Hora de Fin (Desmontaje)", type: "time", required: true },
     { name: "serviceNotes", label: "Notas Adicionales", type: "textarea", fullWidth: true },
   ];
-
-  const selectedService = useMemo(() => {
-    return companyServices.find((s) => String(s.id) === form.serviceId);
-  }, [companyServices, form.serviceId]);
 
   const subtotal = Number(form.quantity || 0) * Number(form.unitPrice || 0);
 
@@ -70,15 +108,23 @@ export default function ContractServiceForm({
   };
 
   async function handleSubmit() {
+    if (Number(form.quantity) > maxStock || Number(form.quantity) < 1) {
+      setError("Verifica la cantidad ingresada antes de guardar.");
+      return;
+    }
+
     const success = await onSubmit(form);
     if (!success) return;
+    
     setShowForm(false);
     setForm(initialForm);
+    setError("");
   }
 
   function handleCancel() {
     setShowForm(false);
     setForm(initialForm);
+    setError("");
   }
 
   return (
@@ -96,14 +142,14 @@ export default function ContractServiceForm({
       ) : (
         <div className="animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex justify-between items-center mb-4">
-             <h3 className="text-lg font-bold text-gray-900">Configurar Servicio</h3>
-             <button onClick={handleCancel} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
-               <X size={20} />
-             </button>
+            <h3 className="text-lg font-bold text-gray-900">Configurar Servicio</h3>
+            <button onClick={handleCancel} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors">
+              <X size={20} />
+            </button>
           </div>
 
           <CreateForm
-            title="" // Quitamos el título interno para evitar redundancia
+            title="" 
             fields={fields}
             form={form}
             setForm={setForm}
