@@ -299,6 +299,32 @@ export default function NewContractPage() {
     restore();
   }, []);
 
+  // Función para reiniciar todo el orquestador sin recargar la página
+  const handleResetFlow = () => {
+    // 1. Limpiamos datos del contrato
+    setContract(undefined);
+    // Si manejas el ID del contrato en la URL (ej. router.push), asegúrate de limpiar la URL aquí también, 
+    // o simplemente limpia el estado local:
+    // setContractId(""); // Descomenta si contractId es un estado y no viene de params
+    
+    // 2. Limpiamos el formulario del Paso 1
+    setForm({
+      clientId: "",
+      name: "",
+      eventDate: "",
+      eventStart: "",
+      eventEnd: "",
+      location: "",
+      notes: "",
+    });
+
+    // 3. APAGAMOS LAS VALIDACIONES (¡La cura del bug!)
+    setEventSubmitAttempted(false);
+    
+    // 4. Regresamos a la casilla de salida
+    setStep("event");
+  };
+
   // =======================================================================
   // CORRECCIÓN 2: OBTENER EL CONTRATO RELACIONADO COMPLETO (CLIENTE VIVO)
   // =======================================================================
@@ -622,8 +648,9 @@ export default function NewContractPage() {
                 </div>
               </div>
             )}
-          </div>
 
+          </div>
+            
           <div className="w-full lg:w-1/3 lg:sticky lg:top-6 z-10">
             <ContractSummaryCard contract={contract} />
           </div>
@@ -631,30 +658,39 @@ export default function NewContractPage() {
       )}
 
       {step === "success" && (
-        <div className="flex flex-col items-center justify-center p-12 bg-white border border-gray-200 rounded-2xl shadow-sm animate-in fade-in zoom-in-95 duration-500 text-center max-w-2xl mx-auto mt-8">
-          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 size={32} />
-          </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
-            ¡Registro Completado!
-          </h2>
-          <p className="text-gray-500 mb-8 max-w-md">
-            El contrato ha sido inicializado correctamente en el sistema. Ya
-            puedes gestionar su logística desde el panel principal o imprimir su
-            orden.
-          </p>
+              <div className="animate-in zoom-in-95 fade-in duration-500 ease-out flex flex-col items-center justify-center p-8 md:p-16 bg-white border border-gray-200 rounded-3xl shadow-sm max-w-2xl mx-auto text-center mt-10">
+                
+                <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-green-50">
+                  <CheckCircle2 size={48} strokeWidth={2.5} />
+                </div>
+                
+                <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">
+                  ¡Contrato Registrado!
+                </h2>
+                
+                <p className="text-gray-500 mb-8 max-w-md text-base leading-relaxed">
+                  El contrato para el evento <strong className="text-gray-900">{contract?.event?.name || "Nuevo Evento"}</strong> se ha creado exitosamente y el pago inicial ha sido aplicado.
+                </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-            <button
-              onClick={resetAll}
-              className="flex justify-center items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all shadow-sm"
-            >
-              <FilePlus size={18} />
-              Crear Nuevo Registro
-            </button>
-          </div>
-        </div>
-      )}
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+                  <button
+                    onClick={() => {
+                      window.location.href = `/company/contracts/${contract?.id || contractId}`;
+                    }}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  >
+                    Ver Detalles del Contrato
+                  </button>
+                  
+                  <button
+                    onClick={handleResetFlow}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
+                  >
+                    Crear Nuevo Contrato
+                  </button>
+                </div>
+              </div>
+            )}
     </div>
   );
 }
