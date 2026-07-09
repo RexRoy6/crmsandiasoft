@@ -587,11 +587,15 @@ export default function NewContractPage() {
 
                 <div className="mt-6">
                   {loadingPayments ? (
-                    <p className="text-sm text-gray-500 animate-pulse">
-                      Cargando historial de pagos...
-                    </p>
+                    <p className="text-sm text-gray-500 animate-pulse">Cargando historial de pagos...</p>
                   ) : (
-                    <PaymentList payments={payments} />
+                    <PaymentList 
+                      payments={payments} 
+                      onDeleteSuccess={() => {
+                        fetchPayments();
+                        fetchContract(); 
+                      }} 
+                    />
                   )}
                 </div>
 

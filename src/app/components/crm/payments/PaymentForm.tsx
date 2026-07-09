@@ -5,7 +5,7 @@ import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import PaymentAllocationCard from "@/app/components/crm/payments/PaymentAllocationCard";
 import ErrorBox from "@/app/components/ErrorBox";
 import ContractSearch from "@/app/components/crm/ContractSearch";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
 import { useContractItems } from "@/app/hooks/useContractItems";
 
 export default function PaymentForm({
@@ -21,6 +21,7 @@ export default function PaymentForm({
 
   const { contractItems, fetchContractItems } = useContractItems(activeContractId);
   const [show, setShow] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [form, setForm] = useState({
     currency: "MXN",
@@ -35,8 +36,43 @@ export default function PaymentForm({
 
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number>();
+  
+  // 1. NUEVO ESTADO: Para capturar los errores específicos de campo enviados por Zod
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  /* ---------- Campos Dinámicos (Traducidos y Estructurados) ---------- */
+  /* ---------- Validaciones Locales (Frontend) ---------- */
+  let dateError = "";
+  if (submitAttempted) {
+    if (!form.paidAt) {
+      dateError = "La fecha de pago es obligatoria.";
+    } else {
+      const selectedDate = new Date(form.paidAt);
+      const today = new Date();
+      if (selectedDate > today) {
+        dateError = "La fecha de pago no puede ser en el futuro.";
+      }
+    }
+  }
+
+  const hasExceededAmounts = contractItems.some((item, idx) => {
+    const total = item.quantity * Number(item.unitPrice);
+    const paid = item.paidAmount || 0;
+    const remaining = item.remainingAmount ?? total - paid;
+    const val = form.items[idx]?.amount || 0;
+    return val > remaining || val < 0;
+  });
+
+  // Función ayudante para renderizar los errores que vengan del Backend (Zod)
+  const renderFieldError = (fieldName: string) => {
+    if (!fieldErrors[fieldName] || fieldErrors[fieldName].length === 0) return undefined;
+    return (
+      <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+        <AlertCircle size={14} /> {fieldErrors[fieldName].join(", ")}
+      </span>
+    );
+  };
+
+  /* ---------- Campos Dinámicos con Mapeo de Errores Inyectado ---------- */
   const fields: Field[] = [
     ...(isGlobal
       ? [
@@ -44,14 +80,15 @@ export default function PaymentForm({
             name: "contractId",
             label: "Contrato",
             readOnly: true,
-            fullWidth: true, // Aprovechamos la nueva cuadrícula inteligente
+            fullWidth: true,
             after: (
-              <ContractSearch
-                selected={selectedContractId}
-                onSelect={(c: any) => {
-                  setSelectedContractId(String(c.id));
-                }}
-              />
+              <>
+                <ContractSearch
+                  selected={selectedContractId}
+                  onSelect={(c: any) => setSelectedContractId(String(c.id))}
+                />
+                {renderFieldError("contractId")}
+              </>
             ),
           },
         ]
@@ -65,6 +102,7 @@ export default function PaymentForm({
         { label: "MXN", value: "MXN" },
         { label: "USD", value: "USD" },
       ],
+      after: renderFieldError("currency"), // Mapea error de Zod si la moneda es inválida
     },
     {
       name: "paymentMethod",
@@ -75,29 +113,40 @@ export default function PaymentForm({
         { label: "Transferencia", value: "transfer" },
         { label: "Tarjeta", value: "card" },
       ],
+      after: renderFieldError("paymentMethod"), // Mapea error de Zod si el método falla
     },
     {
       name: "paidAt",
       label: "Fecha de Pago",
       type: "date",
+      // Combina el error local del frontend con el error que pueda mandar Zod del backend
+      after: dateError || fieldErrors.paidAt ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> 
+          {dateError || fieldErrors.paidAt.join(", ")}
+        </span>
+      ) : undefined,
     },
     {
       name: "ticketNumber",
       label: "Número de Ticket",
+      after: renderFieldError("ticketNumber"), // Mapea error si el formato del ticket no es válido
     },
   ];
 
   /* ---------- Ciclo de Vida ---------- */
   useEffect(() => {
-    if (selectedContractId) {
+    if (activeContractId) {
       fetchContractItems().then((items) => {
-        setForm((prev) => ({
-          ...prev,
-          items,
-        }));
+        if (items) {
+          setForm((prev) => ({
+            ...prev,
+            items: items.map((i: any) => ({ contractItemId: i.id, amount: "" })),
+          }));
+        }
       });
     }
-  }, [selectedContractId]);
+  }, [activeContractId]); 
 
   /* ---------- Acciones ---------- */
   async function openForm() {
@@ -106,7 +155,7 @@ export default function PaymentForm({
       const items = await fetchContractItems();
       setForm((prev) => ({
         ...prev,
-        items,
+        items: items.map((i: any) => ({ contractItemId: i.id, amount: 0 })),
       }));
     }
   }
@@ -122,26 +171,40 @@ export default function PaymentForm({
     });
     setSelectedContractId("");
     setError("");
+    setFieldErrors({}); // Limpiamos errores al cerrar
+    setSubmitAttempted(false);
   }
 
   async function handleSubmit() {
+    setSubmitAttempted(true);
+    setError("");
+    setFieldErrors({}); // Reseteamos los errores de campo en cada intento
+
+    if (!activeContractId) {
+      setError("Por favor, selecciona un contrato.");
+      return;
+    }
+
+    if (!form.paidAt || dateError) {
+      return; 
+    }
+
+    const total = form.items.reduce((sum, i) => sum + (i.amount || 0), 0);
+    if (total <= 0) {
+      setError("Debes ingresar al menos un monto de abono mayor a cero en el desglose.");
+      return;
+    }
+
+    if (hasExceededAmounts) {
+      setError("Por favor corrige los montos en rojo que superan el saldo restante.");
+      return;
+    }
+
     try {
-      if (!activeContractId) {
-        setError("Por favor, selecciona un contrato.");
-        return;
-      }
-
-      const total = form.items.reduce((sum, i) => sum + i.amount, 0);
-
-      if (total <= 0) {
-        setError("Ingresa al menos un monto mayor a cero.");
-        return;
-      }
-
       const payload = {
         currency: form.currency,
         paymentMethod: form.paymentMethod,
-        paidAt: form.paidAt ? new Date(form.paidAt).toISOString() : undefined,
+        paidAt: new Date(form.paidAt).toISOString(),
         ticketNumber: form.ticketNumber || undefined,
         items: form.items.filter((i) => i.amount > 0),
       };
@@ -151,16 +214,22 @@ export default function PaymentForm({
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Error al registrar el pago.");
+        
+        // 2. DETECCIÓN INTELIGENTE DE ERRORES DE CAMPOS (ZOD)
+        if (data.fieldErrors) {
+          setFieldErrors(data.fieldErrors); // Guardamos la lista de culpables
+          setError("Revisa los campos marcados en rojo, los datos enviados no son válidos.");
+        } else {
+          setError(typeof data.error === "string" ? data.error : "Error al registrar el pago.");
+        }
+
         setErrorCode(res.status);
         return;
       }
@@ -172,7 +241,6 @@ export default function PaymentForm({
     }
   }
 
-  /* ---------- Interfaz (UI) ---------- */
   return (
     <div className="mb-6">
       {!show && (
@@ -187,6 +255,20 @@ export default function PaymentForm({
 
       {show && (
         <div className="mt-4 bg-gray-50/50 p-1 md:p-4 rounded-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
+          
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-600 font-semibold animate-in slide-in-from-top-2">
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
+
+          {/* Si el error general de Zod dice algo de "items", lo pintamos arriba del desglose */}
+          {fieldErrors.items && (
+            <div className="p-2.5 bg-red-50 border border-red-100 text-xs text-red-600 font-bold rounded-lg flex items-center gap-1.5 animate-pulse">
+              <AlertCircle size={14} /> El desglose de montos tiene inconsistencias: {fieldErrors.items.join(", ")}
+            </div>
+          )}
+
           {contractItems.length > 0 && (
             <PaymentAllocationCard
               items={contractItems}
@@ -206,7 +288,11 @@ export default function PaymentForm({
         </div>
       )}
 
-      {error && <div className="mt-4"><ErrorBox message={error} code={errorCode} /></div>}
+      {error && errorCode && Object.keys(fieldErrors).length === 0 && (
+        <div className="mt-4">
+          <ErrorBox message={error} code={errorCode} />
+        </div>
+      )}
     </div>
   );
 }

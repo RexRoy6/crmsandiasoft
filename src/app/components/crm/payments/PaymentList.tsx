@@ -107,7 +107,11 @@ export default function PaymentList({
           {/* Botón de Eliminar */}
           <div className="flex justify-start mt-3">
             <button
-              onClick={() => handleDelete(payment.id)}
+              onClick={(e) => {
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                handleDelete(payment.id);
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-none"
             >
               <Trash2 size={14} />
