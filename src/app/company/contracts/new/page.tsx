@@ -9,6 +9,7 @@ import EventSearch from "@/app/components/crm/events/EventSearch";
 import ContractServiceForm from "@/app/components/crm/contracts/ContractServiceForm";
 import ContractServicesList from "@/app/components/crm/contracts/ContractServicesList";
 import ContractSummaryCard from "@/app/components/crm/contracts/ContractSummaryCard";
+import ClientModal from "@/app/components/crm/clients/ClientModal";
 
 import { resumeContractDraft } from "@/services/contracts/resumeContractDraft";
 import { getEventFields } from "@/app/components/crm/events/getEventFields";
@@ -29,6 +30,7 @@ export default function NewContractPage() {
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number | undefined>();
   const [eventSubmitAttempted, setEventSubmitAttempted] = useState(false);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
   const parseError = (error: any, fallback = "Error inesperado") => {
     if (!error) return fallback;
@@ -113,12 +115,17 @@ export default function NewContractPage() {
   const eventErrors: Record<string, string> = {};
   if (eventSubmitAttempted) {
     if (!form.clientId) eventErrors.clientId = "Debes seleccionar un cliente.";
-    if (!form.name?.trim()) eventErrors.name = "El nombre del evento es obligatorio.";
-    if (!form.eventDate) eventErrors.eventDate = "La fecha del evento es obligatoria.";
-    if (!form.location?.trim()) eventErrors.location = "La ubicación es obligatoria.";
-    if (!form.eventStart) eventErrors.eventStart = "La hora de inicio es obligatoria.";
-    if (!form.eventEnd) eventErrors.eventEnd = "La hora de finalización es obligatoria.";
-    
+    if (!form.name?.trim())
+      eventErrors.name = "El nombre del evento es obligatorio.";
+    if (!form.eventDate)
+      eventErrors.eventDate = "La fecha del evento es obligatoria.";
+    if (!form.location?.trim())
+      eventErrors.location = "La ubicación es obligatoria.";
+    if (!form.eventStart)
+      eventErrors.eventStart = "La hora de inicio es obligatoria.";
+    if (!form.eventEnd)
+      eventErrors.eventEnd = "La hora de finalización es obligatoria.";
+
     // Validación de horario cruzado
     if (form.eventStart && form.eventEnd) {
       const dateStr = form.eventDate || "2000-01-01";
@@ -131,7 +138,12 @@ export default function NewContractPage() {
   }
 
   // Pasamos los errores a nuestra configuración de campos
-  const fields = getEventFields({ form, setForm, errors: eventErrors });
+  const fields = getEventFields({
+    form,
+    setForm,
+    errors: eventErrors,
+    onOpenClientModal: () => setIsClientModalOpen(true), // <-- Conecta el botón al estado
+  });
 
   // --- 2. INTERCEPTOR DEL SUBMIT BLINDADO ---
   const handleEventSubmit = async () => {
@@ -146,7 +158,9 @@ export default function NewContractPage() {
       !form.eventStart ||
       !form.eventEnd
     ) {
-      setError("Por favor, completa todos los campos obligatorios marcados en rojo.");
+      setError(
+        "Por favor, completa todos los campos obligatorios marcados en rojo.",
+      );
       return;
     }
 
@@ -171,20 +185,23 @@ export default function NewContractPage() {
         const res = await fetch(`/api/company/events/${contract.event.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(eventPayload), 
+          body: JSON.stringify(eventPayload),
         });
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
           setError(
-            parseError(errorData?.error, "No se pudo actualizar los detalles del evento.")
+            parseError(
+              errorData?.error,
+              "No se pudo actualizar los detalles del evento.",
+            ),
           );
-          return; 
+          return;
         }
 
         const contractRes = await fetch(
           `/api/company/contracts/${contractId}`,
-          { credentials: "include" }
+          { credentials: "include" },
         );
         if (contractRes.ok) {
           setContract(await contractRes.json());
@@ -303,10 +320,10 @@ export default function NewContractPage() {
   const handleResetFlow = () => {
     // 1. Limpiamos datos del contrato
     setContract(undefined);
-    // Si manejas el ID del contrato en la URL (ej. router.push), asegúrate de limpiar la URL aquí también, 
+    // Si manejas el ID del contrato en la URL (ej. router.push), asegúrate de limpiar la URL aquí también,
     // o simplemente limpia el estado local:
     // setContractId(""); // Descomenta si contractId es un estado y no viene de params
-    
+
     // 2. Limpiamos el formulario del Paso 1
     setForm({
       clientId: "",
@@ -320,7 +337,7 @@ export default function NewContractPage() {
 
     // 3. APAGAMOS LAS VALIDACIONES (¡La cura del bug!)
     setEventSubmitAttempted(false);
-    
+
     // 4. Regresamos a la casilla de salida
     setStep("event");
   };
@@ -394,7 +411,7 @@ export default function NewContractPage() {
 
       {/* ---------------- PASO 1: DETALLES DEL EVENTO ---------------- */}
       {step === "event" && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out max-w-4xl">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
           <div className="mb-6 p-4 md:p-5 rounded-xl bg-gray-50 border border-gray-200 flex items-start gap-3 text-sm text-gray-600 leading-relaxed shadow-sm">
             <Info className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
             <div>
@@ -613,14 +630,16 @@ export default function NewContractPage() {
 
                 <div className="mt-6">
                   {loadingPayments ? (
-                    <p className="text-sm text-gray-500 animate-pulse">Cargando historial de pagos...</p>
+                    <p className="text-sm text-gray-500 animate-pulse">
+                      Cargando historial de pagos...
+                    </p>
                   ) : (
-                    <PaymentList 
-                      payments={payments} 
+                    <PaymentList
+                      payments={payments}
                       onDeleteSuccess={() => {
                         fetchPayments();
-                        fetchContract(); 
-                      }} 
+                        fetchContract();
+                      }}
                     />
                   )}
                 </div>
@@ -648,9 +667,8 @@ export default function NewContractPage() {
                 </div>
               </div>
             )}
-
           </div>
-            
+
           <div className="w-full lg:w-1/3 lg:sticky lg:top-6 z-10">
             <ContractSummaryCard contract={contract} />
           </div>
@@ -658,39 +676,58 @@ export default function NewContractPage() {
       )}
 
       {step === "success" && (
-              <div className="animate-in zoom-in-95 fade-in duration-500 ease-out flex flex-col items-center justify-center p-8 md:p-16 bg-white border border-gray-200 rounded-3xl shadow-sm max-w-2xl mx-auto text-center mt-10">
-                
-                <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-green-50">
-                  <CheckCircle2 size={48} strokeWidth={2.5} />
-                </div>
-                
-                <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">
-                  ¡Contrato Registrado!
-                </h2>
-                
-                <p className="text-gray-500 mb-8 max-w-md text-base leading-relaxed">
-                  El contrato para el evento <strong className="text-gray-900">{contract?.event?.name || "Nuevo Evento"}</strong> se ha creado exitosamente y el pago inicial ha sido aplicado.
-                </p>
+        <div className="animate-in zoom-in-95 fade-in duration-500 ease-out flex flex-col items-center justify-center p-8 md:p-16 bg-white border border-gray-200 rounded-3xl shadow-sm max-w-2xl mx-auto text-center mt-10">
+          <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-green-50">
+            <CheckCircle2 size={48} strokeWidth={2.5} />
+          </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
-                  <button
-                    onClick={() => {
-                      window.location.href = `/company/contracts/${contract?.id || contractId}`;
-                    }}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                  >
-                    Ver Detalles del Contrato
-                  </button>
-                  
-                  <button
-                    onClick={handleResetFlow}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
-                  >
-                    Crear Nuevo Contrato
-                  </button>
-                </div>
-              </div>
-            )}
+          <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">
+            ¡Contrato Registrado!
+          </h2>
+
+          <p className="text-gray-500 mb-8 max-w-md text-base leading-relaxed">
+            El contrato para el evento{" "}
+            <strong className="text-gray-900">
+              {contract?.event?.name || "Nuevo Evento"}
+            </strong>{" "}
+            se ha creado exitosamente y el pago inicial ha sido aplicado.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+            <button
+              onClick={() => {
+                window.location.href = `/company/contracts/${contract?.id || contractId}`;
+              }}
+              className="w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            >
+              Ver Detalles del Contrato
+            </button>
+
+            <button
+              onClick={handleResetFlow}
+              className="w-full sm:w-auto px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
+            >
+              Crear Nuevo Contrato
+            </button>
+          </div>
+        </div>
+      )}
+      <ClientModal
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+        onSuccess={(newClient) => {
+          setForm((prev: any) => ({
+            ...prev,
+            clientId: String(newClient.id),
+            client: {
+              id: newClient.id,
+              name: newClient.name,
+              phone: newClient.phone,
+            },
+          }));
+          setIsClientModalOpen(false); // Cerramos el modal
+        }}
+      />
     </div>
   );
 }

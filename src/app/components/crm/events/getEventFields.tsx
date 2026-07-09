@@ -1,21 +1,19 @@
 import { Calendar, AlertCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils/date";
-
-// IMPORTACIONES CRÍTICAS (Ajusta las rutas si es necesario)
-import ClientSelector from "@/app/components/crm/clients/ClientSelector"; 
+import ClientSelector from "@/app/components/crm/clients/ClientSelector";
 import { Field } from "@/app/components/crm/CreateForm";
 
 type Props = {
   form: any;
   setForm: any;
   errors?: Record<string, string>;
+  onOpenClientModal?: () => void;
 };
 
-// Al forzar el tipo de retorno a : Field[], TypeScript dejará de quejarse
-export function getEventFields({ form, setForm, errors = {} }: Props): Field[] {
+export function getEventFields({ form, setForm, errors = {}, onOpenClientModal }: Props): Field[] {
   
   const renderError = (field: string) => {
-    if (!errors[field]) return undefined; // Debe retornar undefined, no null, para que CreateForm lo acepte bien
+    if (!errors[field]) return undefined;
     return (
       <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
         <AlertCircle size={14} /> {errors[field]}
@@ -52,6 +50,7 @@ export function getEventFields({ form, setForm, errors = {} }: Props): Field[] {
                 client: undefined,
               }));
             }}
+            onAddNew={onOpenClientModal}
           />
           {renderError("clientId")}
         </>
@@ -66,7 +65,7 @@ export function getEventFields({ form, setForm, errors = {} }: Props): Field[] {
     {
       name: "eventDate",
       label: "Fecha del Evento",
-      type: "date", // Ahora TypeScript sabe que esto es estrictamente "date"
+      type: "date",
       after: (
         <>
           <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-gray-500">
