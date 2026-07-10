@@ -7,6 +7,7 @@ import ErrorBox from "@/app/components/ErrorBox";
 import ContractSearch from "@/app/components/crm/ContractSearch";
 
 import { useContractItems } from "@/app/hooks/useContractItems";
+import { parseLocalDate } from "@/lib/utils/date";
 
 export default function PaymentForm({
   contractId,
@@ -151,7 +152,9 @@ export default function PaymentForm({
       const payload = {
         currency: form.currency,
         paymentMethod: form.paymentMethod,
-        paidAt: form.paidAt ? new Date(form.paidAt).toISOString() : undefined,
+        paidAt: form.paidAt
+  ? parseLocalDate(form.paidAt).toISOString()
+  : undefined,
         ticketNumber: form.ticketNumber || undefined,
         items: form.items.filter((i) => i.amount > 0),
       };
