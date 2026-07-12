@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Pencil, Trash2, Save, X, Calendar, RefreshCcw } from "lucide-react";
 
 type Field = {
   name: string;
@@ -13,6 +14,8 @@ type Action = {
   label: string;
   href?: string;
   onClick?: () => void;
+  icon?: any;
+  variant?: "primary" | "danger" | "secondary";
 };
 
 type Props = {
@@ -43,56 +46,24 @@ export default function DetailCard({
   actions = [],
 }: Props) {
   return (
-    <div
-      style={{
-        background: "var(--bg-primary)",
-        padding: 24,
-        borderRadius: 12,
-        marginTop: 20,
-        border: "1px solid var(--border-color)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        maxWidth: 500,
-      }}
-    >
-      <h2
-        style={{
-          fontSize: 18,
-          fontWeight: 600,
-        }}
-      >
+    <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm max-w-2xl w-full mx-auto flex flex-col gap-6">
+      <h2 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">
         {title}
       </h2>
 
-      {/* VIEW MODE */}
+      {/* ===================== MODO VISTA (LECTURA) ===================== */}
       {!editing && (
         <>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
-          >
+          <div className="flex flex-col gap-0 bg-gray-50/50 rounded-xl border border-gray-100 p-1">
             {fields.map((field) => {
               if (field.name === "notes") {
                 return (
-                  <div key={field.name}>
-                    <span style={{ color: "var(--text-secondary)" }}>
+                  <div key={field.name} className="flex flex-col gap-2 p-4">
+                    <span className="text-sm font-medium text-gray-500">
                       {field.label}
                     </span>
-
-                    <div
-                      style={{
-                        marginTop: 6,
-                        padding: 10,
-                        borderRadius: 8,
-                        background: "var(--bg-secondary)",
-                        whiteSpace: "pre-line",
-                      }}
-                    >
-                      {data[field.name]}
+                    <div className="p-4 rounded-xl bg-yellow-50/50 border border-yellow-100 text-gray-700 whitespace-pre-line text-sm">
+                      {data[field.name] || "Sin notas adicionales."}
                     </div>
                   </div>
                 );
@@ -101,77 +72,54 @@ export default function DetailCard({
               return (
                 <div
                   key={field.name}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    borderBottom: "1px solid var(--border-color)",
-                    paddingBottom: 6,
-                  }}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-gray-100 last:border-0 gap-1"
                 >
-                  <span style={{ color: "var(--text-secondary)" }}>
+                  <span className="text-sm font-medium text-gray-500">
                     {field.label}
                   </span>
-
-                  <strong style={{ color: "var(--text-primary)" }}>
-                    {data[field.name]}
+                  <strong className="text-sm text-gray-900 font-semibold text-right">
+                    {data[field.name] || "—"}
                   </strong>
                 </div>
               );
             })}
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              flexWrap: "wrap",
-              marginTop: 10,
-            }}
-          >
+          <div className="flex flex-wrap items-center gap-3 mt-2 pt-6 border-t border-gray-100">
             <button
               onClick={() => setEditing(true)}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: "1px solid var(--border-color)",
-                background: "var(--bg-secondary)",
-                cursor: "pointer",
-              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-200 text-sm"
             >
-              Edit
+              <Pencil size={16} />
+              Editar
             </button>
 
             {onDelete && (
               <button
                 onClick={onDelete}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#ef4444",
-                  color: "white",
-                  cursor: "pointer",
-                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-red-100 bg-red-50 text-red-600 font-medium hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-200 text-sm"
               >
-                Delete
+                <Trash2 size={16} />
+                Eliminar
               </button>
             )}
 
+            <div className="flex-1" /> {/* Espaciador para empujar los siguientes a la derecha */}
+
             {actions.map((action, index) => {
+              const ActionIcon = action.icon;
+              const isPrimary = action.variant === "primary";
+              
+              const baseClasses = "flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm focus:outline-none focus:ring-2 text-sm";
+              const colorClasses = isPrimary 
+                ? "bg-gray-900 text-white hover:bg-gray-800 focus:ring-black"
+                : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-200";
+
               if (action.href) {
                 return (
-                  <Link key={index} href={action.href}>
-                    <button
-                      style={{
-                        padding: "8px 14px",
-                        borderRadius: 8,
-                        border: "1px solid var(--border-color)",
-                        background: "var(--bg-secondary)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {action.label}
-                    </button>
+                  <Link key={index} href={action.href} className={`${baseClasses} ${colorClasses}`}>
+                    {ActionIcon && <ActionIcon size={16} />}
+                    {action.label}
                   </Link>
                 );
               }
@@ -180,14 +128,9 @@ export default function DetailCard({
                 <button
                   key={index}
                   onClick={action.onClick}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: 8,
-                    border: "1px solid var(--border-color)",
-                    background: "var(--bg-secondary)",
-                    cursor: "pointer",
-                  }}
+                  className={`${baseClasses} ${colorClasses}`}
                 >
+                  {ActionIcon && <ActionIcon size={16} />}
                   {action.label}
                 </button>
               );
@@ -196,152 +139,90 @@ export default function DetailCard({
         </>
       )}
 
-      {/* EDIT MODE */}
+      {/* ===================== MODO EDICIÓN ===================== */}
       {editing && (
-        <>
-          {fields.some(f => f.readOnly) && (
-            <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-secondary)" }}>
-              Event Info
+        <div className="flex flex-col gap-5 animate-in fade-in duration-300">
+          
+          {fields.some((f) => f.readOnly) && (
+            <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+              Información del Sistema
             </div>
           )}
 
-          {fields.map((field) => {
-            // 🔥 SI ES READONLY → mostrar como texto, NO input
-            if (field.readOnly) {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {fields.map((field) => {
+              // CAMPOS DE SOLO LECTURA
+              if (field.readOnly) {
+                return (
+                  <div key={field.name} className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="text-xs font-medium text-gray-600 ml-1">
+                      {field.label}
+                    </label>
+                    <div className="px-3.5 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 text-sm cursor-not-allowed">
+                      {data[field.name]}
+                    </div>
+                  </div>
+                );
+              }
+
+              // CAMPOS EDITABLES
+              const isTextarea = field.type === "textarea";
               return (
-                <div
-                  key={field.name}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}
+                <div 
+                  key={field.name} 
+                  className={`flex flex-col gap-1.5 ${isTextarea ? 'sm:col-span-2' : ''}`}
                 >
-                  <label
-                    style={{
-                      fontSize: 13,
-                      color: "var(--text-secondary)",
-                    }}
-                  >
+                  <label className="text-xs font-medium text-gray-700 ml-1">
                     {field.label}
                   </label>
-
-                  <div
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border-color)",
-                      background: "var(--bg-secondary)",
-                      color: "var(--text-primary)",
-                      opacity: 0.7, // 👈 look disabled
-                    }}
-                  >
-                    {data[field.name]}
-                  </div>
+                  {isTextarea ? (
+                    <textarea
+                      value={form[field.name] || ""}
+                      onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}
+                      rows={4}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all shadow-sm"
+                    />
+                  ) : (
+                    <input
+                      type={field.type || "text"}
+                      value={form[field.name] || ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          [field.name]: field.type === "number" ? Number(e.target.value) : e.target.value,
+                        })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all shadow-sm"
+                    />
+                  )}
                 </div>
               );
-            }
+            })}
+          </div>
 
-            // 🔥 CAMPOS EDITABLES (igual que antes)
-            return (
-              <div
-                key={field.name}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                }}
-              >
-                <label
-                  style={{
-                    fontSize: 13,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {field.label}
-                </label>
-
-                {field.type === "textarea" ? (
-                  <textarea
-                    value={form[field.name] || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        [field.name]: e.target.value,
-                      })
-                    }
-                    rows={4}
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border-color)",
-                      background: "var(--bg-secondary)",
-                      color: "var(--text-primary)",
-                      resize: "vertical",
-                    }}
-                  />
-                ) : (
-                  <input
-                    type={field.type || "text"}
-                    value={form[field.name] || ""}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        [field.name]:
-                          field.type === "number"
-                            ? Number(e.target.value)
-                            : e.target.value,
-                      })
-                    }
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: 8,
-                      border: "1px solid var(--border-color)",
-                      background: "var(--bg-secondary)",
-                      color: "var(--text-primary)",
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
-
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              marginTop: 10,
-            }}
-          >
+          <div className="flex items-center gap-3 mt-4 pt-6 border-t border-gray-100">
             <button
               onClick={onSave}
               disabled={saving}
-              style={{
-                padding: "10px 16px",
-                borderRadius: 8,
-                border: "none",
-                background: "#2563eb",
-                color: "white",
-                cursor: "pointer",
-              }}
+              className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-medium text-sm transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
+                saving 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                  : "bg-gray-900 text-white hover:bg-gray-800"
+              }`}
             >
-              {saving ? "Saving..." : "Save"}
+              <Save size={16} />
+              {saving ? "Guardando..." : "Guardar Cambios"}
             </button>
 
             <button
               onClick={() => setEditing(false)}
-              style={{
-                padding: "10px 16px",
-                borderRadius: 8,
-                border: "1px solid var(--border-color)",
-                background: "transparent",
-                cursor: "pointer",
-              }}
+              disabled={saving}
+              className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors focus:outline-none text-sm"
             >
-              Cancel
+              Cancelar
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

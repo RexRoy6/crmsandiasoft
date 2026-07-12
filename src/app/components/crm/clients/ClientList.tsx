@@ -43,7 +43,8 @@ export default function ClientList({
             </div>
             <div className="flex items-center gap-2.5">
               <Mail size={15} className="text-gray-400 shrink-0" />
-              <span className="truncate" title={client.email}>
+              {/* Cambiamos client.email por client.email || "" */}
+              <span className="truncate" title={client.email || ""}>
                 {client.email || "—"}
               </span>
             </div>
