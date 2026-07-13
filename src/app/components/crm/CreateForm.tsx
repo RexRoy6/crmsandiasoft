@@ -6,22 +6,21 @@ export type Field = {
   name: string;
   label: string;
   type?:
-  | "text"
-  | "number"
-  | "select"
-  | "date"
-  | "time"
-  | "datetime-local"
-  | "textarea";
-
+    | "text"
+    | "number"
+    | "select"
+    | "date"
+    | "time"
+    | "datetime-local"
+    | "textarea";
   options?: { value: string; label: string }[];
-
   onChange?: (value: string) => void;
-
   readOnly?: boolean;
   hideInput?: boolean;
   required?: boolean;
   after?: ReactNode;
+  // Propiedad nueva para control manual del ancho en la cuadrícula
+  fullWidth?: boolean; 
 };
 
 type Props = {
@@ -44,15 +43,10 @@ export default function CreateForm({
   onSubmit,
   onCancel,
   clearError,
-  submitLabel = "Create",
+  submitLabel = "Guardar",
   loading = false,
 }: Props) {
-
-  function handleFieldChange(
-    field: Field,
-    value: string
-  ) {
-
+  function handleFieldChange(field: Field, value: string) {
     clearError?.();
 
     if (field.onChange) {
@@ -62,278 +56,121 @@ export default function CreateForm({
 
     setForm((prev: any) => ({
       ...prev,
-      [field.name]:
-        field.type === "number"
-          ? Number(value)
-          : String(value),
+      [field.name]: field.type === "number" ? Number(value) : String(value),
     }));
   }
 
   return (
-    <div
-      style={{
-        background: "var(--bg-primary)",
-        padding: 24,
-        borderRadius: 12,
-        marginBottom: 30,
-        border: "1px solid var(--border-color)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        maxWidth: 500,
-      }}
-    >
-      <h3
-        style={{
-          fontSize: 18,
-          fontWeight: 600,
-          marginBottom: 10,
-        }}
-      >
+    <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 mb-8 w-full shadow-sm">
+      <h3 className="text-lg font-bold text-gray-900 tracking-tight">
         {title}
       </h3>
 
-      {fields.map((field) => {
+      {/* CUADRÍCULA INTELIGENTE: 1 columna en móvil, 2 en escritorio */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-6">
+        {fields.map((field) => {
+          // Lógica de Sizing: Textareas o fullWidth explícito ocupan 2 columnas
+          const isFullWidth = field.type === "textarea" || field.fullWidth;
+          const colSpanClass = isFullWidth ? "md:col-span-2" : "col-span-1";
 
-
-
-        /* ---------- SELECT ---------- */
-
-        if (field.type === "select") {
-
-          return (
-            <div
-              key={field.name}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <label
-                style={{
-                  fontSize: 13,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                <>
-                  {field.label}
-
-                  {field.required && (
-                    <span
-                      style={{
-                        color: "red",
-                        marginLeft: 4,
-                      }}
-                    >
-                      *
-                    </span>
-                  )}
-                </>
-              </label>
-
-              <select
-                required={field.required}
-                value={form[field.name] ?? ""}
-                onChange={(e) => {
-                  handleFieldChange(field, e.target.value);
-                }}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: "var(--bg-secondary)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                <option value="">
-                  Select...
-                </option>
-
-                {field.options?.map((opt) => (
-                  <option
-                    key={opt.value}
-                    value={opt.value}
-                  >
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-
-              {field.after && (
-                <div style={{ marginTop: 4 }}>
-                  {field.after}
-                </div>
+          const Label = () => (
+            <label className="text-sm font-medium text-gray-500 mb-1.5 flex items-center tracking-tight">
+              {field.label}
+              {field.required && (
+                <span className="text-red-500 ml-1.5 font-bold">*</span>
               )}
-            </div>
-          );
-        }
-
-        /* ---------- TEXTAREA ---------- */
-
-        if (field.type === "textarea") {
-
-          return (
-            <div
-              key={field.name}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
-              <label
-                style={{
-                  fontSize: 13,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                <>
-                  {field.label}
-
-                  {field.required && (
-                    <span
-                      style={{
-                        color: "red",
-                        marginLeft: 4,
-                      }}
-                    >
-                      *
-                    </span>
-                  )}
-                </>
-              </label>
-
-              <textarea
-                required={field.required}
-                value={form[field.name] ?? ""}
-                rows={4}
-                onChange={(e) => {
-                  console.log("DATETIME CHANGE", e.target.value);
-
-                  handleFieldChange(field, e.target.value);
-                }}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: "var(--bg-secondary)",
-                  color: "var(--text-primary)",
-                }}
-              />
-            </div>
-          );
-        }
-
-        /* ---------- INPUT ---------- */
-
-        return (
-          <div
-            key={field.name}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-            }}
-          >
-            <label
-              style={{
-                fontSize: 13,
-                color: "var(--text-secondary)",
-              }}
-            >
-              <>
-                {field.label}
-
-                {field.required && (
-                  <span
-                    style={{
-                      color: "red",
-                      marginLeft: 4,
-                    }}
-                  >
-                    *
-                  </span>
-                )}
-              </>
             </label>
+          );
 
-
-            {!field.hideInput && (
-              <input
-                required={field.required}
-                type={field.type || "text"}
-                value={form[field.name] ?? ""}
-                readOnly={field.readOnly}
-                onChange={(e) =>
-                  handleFieldChange(field, e.target.value)
-                }
-                style={{
-                  padding: "8px 10px",
-                  fontSize: 12,
-                  borderRadius: 8,
-                  border: "1px solid var(--border-color)",
-                  background: field.readOnly
-                    ? "var(--bg-primary)"
-                    : "var(--bg-secondary)",
-                  color: "var(--text-primary)",
-                }}
-              />
-            )}
-
-            {field.after && (
-              <div style={{ marginTop: 4 }}>
-                {field.after}
+          {/* ---------- SELECT ---------- */}
+          if (field.type === "select") {
+            return (
+              <div key={field.name} className={`flex flex-col ${colSpanClass}`}>
+                <Label />
+                <select
+                  required={field.required}
+                  value={form[field.name] ?? ""}
+                  onChange={(e) => handleFieldChange(field, e.target.value)}
+                  className="w-full px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all shadow-sm"
+                >
+                  <option value="">Seleccionar...</option>
+                  {field.options?.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                {field.after && <div className="mt-1.5">{field.after}</div>}
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          }
 
-      {/* ---------- ACTIONS ---------- */}
+          {/* ---------- TEXTAREA ---------- */}
+          if (field.type === "textarea") {
+            return (
+              <div key={field.name} className={`flex flex-col ${colSpanClass}`}>
+                <Label />
+                <textarea
+                  required={field.required}
+                  value={form[field.name] ?? ""}
+                  rows={3}
+                  onChange={(e) => handleFieldChange(field, e.target.value)}
+                  className="w-full px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all shadow-sm resize-y"
+                />
+                {field.after && <div className="mt-1.5">{field.after}</div>}
+              </div>
+            );
+          }
 
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          marginTop: 10,
-        }}
-      >
+          {/* ---------- INPUT DEFAULT ---------- */}
+          return (
+            <div key={field.name} className={`flex flex-col ${colSpanClass}`}>
+              <Label />
+              {!field.hideInput && (
+                <input
+                  required={field.required}
+                  type={field.type || "text"}
+                  value={form[field.name] ?? ""}
+                  readOnly={field.readOnly}
+                  onChange={(e) => handleFieldChange(field, e.target.value)}
+                  className={`
+                    w-full px-4 py-2 text-sm rounded-lg border focus:outline-none focus:ring-1 transition-all shadow-sm
+                    ${
+                      field.readOnly
+                        ? "bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed"
+                        : "bg-white border-gray-300 text-gray-900 focus:ring-black focus:border-black"
+                    }
+                  `}
+                />
+              )}
+              {field.after && <div className="mt-1.5">{field.after}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ---------- ACTIONS (Footer con línea divisoria) ---------- */}
+      <div className="flex flex-wrap items-center gap-3 mt-6 pt-5 border-t border-gray-100">
         <button
           onClick={onSubmit}
           disabled={loading}
-          style={{
-            padding: "10px 16px",
-            borderRadius: 8,
-            border: "none",
-            background: loading
-              ? "#94a3b8"
-              : "#2563eb",
-            color: "white",
-            cursor: loading
-              ? "not-allowed"
-              : "pointer",
-            fontWeight: 500,
-          }}
+          className={`
+            px-6 py-2 rounded-lg font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black
+            ${
+              loading
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                : "bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
+            }
+          `}
         >
-          {loading
-            ? "Saving..."
-            : submitLabel}
+          {loading ? "Guardando..." : submitLabel}
         </button>
 
         <button
           onClick={onCancel}
-          style={{
-            padding: "10px 16px",
-            borderRadius: 8,
-            border:
-              "1px solid var(--border-color)",
-            background: "transparent",
-            color: "var(--text-primary)",
-            cursor: "pointer",
-          }}
+          className="px-6 py-2 rounded-lg font-medium text-sm border border-gray-200 bg-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
         >
-          Cancel
+          Cancelar
         </button>
       </div>
     </div>

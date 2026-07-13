@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 type Props = {
   page: number;
   totalPages: number;
@@ -12,72 +14,53 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
   const getPages = () => {
     const delta = 2; // páginas alrededor de la actual
     const range = [];
-
     const start = Math.max(1, page - delta);
     const end = Math.min(totalPages, page + delta);
 
     for (let i = start; i <= end; i++) {
       range.push(i);
     }
-
     return range;
   };
 
   const pages = getPages();
 
   return (
-    <div
-      style={{
-        marginTop: 24,
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: "var(--bg-primary)",
-          padding: 8,
-          borderRadius: 12,
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-        }}
-      >
+    <div className="flex justify-center w-full mt-2 mb-8">
+      <div className="flex items-center gap-1.5 p-1.5 bg-white border border-gray-200 rounded-xl shadow-sm">
+        
+        {/* Botón Anterior */}
         <button
           disabled={page === 1}
           onClick={() => onPageChange(page - 1)}
-          style={{
-            padding: "6px 10px",
-            borderRadius: 8,
-            border: "none",
-            background: page === 1 ? "#a0a0a0" : "#e2e8f0",
-            color: "#334155",
-            cursor: page === 1 ? "not-allowed" : "pointer",
-          }}
+          className={`flex items-center justify-center p-2 rounded-lg border border-transparent transition-all focus:outline-none focus:ring-2 focus:ring-gray-200 ${
+            page === 1
+              ? "text-gray-300 cursor-not-allowed"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
+          aria-label="Página anterior"
         >
-          ←
+          <ChevronLeft size={18} />
         </button>
 
-        {/* First */}
+        {/* Primera Página */}
         {pages[0] > 1 && (
           <>
             <PageButton page={1} current={page} onClick={onPageChange} />
-            {pages[0] > 2 && <span style={{ padding: "0 4px" }}>...</span>}
+            {pages[0] > 2 && <span className="px-2 text-gray-400">...</span>}
           </>
         )}
 
-        {/* Middle pages */}
+        {/* Páginas Centrales */}
         {pages.map((p) => (
           <PageButton key={p} page={p} current={page} onClick={onPageChange} />
         ))}
 
-        {/* Last */}
+        {/* Última Página */}
         {pages[pages.length - 1] < totalPages && (
           <>
             {pages[pages.length - 1] < totalPages - 1 && (
-              <span style={{ padding: "0 4px" }}>...</span>
+              <span className="px-2 text-gray-400">...</span>
             )}
             <PageButton
               page={totalPages}
@@ -87,25 +70,25 @@ export default function Pagination({ page, totalPages, onPageChange }: Props) {
           </>
         )}
 
+        {/* Botón Siguiente */}
         <button
           disabled={page === totalPages}
           onClick={() => onPageChange(page + 1)}
-          style={{
-            padding: "6px 10px",
-            borderRadius: 8,
-            border: "none",
-            background: page === totalPages ? "#a0a0a0" : "#e2e8f0",
-            color: "#334155",
-            cursor: page === totalPages ? "not-allowed" : "pointer",
-          }}
+          className={`flex items-center justify-center p-2 rounded-lg border border-transparent transition-all focus:outline-none focus:ring-2 focus:ring-gray-200 ${
+            page === totalPages
+              ? "text-gray-300 cursor-not-allowed"
+              : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          }`}
+          aria-label="Página siguiente"
         >
-          →
+          <ChevronRight size={18} />
         </button>
       </div>
     </div>
   );
 }
 
+// Subcomponente de botón de número de página
 function PageButton({
   page,
   current,
@@ -120,17 +103,11 @@ function PageButton({
   return (
     <button
       onClick={() => onClick(page)}
-      style={{
-        minWidth: 32,
-        height: 32,
-        borderRadius: 8,
-        border: "none",
-        fontSize: 13,
-        fontWeight: isActive ? 600 : 500,
-        background: isActive ? "#2563eb" : "transparent",
-        color: isActive ? "#ffffff" : "var(--text-prymary)",
-        cursor: "pointer",
-      }}
+      className={`min-w-[36px] h-9 px-2 flex items-center justify-center text-sm font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+        isActive
+          ? "bg-gray-900 text-white shadow-sm focus:ring-gray-900"
+          : "text-gray-600 bg-transparent hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-200"
+      }`}
     >
       {page}
     </button>

@@ -1,48 +1,23 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
+import { getContract } from "@/lib/api/contracts";
 
-import {
-  getContract,
-} from "@/lib/api/contracts";
-
-export function useContract(
-  contractId?: number | null
-) {
-
-  const [contract, setContract] =
-    useState<any>(null);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
+export function useContract(contractId?: number | null) {
+  const [contract, setContract] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const fetchContract = async () => {
-
     if (!contractId) return;
 
     try {
-
       setLoading(true);
-
-      const data =
-        await getContract(contractId);
-
+      const data = await getContract(contractId);
       setContract(data);
-
     } catch {
-
-      setError(
-        "Failed to load contract"
-      );
-
+      setError("Error al cargar los datos del contrato");
     } finally {
-
       setLoading(false);
     }
   };
@@ -52,14 +27,10 @@ export function useContract(
   }, [contractId]);
 
   return {
-
     contract,
     setContract,
-
     loading,
-
     error,
-
     fetchContract,
   };
 }
