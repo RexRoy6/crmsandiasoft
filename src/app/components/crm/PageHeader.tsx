@@ -4,55 +4,23 @@ type Props = {
   onClick?: () => void;
 };
 
-export default function PageHeader({
-  title,
-  buttonLabel,
-  onClick,
-}: Props) {
+export default function PageHeader({ title, buttonLabel, onClick }: Props) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 24,
-        paddingBottom: 12,
-        borderBottom: "1px solid var(--border-color)",
-      }}
-    >
-      {/* TITLE */}
-
-      <h1
-        style={{
-          fontSize: 22,
-          fontWeight: 600,
-          color: "var(--text-primary)",
-        }}
-      >
+    <div className="flex justify-between items-center mb-8">
+      {/* Título como subtítulo ejecutivo */}
+      <h1 className="text-2xl font-semibold text-gray-700 tracking-tight">
         {title}
       </h1>
 
-      {/* ACTION BUTTON */}
-
+      {/* Botón de acción formal y monocromático */}
       {buttonLabel && onClick && (
         <button
           onClick={onClick}
-          style={{
-            background: "#2563eb",
-            color: "white",
-            padding: "8px 14px",
-            borderRadius: 8,
-            border: "none",
-            fontSize: 14,
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = "0.9";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = "1";
-          }}
+          className="
+            px-5 py-2 rounded-lg text-sm font-medium 
+            bg-gray-900 text-white shadow-sm
+            hover:bg-gray-800 transition-colors duration-200 focus:outline-none
+          "
         >
           {buttonLabel}
         </button>
