@@ -2,226 +2,250 @@
 
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/utils/date";
-import CreateForm, {
-    Field,
-} from "@/app/components/crm/CreateForm";
+import CreateForm, { Field } from "@/app/components/crm/CreateForm";
+import { Plus, PackageSearch, X, AlertCircle } from "lucide-react";
 
 type Props = {
-    companyServices: any[];
-    contract: any;
-    onSubmit: (data: any) => Promise<boolean | void>;
+  companyServices: any[];
+  contract: any;
+  onSubmit: (data: any) => Promise<boolean | void>;
 };
 
 const initialForm = {
-    serviceId: "",
-    quantity: "",
-    unitPrice: "",
-    serviceNotes: "",
-    operationStart: "",
-    operationEnd: "",
+  serviceId: "",
+  quantity: "",
+  unitPrice: "",
+  serviceNotes: "",
+  operationStart: "",
+  operationEnd: "",
 };
 
 export default function ContractServiceForm({
-    companyServices,
-    contract,
-    onSubmit,
+  companyServices,
+  contract,
+  onSubmit,
 }: Props) {
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(initialForm);
+  const [error, setError] = useState("");
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-    const [showForm, setShowForm] =
-        useState(false);
+  const selectedService = useMemo(() => {
+    return companyServices.find((s) => String(s.id) === form.serviceId);
+  }, [companyServices, form.serviceId]);
 
-    const [form, setForm] =
-        useState(initialForm);
+  const maxStock = selectedService?.stockTotal ?? 999;
 
-    const handleServiceChange = (
-        serviceId: string
-    ) => {
+  const handleServiceChange = (serviceId: string) => {
+    const service = companyServices.find((s) => String(s.id) === serviceId);
+    if (!service) return;
 
-        const service =
-            companyServices.find(
-                (s) =>
-                    String(s.id) === serviceId
-            );
+    setForm((prev) => ({
+      ...prev,
+      serviceId,
+      unitPrice: String(service.priceBase),
+      quantity: "", 
+    }));
+    setError("");
+    setSubmitAttempted(false);
+  };
 
-        if (!service) return;
+  // --- BUG SOLUCIONADO: Validación natural sin autocompletar ---
+  const handleQuantityChange = (val: string) => {
+    setForm((prev) => ({ ...prev, quantity: val }));
 
-        setForm((prev) => ({
-            ...prev,
-            serviceId,
-            unitPrice: String(
-                service.priceBase
-            ),
-        }));
-    };
-
-    const fields: Field[] = [
-        {
-            name: "serviceId",
-            label: "Service",
-            type: "select",
-            options:
-                companyServices.map((s) => ({
-                    value: String(s.id),
-                    label:
-                        `${s.name} ($${s.priceBase})`,
-                })),
-            onChange: handleServiceChange,
-
-            required: true,
-        },
-        {
-            name: "quantity",
-            label: "Quantity",
-            type: "number",
-            required: true,
-        },
-        {
-            name: "unitPrice",
-            label: "Unit Price",
-            type: "number",
-        },
-        {
-            name: "serviceNotes",
-            label: "Notes",
-            type: "textarea",
-        },
-        {
-            name: "operationStart",
-            label: "Start Time",
-            type: "time",
-            required: true,
-        },
-        {
-            name: "operationEnd",
-            label: "End Time",
-            type: "time",
-            required: true,
-        },
-    ];
-
-    const selectedService =
-        useMemo(() => {
-
-            return companyServices.find(
-                (s) =>
-                    String(s.id) ===
-                    form.serviceId
-            );
-
-        }, [
-            companyServices,
-            form.serviceId,
-        ]);
-
-    const subtotal =
-        Number(form.quantity || 0) *
-        Number(form.unitPrice || 0);
-
-    async function handleSubmit() {
-
-        const success =
-            await onSubmit(form);
-
-        if (!success) return;
-
-        setShowForm(false);
-
-        setForm(initialForm);
+    if (val === "") {
+      setError("La cantidad es requerida.");
+      return;
     }
 
-    function handleCancel() {
+    let num = Number(val);
 
-        setShowForm(false);
+    if (num > maxStock) {
+      setError(`Solo hay ${maxStock} unidades disponibles en inventario.`);
+    } else if (num < 1) {
+      setError("La cantidad mínima es 1.");
+    } else {
+      setError("");
+    }
+  };
 
-        setForm(initialForm);
+  let startError = "";
+  let endError = "";
+
+  if (submitAttempted && !form.operationStart) {
+    startError = "Por favor, ingresa la hora de inicio (Montaje).";
+  }
+  if (submitAttempted && !form.operationEnd) {
+    endError = "Por favor, ingresa la hora de fin (Desmontaje).";
+  }
+
+  if (form.operationStart && form.operationEnd) {
+    const eventDate = contract?.event?.eventDate?.split("T")[0] || "2000-01-01";
+    const start = new Date(`${eventDate}T${form.operationStart}`);
+    const end = new Date(`${eventDate}T${form.operationEnd}`);
+    
+    if (end <= start) {
+      endError = "El fin (desmontaje) debe ser posterior al inicio.";
+    }
+  }
+
+  const fields: Field[] = [
+    {
+      name: "serviceId",
+      label: "Servicio / Equipo",
+      type: "select",
+      fullWidth: true,
+      options: companyServices.map((s) => ({
+        value: String(s.id),
+        label: `${s.name} ($${s.priceBase})`,
+      })),
+      onChange: handleServiceChange,
+      required: true,
+    },
+    {
+      name: "quantity",
+      label: "Cantidad",
+      type: "number",
+      required: true,
+      onChange: handleQuantityChange,
+      after: error ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> {error}
+        </span>
+      ) : undefined,
+    },
+    { 
+      name: "unitPrice", 
+      label: "Precio Unitario", 
+      type: "number" 
+    },
+    { 
+      name: "operationStart", 
+      label: "Hora de Inicio (Montaje)", 
+      type: "time", 
+      after: startError ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> {startError}
+        </span>
+      ) : undefined,
+    },
+    { 
+      name: "operationEnd", 
+      label: "Hora de Fin (Desmontaje)", 
+      type: "time", 
+      after: endError ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> {endError}
+        </span>
+      ) : undefined,
+    },
+    { 
+      name: "serviceNotes", 
+      label: "Notas Adicionales", 
+      type: "textarea", 
+      fullWidth: true 
+    },
+  ];
+
+  const subtotal = Number(form.quantity || 0) * Number(form.unitPrice || 0);
+  
+  const formatMoney = (amount: number) => {
+    return new Intl.NumberFormat("es-MX", { 
+      style: "currency", 
+      currency: "MXN" 
+    }).format(amount);
+  };
+
+  async function handleSubmit() {
+    setSubmitAttempted(true); 
+
+    if (!form.operationStart || !form.operationEnd || startError || endError || error || !form.quantity) {
+      return; 
     }
 
-    return (
-        <div
-            style={{
-                marginBottom: 20,
-            }}
+    const success = await onSubmit(form);
+    if (!success) return;
+    
+    setShowForm(false);
+    setForm(initialForm);
+    setError("");
+    setSubmitAttempted(false);
+  }
+
+  function handleCancel() {
+    setShowForm(false);
+    setForm(initialForm);
+    setError("");
+    setSubmitAttempted(false);
+  }
+
+  return (
+    <div className="w-full mb-8">
+      {!showForm ? (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full flex flex-col items-center justify-center gap-2 py-8 bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
         >
-
-            <button
-                onClick={() =>
-                    setShowForm(true)
-                }
-                style={{
-                    padding: "8px 12px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: "#2563eb",
-                    color: "white",
-                    cursor: "pointer",
-                    marginBottom: 10,
-                }}
+          <div className="bg-white p-2 rounded-full shadow-sm">
+            <Plus size={20} className="text-gray-900" />
+          </div>
+          <span className="font-semibold text-sm">Añadir Nuevo Servicio</span>
+        </button>
+      ) : (
+        <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+          
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-900">
+              Configurar Servicio
+            </h3>
+            <button 
+              onClick={handleCancel} 
+              className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
             >
-                + Add Service
+              <X size={20} />
             </button>
+          </div>
 
-            {showForm && (
-                <CreateForm
-                    title="Add Service to Contract"
-                    fields={fields}
-                    form={form}
-                    setForm={setForm}
-                    onSubmit={handleSubmit}
-                    onCancel={handleCancel}
-                />
-            )}
+          <CreateForm
+            title="" 
+            fields={fields}
+            form={form}
+            setForm={setForm}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            submitLabel="Agregar al Contrato"
+          />
 
-            {selectedService && (
-                <div
-                    style={{
-                        marginTop: 10,
-                        padding: 12,
-                        border:
-                            "1px solid var(--border-color)",
-                        borderRadius: 8,
-                    }}
-                >
-
-                    <p
-                        style={{
-                            fontSize: 12,
-                            color:
-                                "var(--text-secondary)",
-                            marginBottom: 6,
-                        }}
-                    >
-                        📅 Event date:
-                        {" "}
-                        {formatDate(contract?.event?.eventDate)}
-                    </p>
-
-                    <p
-                        style={{
-                            marginBottom: 6,
-                        }}
-                    >
-                        Stock available:
-                        {" "}
-                        {
-                            selectedService.stockTotal
-                        }
-                    </p>
-
-                    {subtotal > 0 && (
-                        <p
-                            style={{
-                                fontWeight: 600,
-                            }}
-                        >
-                            Subtotal:
-                            {" "}
-                            ${subtotal}
-                        </p>
-                    )}
-
+          {selectedService && (
+            <div className="mt-4 bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+                  <PackageSearch size={16} /> 
+                  Disponibilidad en Inventario
                 </div>
-            )}
+                <div className="text-xs text-blue-700">
+                  Fecha: {formatDate(contract?.event?.eventDate)}
+                </div>
+                <div className="text-sm text-blue-800 mt-1">
+                  Stock base: <strong>{selectedService.stockTotal} unidades</strong>
+                </div>
+              </div>
 
+              {subtotal > 0 && (
+                <div className="bg-white px-4 py-2 rounded-lg border border-blue-100 text-right shadow-sm">
+                  <div className="text-xs font-medium text-blue-500 uppercase tracking-wider mb-0.5">
+                    Subtotal Estimado
+                  </div>
+                  <div className="text-lg font-black text-gray-900">
+                    {formatMoney(subtotal)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-    );
+      )}
+    </div>
+  );
 }

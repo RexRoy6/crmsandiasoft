@@ -2,6 +2,7 @@
 
 import ListCard from "@/app/components/crm/ListCard";
 import { formatDate } from "@/lib/utils/date";
+import { Receipt, Trash2 } from "lucide-react";
 
 export default function PaymentList({
   payments,
@@ -10,9 +11,8 @@ export default function PaymentList({
   payments: any[];
   onDeleteSuccess?: () => void;
 }) {
-
   async function handleDelete(id: number) {
-    if (!confirm("Delete this payment?")) return;
+    if (!confirm("¿Estás seguro de eliminar este pago? Esta acción no se puede deshacer.")) return;
 
     try {
       const res = await fetch(`/api/company/payments/${id}`, {
@@ -21,162 +21,101 @@ export default function PaymentList({
       });
 
       if (!res.ok) {
-        alert("Failed to delete payment");
+        alert("Error al eliminar el pago");
         return;
       }
 
       onDeleteSuccess?.();
     } catch {
-      alert("Connection error");
+      alert("Error de conexión");
     }
   }
 
   if (payments.length === 0) {
     return (
-      <p style={{ color: "var(--text-secondary)" }}>
-        No payments yet.
+      <p className="text-sm text-gray-500 italic py-4 text-center bg-gray-50 rounded-lg border border-gray-100">
+        Aún no hay pagos registrados.
       </p>
     );
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-    >
+    <div className="flex flex-col gap-4 mt-2">
       {payments.map((payment) => (
         <ListCard
           key={payment.id}
-          title={`Payment #${payment.id}`}
+          title={`Pago #${payment.id}`}
           link="#"
           content={
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="flex flex-col gap-3 mt-2">
               
-              {/* 🔥 ticket */}
+              {/* Etiqueta del Ticket (Estilo Financiero) */}
               {payment.ticketNumber && (
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "#7c3aed",
-                    background: "#f5f3ff",
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    width: "fit-content",
-                  }}
-                >
-                  🧾 Ticket: {payment.ticketNumber}
+                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-100 px-2.5 py-1 rounded-md w-fit border border-gray-200">
+                  <Receipt size={14} className="text-gray-500" />
+                  Ticket: {payment.ticketNumber}
                 </div>
               )}
 
-              {/* items */}
-              {payment.items.map((item: any) => (
-                <div
-                  key={`p${payment.id}-c${payment.contractId}-i${item.contractItemId}`}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    background: "var(--bg-secondary)",
-                    padding: "8px 10px",
-                    borderRadius: 8,
-                  }}
-                >
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>
-                      {item.service.name}
-                      {item.service.description && (
-                        <span
-                          style={{
-                            fontSize: 12,
-                            color: "var(--text-secondary)",
-                          }}
-                        >
-                          {" "}
-                          - {item.service.description}
-                        </span>
-                      )}
+              {/* Lista de Conceptos (Items) */}
+              <div className="flex flex-col gap-2">
+                {payment.items.map((item: any) => (
+                  <div
+                    key={`p${payment.id}-c${payment.contractId}-i${item.contractItemId}`}
+                    className="flex justify-between items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-100"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-900 tracking-tight">
+                        {item.service.name}
+                        {item.service.description && (
+                          <span className="text-xs text-gray-500 ml-1 font-normal">
+                            - {item.service.description}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    <span className="text-sm font-semibold text-gray-900">
+                      ${item.amount}
                     </span>
                   </div>
-
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>
-                    ${item.amount}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           }
         >
-          {/* meta info */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              marginTop: 8,
-              fontSize: 13,
-            }}
-          >
-            <span>
-              <strong>Currency:</strong> {payment.currency}
-            </span>
-
-            <span>
-              <strong>Amount:</strong> ${payment.amount}
-            </span>
-
-            <span>
-              <strong>Method:</strong> {payment.paymentMethod}
-            </span>
-
-            {/* 🔥 fecha REAL */}
-            <span>
-              <strong>Payment Date:</strong>{" "}
-              {payment.paidAt
-                ? formatDate(payment.paidAt)
-                : "—"}
-            </span>
-
-            {/* 🔥 fecha sistema */}
-            <span style={{ color: "var(--text-secondary)", fontSize: 12 }}>
-              Recorded: {formatDate(payment.createdAt)}
+          {/* Metadatos del Pago */}
+          <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-gray-100 text-sm text-gray-700">
+            <div className="grid grid-cols-2 gap-2">
+              <span><strong>Moneda:</strong> {payment.currency}</span>
+              <span><strong>Total:</strong> ${payment.amount}</span>
+              <span>
+                <strong>Método:</strong>{" "}
+                <span className="capitalize">{payment.paymentMethod}</span>
+              </span>
+              <span>
+                <strong>Fecha de Pago:</strong>{" "}
+                {payment.paidAt ? formatDate(payment.paidAt) : "—"}
+              </span>
+            </div>
+            
+            <span className="text-xs text-gray-400 mt-1">
+              Registrado en sistema: {formatDate(payment.createdAt)}
             </span>
           </div>
 
-          {/* delete */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-start",
-              marginTop: 12,
-            }}
-          >
+          {/* Botón de Eliminar */}
+          <div className="flex justify-start mt-3">
             <button
-              onClick={() => handleDelete(payment.id)}
-              style={{
-                padding: "6px 12px",
-                fontSize: 12,
-                fontWeight: 500,
-                color: "var(--error-color)",
-                background: "var(--error-bg)",
-                border: "1px solid var(--error-border)",
-                borderRadius: 6,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
+              onClick={(e) => {
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                handleDelete(payment.id);
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--error-color)";
-                e.currentTarget.style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "var(--error-bg)";
-                e.currentTarget.style.color = "var(--error-color)";
-              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-none"
             >
-              🗑 Delete
+              <Trash2 size={14} />
+              Eliminar
             </button>
           </div>
         </ListCard>

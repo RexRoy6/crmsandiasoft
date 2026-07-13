@@ -1,119 +1,105 @@
-import type { Field }
-    from "@/app/components/crm/CreateForm";
+import { Calendar, AlertCircle } from "lucide-react";
+import { formatDate } from "@/lib/utils/date";
+import ClientSelector from "@/app/components/crm/clients/ClientSelector";
+import { Field } from "@/app/components/crm/CreateForm";
 
-import ClientSelector
-    from "@/app/components/crm/clients/ClientSelector";
+type Props = {
+  form: any;
+  setForm: any;
+  errors?: Record<string, string>;
+  onOpenClientModal?: () => void;
+};
 
-import {
-    formatDate,
-} from "@/lib/utils/date";
-import type {
-    EventFormState,
-} from "@/types/forms/eventForm";
+export function getEventFields({ form, setForm, errors = {}, onOpenClientModal }: Props): Field[] {
+  
+  const renderError = (field: string) => {
+    if (!errors[field]) return undefined;
+    return (
+      <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+        <AlertCircle size={14} /> {errors[field]}
+      </span>
+    );
+  };
 
-
-interface Props {
-    form: EventFormState;
-
-    setForm: React.Dispatch<
-        React.SetStateAction<EventFormState>
-    >;
-}
-
-export function getEventFields({
-    form,
-    setForm,
-}: Props): Field[] {
-
-    return [
-        {
-            name: "clientId",
-
-            label: "Client",
-            hideInput: true,
-            readOnly: true,
-            required: true,
-            after: (
-                <ClientSelector
-                    selected={form.client}
-
-                    onSelect={(client) => {
-                        setForm((prev) => ({
-                            ...prev,
-
-                            clientId: String(client.id),
-
-                            client: {
-                                id: client.id,
-                                name: client.name,
-                                phone: client.phone,
-                            },
-                        }));
-                    }}
-
-                    onClear={() => {
-                        setForm((prev) => ({
-                            ...prev,
-
-                            clientId: "",
-
-                            client: undefined,
-                        }));
-                    }}
-                />
-            ),
-        },
-
-        {
-            name: "name",
-            label: "Event Name",
-            required: true,
-        },
-
-        {
-            name: "eventDate",
-
-            label: "Event Date",
-
-            type: "date",
-            required: true,
-
-            after: (
-                <p
-                    style={{
-                        fontSize: 12,
-                        color: "var(--text-secondary)",
-                        marginTop: 4,
-                    }}
-                >
-                    {form.eventDate
-                        ? `📅 Fecha seleccionada: ${formatDate(form.eventDate)}`
-                        : "📅 Selecciona una fecha"}
-                </p>
-            ),
-        },
-        {
-            name: "eventStart",
-            label: "Hora Inicio",
-            type: "time",
-        },
-
-        {
-            name: "eventEnd",
-            label: "Hora Final",
-            type: "time",
-        },
-
-        {
-            name: "location",
-            label: "Location",
-            required: true,
-        },
-
-        {
-            name: "notes",
-            label: "Notes",
-            type: "textarea",
-        },
-    ];
+  return [
+    {
+      name: "clientId",
+      label: "Cliente",
+      hideInput: true,
+      readOnly: true,
+      fullWidth: true,
+      after: (
+        <>
+          <ClientSelector
+            selected={form.client}
+            onSelect={(client: any) => {
+              setForm((prev: any) => ({
+                ...prev,
+                clientId: String(client.id),
+                client: {
+                  id: client.id,
+                  name: client.name,
+                  phone: client.phone,
+                },
+              }));
+            }}
+            onClear={() => {
+              setForm((prev: any) => ({
+                ...prev,
+                clientId: "",
+                client: undefined,
+              }));
+            }}
+            onAddNew={onOpenClientModal}
+          />
+          {renderError("clientId")}
+        </>
+      ),
+    },
+    {
+      name: "name",
+      label: "Nombre del Evento",
+      fullWidth: true,
+      after: renderError("name"),
+    },
+    {
+      name: "eventDate",
+      label: "Fecha del Evento",
+      type: "date",
+      after: (
+        <>
+          <div className="flex items-center gap-1.5 mt-1.5 text-xs font-medium text-gray-500">
+            <Calendar size={14} className="text-gray-400" />
+            {form.eventDate
+              ? `Fecha confirmada: ${formatDate(form.eventDate)}`
+              : "Selecciona un día en el calendario"}
+          </div>
+          {renderError("eventDate")}
+        </>
+      ),
+    },
+    {
+      name: "location",
+      label: "Ubicación (Lugar)",
+      after: renderError("location"),
+    },
+    {
+      name: "eventStart",
+      label: "Hora de Inicio",
+      type: "time",
+      after: renderError("eventStart"),
+    },
+    {
+      name: "eventEnd",
+      label: "Hora de Finalización",
+      type: "time",
+      after: renderError("eventEnd"),
+    },
+    {
+      name: "notes",
+      label: "Notas Adicionales",
+      type: "textarea",
+      fullWidth: true,
+    },
+  ];
 }

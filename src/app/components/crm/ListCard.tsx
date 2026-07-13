@@ -3,34 +3,19 @@
 import { useRouter } from "next/navigation";
 import React from "react";
 
-type Badge = {
-  label: string;
-};
-
-type Action = {
-  label: string;
-  onClick?: () => void;
-  color?: string;
-};
-
-type MetaItem = {
-  icon?: React.ReactNode;
-  label: string;
-};
+type Badge = { label: string };
+type Action = { label: string; onClick?: () => void; color?: string };
+type MetaItem = { icon?: React.ReactNode; label: string };
 
 type ListCardProps = {
   title?: string;
   subtitle?: string;
   content?: React.ReactNode;
-
   meta?: MetaItem[];
   badge?: Badge;
-
   actions?: Action[];
-
   link?: string;
   onClick?: () => void;
-
   children?: React.ReactNode;
   isActive?: boolean;
 };
@@ -49,31 +34,21 @@ export default function ListCard({
 }: ListCardProps) {
   const router = useRouter();
 
-  const badgeStyles: Record<string, { background: string; color: string }> = {
-    paid: { background: "#dcfce7", color: "#166534" },
-    completed: { background: "#dcfce7", color: "#166534" },
-    active: { background: "#8eb4ff", color: "#0e4685" },
-    pending: { background: "#fef9c3", color: "#854d0e" },
-    partial: { background: "#fef9c3", color: "#854d0e" },
-    cancelled: { background: "#fee2e2", color: "#991b1b" },
+  // Diccionario de colores corporativos para etiquetas (traducidas)
+  const badgeStyles: Record<string, string> = {
+    pagado: "bg-green-100 text-green-800",
+    completado: "bg-green-100 text-green-800",
+    activo: "bg-blue-100 text-blue-800",
+    pendiente: "bg-yellow-100 text-yellow-800",
+    parcial: "bg-yellow-100 text-yellow-800",
+    cancelado: "bg-red-100 text-red-800",
+    draft: "bg-yellow-100 text-yellow-800", // Mapeo de seguridad
   };
 
-  const getBadgeStyles = () => {
-    const label = badge?.label || "";
-    const baseStyle = badgeStyles[label];
-
-    if (!isActive) {
-      return {
-        background: "#ff4d4f",
-        color: "white",
-      };
-    }
-    if (baseStyle) return baseStyle;
-
-    return {
-      background: "#e2e8f0",
-      color: "#334155",
-    };
+  const getBadgeClass = () => {
+    if (!isActive) return "bg-red-500 text-white";
+    const label = badge?.label?.toLowerCase() || "";
+    return badgeStyles[label] || "bg-gray-200 text-gray-700";
   };
 
   const handleClick = () => {
@@ -84,61 +59,32 @@ export default function ListCard({
   return (
     <div
       onClick={handleClick}
-      style={{
-        // border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        border: isActive
-          ? "1px solid var(--border-color)"
-          : "1px solid #ff4d4f",
-        cursor: link || onClick ? "pointer" : "default",
-        transition: "all 0.2s ease",
-        marginBottom: 12,
-        opacity: isActive ? 1 : 0.6,
-        padding: 20,
-        backgroundColor: "var(--bg-primary)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.08)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "none";
-      }}
+      className={`
+        bg-white p-5 rounded-xl transition-all duration-200 
+        ${isActive ? "border border-gray-200 opacity-100" : "border border-red-500 opacity-60"}
+        ${(link || onClick) ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md" : ""}
+        mb-3 w-full
+      `}
     >
       {/* HEADER */}
       {(title || actions.length > 0) && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
             {title && (
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+              <h3 className="m-0 text-base font-semibold text-gray-900 tracking-tight">
                 {title}
               </h3>
             )}
 
             {(badge || !isActive) && (
-              <span
-                style={{
-                  ...getBadgeStyles(),
-                  fontSize: 12,
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  fontWeight: 500,
-                }}
-              >
-                {badge?.label || "Inactive"}
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize tracking-wider w-fit ${getBadgeClass()}`}>
+                {badge?.label || "Inactivo"}
               </span>
             )}
           </div>
 
           {actions.length > 0 && (
-            <div style={{ display: "flex", gap: 8 }}>
+            <div className="flex gap-2 ml-4 shrink-0">
               {actions.map((action, i) => (
                 <button
                   key={i}
@@ -146,16 +92,7 @@ export default function ListCard({
                     e.stopPropagation();
                     action.onClick?.();
                   }}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 6,
-                    border: "none",
-                    background: "var(--text-primary)",
-                    color: "var(--bg-primary)",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 500,
-                  }}
+                  className="px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors focus:outline-none"
                 >
                   {action.label}
                 </button>
@@ -167,56 +104,25 @@ export default function ListCard({
 
       {/* SUBTITLE */}
       {subtitle && (
-        <p
-          style={{
-            margin: "0 0 8px 0",
-            fontSize: 13,
-            color: "#6b7280",
-          }}
-        >
+        <p className="m-0 mb-3 text-sm text-gray-500">
           {subtitle}
         </p>
       )}
 
       {/* CONTENT */}
       {content && (
-        <div
-          style={{
-            background: "var(--bg-secondary)",
-            padding: 10,
-            borderRadius: 8,
-            fontSize: 13,
-            color: "var(--text-primary)",
-            marginBottom: 10,
-          }}
-        >
+        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-900 mb-3 border border-gray-100">
           {content}
         </div>
       )}
 
       {/* META */}
       {meta.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            flexWrap: "wrap",
-            marginTop: 8,
-          }}
-        >
+        <div className="flex flex-wrap gap-2 mt-3">
           {meta.map((item, i) => (
             <div
               key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: 12,
-                color: "#6b7280",
-                background: "#f3f4f6",
-                padding: "4px 8px",
-                borderRadius: 6,
-              }}
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md"
             >
               {item.icon}
               {item.label}
@@ -225,8 +131,8 @@ export default function ListCard({
         </div>
       )}
 
-      {/* CHILDREN (extensión libre) */}
-      {children && <div style={{ marginTop: 12 }}>{children}</div>}
+      {/* CHILDREN LIBRE */}
+      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }

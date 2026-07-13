@@ -81,6 +81,7 @@ export default function ContractServicesPage() {
 
       <ContractServicesList
         services={services}
+        companyServices={companyServices}
         loading={loading}
         onDelete={deleteItem}
         onUpdate={updateItem}

@@ -5,8 +5,9 @@ import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 import PaymentAllocationCard from "@/app/components/crm/payments/PaymentAllocationCard";
 import ErrorBox from "@/app/components/ErrorBox";
 import ContractSearch from "@/app/components/crm/ContractSearch";
-
+import { Plus, AlertCircle } from "lucide-react";
 import { useContractItems } from "@/app/hooks/useContractItems";
+import { parseLocalDate } from "@/lib/utils/date";
 
 export default function PaymentForm({
   contractId,
@@ -16,15 +17,12 @@ export default function PaymentForm({
   onSuccess?: () => void;
 }) {
   const isGlobal = !contractId;
-
   const [selectedContractId, setSelectedContractId] = useState<string>("");
-
   const activeContractId = contractId || selectedContractId;
 
-  const { contractItems, fetchContractItems } =
-    useContractItems(activeContractId);
-
+  const { contractItems, fetchContractItems } = useContractItems(activeContractId);
   const [show, setShow] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const [form, setForm] = useState({
     currency: "MXN",
@@ -39,23 +37,59 @@ export default function PaymentForm({
 
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number>();
+  
+  // 1. NUEVO ESTADO: Para capturar los errores específicos de campo enviados por Zod
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  /* ---------- fields dinámicos ---------- */
+  /* ---------- Validaciones Locales (Frontend) ---------- */
+  let dateError = "";
+  if (submitAttempted) {
+    if (!form.paidAt) {
+      dateError = "La fecha de pago es obligatoria.";
+    } else {
+      const selectedDate = new Date(form.paidAt);
+      const today = new Date();
+      if (selectedDate > today) {
+        dateError = "La fecha de pago no puede ser en el futuro.";
+      }
+    }
+  }
 
+  const hasExceededAmounts = contractItems.some((item, idx) => {
+    const total = item.quantity * Number(item.unitPrice);
+    const paid = item.paidAmount || 0;
+    const remaining = item.remainingAmount ?? total - paid;
+    const val = form.items[idx]?.amount || 0;
+    return val > remaining || val < 0;
+  });
+
+  // Función ayudante para renderizar los errores que vengan del Backend (Zod)
+  const renderFieldError = (fieldName: string) => {
+    if (!fieldErrors[fieldName] || fieldErrors[fieldName].length === 0) return undefined;
+    return (
+      <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+        <AlertCircle size={14} /> {fieldErrors[fieldName].join(", ")}
+      </span>
+    );
+  };
+
+  /* ---------- Campos Dinámicos con Mapeo de Errores Inyectado ---------- */
   const fields: Field[] = [
     ...(isGlobal
       ? [
           {
             name: "contractId",
-            label: "Contract",
+            label: "Contrato",
             readOnly: true,
+            fullWidth: true,
             after: (
-              <ContractSearch
-                selected={selectedContractId}
-                onSelect={(c: any) => {
-                  setSelectedContractId(String(c.id));
-                }}
-              />
+              <>
+                <ContractSearch
+                  selected={selectedContractId}
+                  onSelect={(c: any) => setSelectedContractId(String(c.id))}
+                />
+                {renderFieldError("contractId")}
+              </>
             ),
           },
         ]
@@ -63,65 +97,72 @@ export default function PaymentForm({
 
     {
       name: "currency",
-      label: "Currency",
+      label: "Moneda",
       type: "select",
       options: [
         { label: "MXN", value: "MXN" },
         { label: "USD", value: "USD" },
       ],
+      after: renderFieldError("currency"), // Mapea error de Zod si la moneda es inválida
     },
     {
       name: "paymentMethod",
-      label: "Payment Method",
+      label: "Método de Pago",
       type: "select",
       options: [
-        { label: "Cash", value: "cash" },
-        { label: "Transfer", value: "transfer" },
-        { label: "Card", value: "card" },
+        { label: "Efectivo", value: "cash" },
+        { label: "Transferencia", value: "transfer" },
+        { label: "Tarjeta", value: "card" },
       ],
+      after: renderFieldError("paymentMethod"), // Mapea error de Zod si el método falla
     },
     {
       name: "paidAt",
-      label: "Payment Date",
+      label: "Fecha de Pago",
       type: "date",
+      // Combina el error local del frontend con el error que pueda mandar Zod del backend
+      after: dateError || fieldErrors.paidAt ? (
+        <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
+          <AlertCircle size={14} /> 
+          {dateError || fieldErrors.paidAt.join(", ")}
+        </span>
+      ) : undefined,
     },
     {
       name: "ticketNumber",
-      label: "Ticket Number",
+      label: "Número de Ticket",
+      after: renderFieldError("ticketNumber"), // Mapea error si el formato del ticket no es válido
     },
   ];
 
-  /* ---------- lifecycle ---------- */
-
+  /* ---------- Ciclo de Vida ---------- */
   useEffect(() => {
-    if (selectedContractId) {
+    if (activeContractId) {
       fetchContractItems().then((items) => {
-        setForm((prev) => ({
-          ...prev,
-          items,
-        }));
+        if (items) {
+          setForm((prev) => ({
+            ...prev,
+            items: items.map((i: any) => ({ contractItemId: i.id, amount: "" })),
+          }));
+        }
       });
     }
-  }, [selectedContractId]);
+  }, [activeContractId]); 
 
-  /* ---------- actions ---------- */
-
+  /* ---------- Acciones ---------- */
   async function openForm() {
     setShow(true);
-
     if (contractId) {
       const items = await fetchContractItems();
-
       setForm((prev) => ({
         ...prev,
-        items,
+        items: items.map((i: any) => ({ contractItemId: i.id, amount: 0 })),
       }));
     }
   }
 
   function closeForm() {
     setShow(false);
-
     setForm({
       currency: "MXN",
       paymentMethod: "cash",
@@ -129,29 +170,44 @@ export default function PaymentForm({
       ticketNumber: "",
       items: [],
     });
-
     setSelectedContractId("");
     setError("");
+    setFieldErrors({}); // Limpiamos errores al cerrar
+    setSubmitAttempted(false);
   }
 
   async function handleSubmit() {
+    setSubmitAttempted(true);
+    setError("");
+    setFieldErrors({}); // Reseteamos los errores de campo en cada intento
+
+    if (!activeContractId) {
+      setError("Por favor, selecciona un contrato.");
+      return;
+    }
+
+    if (!form.paidAt || dateError) {
+      return; 
+    }
+
+    const total = form.items.reduce((sum, i) => sum + (i.amount || 0), 0);
+    if (total <= 0) {
+      setError("Debes ingresar al menos un monto de abono mayor a cero en el desglose.");
+      return;
+    }
+
+    if (hasExceededAmounts) {
+      setError("Por favor corrige los montos en rojo que superan el saldo restante.");
+      return;
+    }
+
     try {
-      if (!activeContractId) {
-        setError("Select a contract");
-        return;
-      }
-
-      const total = form.items.reduce((sum, i) => sum + i.amount, 0);
-
-      if (total <= 0) {
-        setError("Enter at least one amount");
-        return;
-      }
-
       const payload = {
         currency: form.currency,
         paymentMethod: form.paymentMethod,
-        paidAt: form.paidAt ? new Date(form.paidAt).toISOString() : undefined,
+        paidAt: form.paidAt
+  ? parseLocalDate(form.paidAt).toISOString()
+  : undefined,
         ticketNumber: form.ticketNumber || undefined,
         items: form.items.filter((i) => i.amount > 0),
       };
@@ -161,75 +217,61 @@ export default function PaymentForm({
         {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          // body: JSON.stringify({
-          //   currency: form.currency,
-          //   paymentMethod: form.paymentMethod,
-
-          //   // paidAt: form.paidAt
-          //   //   ? new Date(form.paidAt).toISOString()
-          //   //   : undefined,
-          //   paidAt: paidAt?.toISOString(),
-          //   ticketNumber: form.ticketNumber || undefined,
-          //   items: form.items.filter((i) => i.amount > 0),
-          // }),
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
 
       if (!res.ok) {
         const data = await res.json();
+        
+        // 2. DETECCIÓN INTELIGENTE DE ERRORES DE CAMPOS (ZOD)
+        if (data.fieldErrors) {
+          setFieldErrors(data.fieldErrors); // Guardamos la lista de culpables
+          setError("Revisa los campos marcados en rojo, los datos enviados no son válidos.");
+        } else {
+          setError(typeof data.error === "string" ? data.error : "Error al registrar el pago.");
+        }
 
-        setError(data.error || "Failed to create payment");
         setErrorCode(res.status);
         return;
       }
 
       closeForm();
-
       onSuccess?.();
     } catch {
-      setError("Connection error");
+      setError("Error de conexión con el servidor.");
     }
   }
 
-  /* ---------- UI ---------- */
-
   return (
-    <>
-      <button
-        onClick={openForm}
-        style={{
-          padding: "8px 12px",
-          borderRadius: 6,
-          background: "#22c55e",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: 10,
-        }}
-      >
-        + Add Payment
-      </button>
+    <div className="mb-6">
+      {!show && (
+        <button
+          onClick={openForm}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
+        >
+          <Plus size={16} />
+          Registrar Pago
+        </button>
+      )}
 
       {show && (
-        <div
-          style={{
-            paddingTop: 16,
-            paddingRight: 16,
-            paddingBottom: 0,
-            paddingLeft: 16,
-            border: "1px solid var(--border-color)",
-            borderRadius: 12,
-            background: "var(--bg-primary)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
+        <div className="mt-4 bg-gray-50/50 p-1 md:p-4 rounded-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
+          
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-600 font-semibold animate-in slide-in-from-top-2">
+              <AlertCircle size={16} /> {error}
+            </div>
+          )}
+
+          {/* Si el error general de Zod dice algo de "items", lo pintamos arriba del desglose */}
+          {fieldErrors.items && (
+            <div className="p-2.5 bg-red-50 border border-red-100 text-xs text-red-600 font-bold rounded-lg flex items-center gap-1.5 animate-pulse">
+              <AlertCircle size={14} /> El desglose de montos tiene inconsistencias: {fieldErrors.items.join(", ")}
+            </div>
+          )}
+
           {contractItems.length > 0 && (
             <PaymentAllocationCard
               items={contractItems}
@@ -237,8 +279,9 @@ export default function PaymentForm({
               setForm={setForm}
             />
           )}
+          
           <CreateForm
-            title="Add Payment"
+            title="Detalles del Pago"
             fields={fields}
             form={form}
             setForm={setForm}
@@ -248,7 +291,11 @@ export default function PaymentForm({
         </div>
       )}
 
-      {error && <ErrorBox message={error} code={errorCode} />}
-    </>
+      {error && errorCode && Object.keys(fieldErrors).length === 0 && (
+        <div className="mt-4">
+          <ErrorBox message={error} code={errorCode} />
+        </div>
+      )}
+    </div>
   );
 }
