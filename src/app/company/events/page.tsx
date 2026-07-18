@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, CalendarDays, CheckCircle2 } from "lucide-react";
+import { CalendarDays, CheckCircle2 } from "lucide-react";
 
 import ErrorBox from "@/app/components/ErrorBox";
 import CreateForm from "@/app/components/crm/CreateForm";
@@ -52,17 +52,34 @@ export default function EventsPage() {
     setForm,
   });
 
-  // Bloquear scroll del fondo cuando hay un modal abierto
+  // Referencia para detectar clics fuera del modal de creación
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // ------------------------------------------------------------------
+  // 🚀 MAGIA UX: Scroll Lock + Cierre al clic exterior
+  // ------------------------------------------------------------------
   useEffect(() => {
     if (showForm || createdContractId) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      // Si el modal está abierto y el clic ocurrió fuera de formRef
+      if (showForm && formRef.current && !formRef.current.contains(e.target as Node)) {
+        resetForm();
+        setShowForm(false);
+      }
+    };
+
+    if (showForm) document.addEventListener("mousedown", handleOutsideClick);
+
     return () => {
       document.body.style.overflow = "unset";
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
-  }, [showForm, createdContractId]);
+  }, [showForm, createdContractId, resetForm, setShowForm]);
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
@@ -92,12 +109,9 @@ export default function EventsPage() {
 
       {/* ===================== MODAL DE CREACIÓN ===================== */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-          <div className="w-full max-w-lg my-8 animate-in zoom-in-95 duration-200">
-            {/* 
-              Al envolver tu CreateForm en este contenedor, lo transformamos en un modal flotante. 
-              Asumimos que CreateForm tiene su propio fondo blanco/tarjeta. 
-            */}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          {/* Contenedor transparente donde inyectamos el motor CreateForm */}
+          <div ref={formRef} className="w-full max-w-2xl my-auto animate-in zoom-in-95 duration-200">
             <CreateForm
               title="Registrar Evento"
               fields={eventFields}
@@ -108,6 +122,11 @@ export default function EventsPage() {
                 resetForm();
                 setShowForm(false);
               }}
+              onCloseIcon={() => {
+                resetForm();
+                setShowForm(false);
+              }}
+              mode="card" // Le decimos que se comporte como una tarjeta modal blanca
             />
           </div>
         </div>
@@ -115,8 +134,8 @@ export default function EventsPage() {
 
       {/* ===================== MODAL DE ÉXITO (Contrato Creado) ===================== */}
       {createdContractId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 sm:p-8 flex flex-col items-center text-center gap-4 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 sm:p-8 flex flex-col items-center text-center gap-4 animate-in zoom-in-95 duration-200 border border-gray-100">
             <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
               <CheckCircle2 size={32} />
             </div>
@@ -153,7 +172,7 @@ export default function EventsPage() {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-48 bg-gray-100 rounded-xl border border-gray-200 animate-pulse"></div>
+            <div key={i} className="h-48 bg-gray-100 rounded-xl border border-gray-100 animate-pulse"></div>
           ))}
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -33,6 +33,9 @@ export default function ContractsPage() {
   /* Modal de creación */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Referencia para detectar clics fuera del modal
+  const modalRef = useRef<HTMLDivElement>(null);
 
   type ContractForm = {
     eventId: string;
@@ -149,14 +152,30 @@ export default function ContractsPage() {
     return () => clearTimeout(timeout);
   }, [search, page]);
 
-  // Bloquear scroll cuando el modal está abierto
+  // ------------------------------------------------------------------
+  // 🚀 MAGIA UX: Scroll Lock + Cierre al clic exterior
+  // ------------------------------------------------------------------
   useEffect(() => {
     if (isModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-    return () => { document.body.style.overflow = "unset"; };
+
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (isModalOpen && modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        setIsModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
   }, [isModalOpen]);
 
   // Utilidades de diseño para el estado
@@ -311,24 +330,31 @@ export default function ContractsPage() {
 
       {/* ===================== MODAL DE CREACIÓN INLINE ===================== */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+          <div 
+            ref={modalRef} 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 my-auto"
+          >
             
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-900 tracking-tight">Generar Contrato</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-700 transition-colors focus:outline-none">
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
+              >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-5 flex flex-col gap-5">
+            {/* Cuerpo del Modal */}
+            <div className="p-5 sm:p-6 flex flex-col gap-5 sm:gap-6">
               
-              {/* Event Search Component */}
+              {/* Selector de Evento */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-gray-700 ml-1">
                   Buscar Evento Vinculado <span className="text-red-500">*</span>
                 </label>
-                <div className="border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-black transition-all">
                   <EventSearch
                     onSelect={(event: any) => {
                       setForm((prev) => ({
@@ -343,22 +369,21 @@ export default function ContractsPage() {
                       }));
                     }}
                   />
-                </div>
               </div>
 
               {/* Vista previa del evento seleccionado */}
               {form.event && (
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-xl flex flex-col gap-2">
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
                     <CheckCircle2 size={16} className="text-green-600 shrink-0" />
                     <span className="truncate">{form.event.name}</span>
                   </div>
                   <div className="text-xs font-medium text-gray-500 ml-6 truncate">
-                    Cliente: {form.event.clientName}
+                    Cliente: <span className="text-gray-700">{form.event.clientName}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs font-medium text-gray-500 ml-6 mt-1">
-                    <span className="flex items-center gap-1"><Calendar size={12}/> {formatDate(form.event.date)}</span>
-                    <span className="flex items-center gap-1 truncate"><MapPin size={12}/> {form.event.location}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs font-medium text-gray-500 ml-6 mt-1">
+                    <span className="flex items-center gap-1.5"><Calendar size={12}/> {formatDate(form.event.date)}</span>
+                    <span className="flex items-center gap-1.5 truncate"><MapPin size={12}/> {form.event.location}</span>
                   </div>
                 </div>
               )}
@@ -371,10 +396,9 @@ export default function ContractsPage() {
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-black transition-all cursor-pointer"
                 >
                   {CONTRACT_STATUS.map((status) => {
-                    // Traducción manual de opciones
                     const translations: Record<string, string> = {
                       draft: "Borrador",
                       active: "Activo",
@@ -392,17 +416,18 @@ export default function ContractsPage() {
 
             </div>
 
-            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
+            {/* Footer Responsivo */}
+            <div className="px-5 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none"
+                className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-gray-700 bg-white sm:bg-transparent border border-gray-300 sm:border-transparent hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
                 Cancelar
               </button>
               <button
                 onClick={createContract}
                 disabled={isSubmitting || !form.eventId}
-                className={`px-6 py-2 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
+                className={`w-full sm:w-auto px-6 py-2.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black flex items-center justify-center ${
                   isSubmitting || !form.eventId
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "text-white bg-gray-900 hover:bg-gray-800"
