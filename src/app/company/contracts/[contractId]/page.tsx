@@ -319,7 +319,7 @@ export default function ContractDetailPage() {
                 label: "Pagos",
                 href: `/company/contracts/${contractId}/payments`,
                 icon: CreditCard,
-                variant: "primary", // Esto lo pintará de oscuro si tu DetailCard usa esta prop (como lo actualizamos)
+                variant: "primary", 
               },
               ...(contract.deletedAt
                 ? [
