@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import DashboardCard from "@/app/components/DashboardCard";
 import Toast from "@/app/components/Toast";
 import PageHeader from "@/app/components/crm/PageHeader";
+import { Home } from "lucide-react";
 
 // Utilidades para formateo de números (convención de México)
 const formatNumber = (num: number) => {
@@ -57,7 +58,7 @@ export default function CompanyDashboard() {
 
   return (
     <div className="relative">
-      <PageHeader title="Inicio" />
+      <PageHeader title="Inicio" icon={Home} />
 
       {error && (
         <Toast message={error} onClose={() => setError("")} />

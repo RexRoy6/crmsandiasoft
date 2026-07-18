@@ -36,25 +36,21 @@ export default function ClientsModule() {
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
 
       {/* Título simple */}
-      <PageHeader title="Clientes" />
+      <PageHeader 
+        title="Directorio de Clientes" 
+        icon={Users} 
+        
+        buttonLabel="+ Nuevo Cliente"
+        onClick={() => setIsModalOpen(true)}
+      />
 
       {/* Barra de Herramientas */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <div className="w-full sm:max-w-md">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por nombre o teléfono..."
-          />
-        </div>
-        
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black shrink-0"
-        >
-          <Plus size={18} />
-          Nuevo Cliente
-        </button>
+      <div className="w-full sm:max-w-md">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por nombre o teléfono..."
+        />
       </div>
 
       {/* Contenedor de la Lista y Estados */}

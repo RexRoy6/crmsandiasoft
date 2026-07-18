@@ -20,11 +20,13 @@ import {
   Info,
   AlertCircle,
   FilePlus,
+  Zap,
   ChevronRight,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
+import PageHeader from "@/app/components/crm/PageHeader";
 
 export default function NewContractPage() {
   const [error, setError] = useState("");
@@ -372,31 +374,29 @@ export default function NewContractPage() {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-4 flex items-center gap-2">
-          Registro Rápido
-          {(step === "services" || step === "payments") && (
-            <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-1 rounded-md border border-gray-200 shadow-sm ml-2">
-              ☁️ Borrador guardado
-            </span>
-          )}
-        </h2>
+        <PageHeader 
+          title="Registro Rápido" 
+          icon={Zap}
+          badge={
+            (step === "services" || step === "payments") && (
+              <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
+                ☁️ Borrador guardado
+              </span>
+            )
+          }
+        />
 
-        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm font-medium">
-          <span
-            className={`${step === "event" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}
-          >
+        {/* Los pasos se quedan justo debajo, limpios */}
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-sm font-medium mt-[-10px]">
+          <span className={`${step === "event" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}>
             1. Detalles del Evento
           </span>
           <ChevronRight size={16} className="text-gray-300" />
-          <span
-            className={`${step === "services" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}
-          >
+          <span className={`${step === "services" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}>
             2. Asignación de Servicios
           </span>
           <ChevronRight size={16} className="text-gray-300" />
-          <span
-            className={`${step === "payments" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}
-          >
+          <span className={`${step === "payments" ? "text-gray-900 font-bold" : "text-gray-400"} transition-colors`}>
             3. Registro de Pagos
           </span>
         </div>

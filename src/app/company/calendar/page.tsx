@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, CalendarDays, MapPin } from "lucide-react";
+import PageHeader from "@/app/components/crm/PageHeader";
 
 interface Contract {
   id: number;
@@ -31,7 +33,6 @@ interface CalendarEvent {
 
 export default function GoogleLikeCalendar() {
   const router = useRouter();
-  const [isDark, setIsDark] = useState(false);
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
@@ -39,32 +40,18 @@ export default function GoogleLikeCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDark(media.matches);
-
-    const listener = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    media.addEventListener("change", listener);
-
-    return () => media.removeEventListener("change", listener);
-  }, []);
-
-  const styles = getThemeStyles(isDark);
-
   const fetchContracts = async () => {
     try {
       setLoading(true);
-
       const res = await fetch("/api/company/contracts", {
         credentials: "include",
       });
 
       if (!res.ok) return;
       const result = await res.json();
-
       setContracts(result.data);
     } catch {
-      console.error("contracts error");
+      console.error("Error fetching contracts");
     } finally {
       setLoading(false);
     }
@@ -108,178 +95,128 @@ export default function GoogleLikeCalendar() {
     );
   };
 
-  const getColor = (status: string) => {
+  const getEventStyles = (status: string) => {
     switch (status) {
       case "active":
-        return "#2563eb";
+        return "bg-blue-50 border-blue-500 text-blue-700 hover:bg-blue-100";
       case "completed":
-        return "#16a34a";
+        return "bg-green-50 border-green-500 text-green-700 hover:bg-green-100";
       case "cancelled":
-        return "#dc2626";
+        return "bg-red-50 border-red-500 text-red-700 hover:bg-red-100";
+      case "draft":
       default:
-        return "#9ca3af";
-    }
-  };
-
-  const getSoftColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "rgba(37, 99, 235, 0.12)";
-      case "completed":
-        return "rgba(22, 163, 74, 0.12)";
-      case "cancelled":
-        return "rgba(220, 38, 38, 0.12)";
-      default:
-        return "rgba(156, 163, 175, 0.12)";
+        return "bg-gray-50 border-gray-400 text-gray-700 hover:bg-gray-100";
     }
   };
 
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const goToToday = () => setCurrentDate(new Date());
+
+  const monthName = currentDate.toLocaleString("es-MX", { month: "long" });
+  const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.nav}>
-          <button onClick={prevMonth} style={styles.navBtn}>
-            ◀
-          </button>
-          <button onClick={nextMonth} style={styles.navBtn}>
-            ▶
-          </button>
-          <h2 style={styles.title}>
-            {currentDate.toLocaleString("es-MX", {
-              month: "long",
-              year: "numeric",
-            })}
-          </h2>
+    <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
+
+      {/* ===================== HEADER & NAVEGACIÓN ===================== */}
+      <PageHeader
+        title={`${capitalizedMonth} ${year}`}
+        icon={CalendarDays}
+        badge={
+          <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ml-1 sm:ml-2">
+            <button
+              onClick={prevMonth}
+              className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
+              title="Mes anterior"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="w-px h-5 bg-gray-200"></div>
+            <button
+              onClick={nextMonth}
+              className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
+              title="Mes siguiente"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        }
+        action={
+          <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            {loading && (
+              <span className="text-sm font-medium text-gray-400 animate-pulse hidden sm:inline-block">
+                Sincronizando...
+              </span>
+            )}
+            <button
+              onClick={goToToday}
+              className="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 shadow-sm"
+            >
+              Ir a Hoy
+            </button>
+          </div>
+        }
+      />
+
+      {/* ===================== GRID DEL CALENDARIO ===================== */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in duration-300">
+
+        {/* Días de la semana */}
+        <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
+          {["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"].map((d) => (
+            <div key={d} className="text-center py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-r border-gray-200 last:border-r-0">
+              {d}
+            </div>
+          ))}
         </div>
 
-        <button
-          style={styles.todayBtn}
-          onClick={() => setCurrentDate(new Date())}
-        >
-          Hoy
-        </button>
-      </div>
+        {/* Celdas de los días */}
+        <div className="grid grid-cols-7 bg-gray-200 gap-px">
+          {days.map((day, i) => (
+            <div
+              key={i}
+              className={`min-h-[120px] bg-white p-2 transition-colors ${day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
+                  ? "bg-blue-50/30"
+                  : ""
+                }`}
+            >
+              {day && (
+                <div className="flex flex-col h-full">
+                  <span className={`text-sm font-medium mb-1.5 ${day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
+                      ? "bg-gray-900 text-white w-6 h-6 flex items-center justify-center rounded-full"
+                      : "text-gray-500 pl-1"
+                    }`}>
+                    {day}
+                  </span>
 
-      <div style={styles.grid}>
-        {["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"].map((d) => (
-          <div key={d} style={styles.dayHeader}>
-            {d}
-          </div>
-        ))}
-
-        {days.map((day, i) => (
-          <div key={i} style={styles.cell}>
-            {day && (
-              <>
-                <div style={styles.dayNumber}>{day}</div>
-
-                <div style={styles.events}>
-                  {getEvents(day).map((e) => (
-                    <div
-                      key={e.id}
-                      onClick={() => router.push(`/company/contracts/${e.id}`)}
-                      style={{
-                        ...styles.event,
-                        backgroundColor: getSoftColor(e.status),
-                        borderLeft: `4px solid ${getColor(e.status)}`,
-                      }}
-                    >
-                      <div style={styles.eventTitle}>{e.title}</div>
-                      {e.location && (
-                        <div style={styles.eventSub}>{e.location}</div>
-                      )}
-                    </div>
-                  ))}
+                  <div className="flex flex-col gap-1.5 flex-grow">
+                    {getEvents(day).map((e) => (
+                      <div
+                        key={e.id}
+                        onClick={() => router.push(`/company/contracts/${e.id}`)}
+                        className={`flex flex-col gap-0.5 px-2 py-1.5 border-l-4 rounded-r-md cursor-pointer transition-all ${getEventStyles(e.status)}`}
+                        title={e.title}
+                      >
+                        <span className="text-[11px] font-bold leading-tight line-clamp-1">
+                          {e.title}
+                        </span>
+                        {e.location && (
+                          <span className="flex items-center gap-1 text-[10px] font-medium opacity-80 line-clamp-1">
+                            <MapPin size={10} className="shrink-0" />
+                            {e.location}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {loading && <p>Cargando...</p>}
+      </div>
     </div>
   );
 }
-
-const getThemeStyles = (
-  isDark: boolean,
-): Record<string, React.CSSProperties> => ({
-  container: {
-    padding: 20,
-    fontFamily: "Arial",
-    background: isDark ? "#0f172a" : "#f5f7fb",
-    color: isDark ? "#e5e7eb" : "#111827",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  nav: { display: "flex", alignItems: "center", gap: 10 },
-  navBtn: {
-    border: "none",
-    background: isDark ? "#1f2933" : "white",
-    color: isDark ? "#e5e7eb" : "#111",
-    padding: "6px 10px",
-    borderRadius: 6,
-    cursor: "pointer",
-  },
-  title: { fontSize: 18, fontWeight: 600 },
-  todayBtn: {
-    padding: "6px 12px",
-    borderRadius: 6,
-    border: "1px solid #ddd",
-    background: isDark ? "#1f2933" : "white",
-    color: isDark ? "#e5e7eb" : "#111",
-    cursor: "pointer",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-    background: isDark ? "#020617" : "white",
-    borderRadius: 10,
-    overflow: "hidden",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-  },
-  dayHeader: {
-    textAlign: "center",
-    padding: 10,
-    fontWeight: "bold",
-    background: isDark ? "#1e293b" : "#f1f5f9",
-    fontSize: 12,
-  },
-  cell: {
-    minHeight: 110,
-    border: isDark ? "1px solid #1e293b" : "1px solid #f1f1f1",
-    padding: 6,
-    background: isDark ? "#020617" : "white",
-  },
-  dayNumber: {
-    fontSize: 12,
-    marginBottom: 4,
-    color: isDark ? "#94a3b8" : "#6b7280",
-  },
-  events: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-  },
-  event: {
-    padding: "4px 6px",
-    borderRadius: 6,
-    cursor: "pointer",
-  },
-  eventTitle: {
-    fontSize: 11,
-    fontWeight: 600,
-  },
-  eventSub: {
-    fontSize: 10,
-    color: isDark ? "#94a3b8" : "#6b7280",
-  },
-});
