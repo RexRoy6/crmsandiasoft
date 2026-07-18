@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, CalendarDays, MapPin } from "lucide-react";
+import PageHeader from "@/app/components/crm/PageHeader";
 
 interface Contract {
   id: number;
@@ -117,51 +118,50 @@ export default function GoogleLikeCalendar() {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
-      
-      {/* ===================== HEADER & NAVEGACIÓN ===================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-gray-100 text-gray-600 rounded-xl hidden sm:block">
-            <CalendarDays size={24} />
-          </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight m-0 min-w-[200px]">
-              {capitalizedMonth} {year}
-            </h1>
-            <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-              <button 
-                onClick={prevMonth}
-                className="p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
-                title="Mes anterior"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <div className="w-px h-5 bg-gray-200"></div>
-              <button 
-                onClick={nextMonth}
-                className="p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
-                title="Mes siguiente"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          {loading && <span className="text-sm font-medium text-gray-400 animate-pulse">Sincronizando...</span>}
-          <button
-            onClick={goToToday}
-            className="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 shadow-sm"
-          >
-            Ir a Hoy
-          </button>
-        </div>
-      </div>
+      {/* ===================== HEADER & NAVEGACIÓN ===================== */}
+      <PageHeader
+        title={`${capitalizedMonth} ${year}`}
+        icon={CalendarDays}
+        badge={
+          <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ml-1 sm:ml-2">
+            <button
+              onClick={prevMonth}
+              className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
+              title="Mes anterior"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="w-px h-5 bg-gray-200"></div>
+            <button
+              onClick={nextMonth}
+              className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
+              title="Mes siguiente"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        }
+        action={
+          <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            {loading && (
+              <span className="text-sm font-medium text-gray-400 animate-pulse hidden sm:inline-block">
+                Sincronizando...
+              </span>
+            )}
+            <button
+              onClick={goToToday}
+              className="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 shadow-sm"
+            >
+              Ir a Hoy
+            </button>
+          </div>
+        }
+      />
 
       {/* ===================== GRID DEL CALENDARIO ===================== */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in duration-300">
-        
+
         {/* Días de la semana */}
         <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
           {["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"].map((d) => (
@@ -174,21 +174,19 @@ export default function GoogleLikeCalendar() {
         {/* Celdas de los días */}
         <div className="grid grid-cols-7 bg-gray-200 gap-px">
           {days.map((day, i) => (
-            <div 
-              key={i} 
-              className={`min-h-[120px] bg-white p-2 transition-colors ${
-                day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
+            <div
+              key={i}
+              className={`min-h-[120px] bg-white p-2 transition-colors ${day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
                   ? "bg-blue-50/30"
                   : ""
-              }`}
+                }`}
             >
               {day && (
                 <div className="flex flex-col h-full">
-                  <span className={`text-sm font-medium mb-1.5 ${
-                    day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
+                  <span className={`text-sm font-medium mb-1.5 ${day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
                       ? "bg-gray-900 text-white w-6 h-6 flex items-center justify-center rounded-full"
                       : "text-gray-500 pl-1"
-                  }`}>
+                    }`}>
                     {day}
                   </span>
 

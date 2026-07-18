@@ -9,7 +9,8 @@ import Pagination from "@/app/components/crm/Pagination";
 import PaymentForm from "@/app/components/crm/payments/PaymentForm";
 import PaymentList from "@/app/components/crm/payments/PaymentList";
 
-import { useCompanyPayments } from "@/app/hooks/useCompanyPayments";
+import { useCompanyPayments } from "@/app/hooks/useCompanyPayments"; 
+import PageHeader from "@/app/components/crm/PageHeader";
 
 export default function PaymentsPage() {
   const {
@@ -29,18 +30,11 @@ export default function PaymentsPage() {
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
       
       {/* ===================== HEADER ===================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <h1 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight m-0">
-          <Wallet size={28} className="text-gray-400 hidden sm:block" />
-          Historial de Pagos
-        </h1>
-        
-        {/* Envolvemos tu componente en el contenedor de acción derecho. 
-            Si PaymentForm tiene su propio botón, se verá integrado perfectamente aquí. */}
-        <div className="shrink-0 w-full sm:w-auto">
-          <PaymentForm onSuccess={fetchPayments} />
-        </div>
-      </div>
+      <PageHeader 
+        title="Historial de Pagos" 
+        icon={Wallet}
+        action={<PaymentForm onSuccess={fetchPayments} />} 
+      />
 
       {/* ===================== BUSCADOR Y CONTADOR ===================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">

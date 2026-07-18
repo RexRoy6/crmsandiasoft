@@ -12,7 +12,6 @@ import {
   MapPin, 
   CheckCircle2, 
   X,
-  Wallet
 } from "lucide-react";
 import ErrorBox from "@/app/components/ErrorBox";
 import SearchBar from "@/app/components/crm/SearchBar";
@@ -20,6 +19,7 @@ import Pagination from "@/app/components/crm/Pagination";
 import EventSearch from "@/app/components/crm/EventSearch";
 import { formatDate } from "@/lib/utils/date";
 import { CONTRACT_STATUS } from "@/db/schema";
+import PageHeader from "@/app/components/crm/PageHeader";
 
 export default function ContractsPage() {
   const router = useRouter();
@@ -182,19 +182,12 @@ export default function ContractsPage() {
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
       
       {/* ===================== HEADER & BÚSQUEDA ===================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight m-0">
-          Contratos
-        </h1>
-        
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black shrink-0"
-        >
-          <Plus size={18} />
-          Nuevo Contrato
-        </button>
-      </div>
+      <PageHeader 
+        title="Contratos" 
+        icon={FileText}
+        buttonLabel="+ Nuevo Contrato"
+        onClick={() => setIsModalOpen(true)}
+      />
 
       <div className="w-full max-w-md">
         <SearchBar

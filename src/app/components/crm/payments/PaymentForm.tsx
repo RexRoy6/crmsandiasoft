@@ -38,8 +38,19 @@ export default function PaymentForm({
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState<number>();
   
-  // 1. NUEVO ESTADO: Para capturar los errores específicos de campo enviados por Zod
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  // Bloquear el scroll del fondo cuando el modal de pago está abierto
+  useEffect(() => {
+    if (show) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [show]);
 
   /* ---------- Validaciones Locales (Frontend) ---------- */
   let dateError = "";
@@ -63,7 +74,6 @@ export default function PaymentForm({
     return val > remaining || val < 0;
   });
 
-  // Función ayudante para renderizar los errores que vengan del Backend (Zod)
   const renderFieldError = (fieldName: string) => {
     if (!fieldErrors[fieldName] || fieldErrors[fieldName].length === 0) return undefined;
     return (
@@ -73,7 +83,7 @@ export default function PaymentForm({
     );
   };
 
-  /* ---------- Campos Dinámicos con Mapeo de Errores Inyectado ---------- */
+  /* ---------- Campos Dinámicos ---------- */
   const fields: Field[] = [
     ...(isGlobal
       ? [
@@ -94,7 +104,6 @@ export default function PaymentForm({
           },
         ]
       : []),
-
     {
       name: "currency",
       label: "Moneda",
@@ -103,7 +112,7 @@ export default function PaymentForm({
         { label: "MXN", value: "MXN" },
         { label: "USD", value: "USD" },
       ],
-      after: renderFieldError("currency"), // Mapea error de Zod si la moneda es inválida
+      after: renderFieldError("currency"),
     },
     {
       name: "paymentMethod",
@@ -114,13 +123,12 @@ export default function PaymentForm({
         { label: "Transferencia", value: "transfer" },
         { label: "Tarjeta", value: "card" },
       ],
-      after: renderFieldError("paymentMethod"), // Mapea error de Zod si el método falla
+      after: renderFieldError("paymentMethod"),
     },
     {
       name: "paidAt",
       label: "Fecha de Pago",
       type: "date",
-      // Combina el error local del frontend con el error que pueda mandar Zod del backend
       after: dateError || fieldErrors.paidAt ? (
         <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1 animate-pulse">
           <AlertCircle size={14} /> 
@@ -131,7 +139,7 @@ export default function PaymentForm({
     {
       name: "ticketNumber",
       label: "Número de Ticket",
-      after: renderFieldError("ticketNumber"), // Mapea error si el formato del ticket no es válido
+      after: renderFieldError("ticketNumber"),
     },
   ];
 
@@ -172,14 +180,14 @@ export default function PaymentForm({
     });
     setSelectedContractId("");
     setError("");
-    setFieldErrors({}); // Limpiamos errores al cerrar
+    setFieldErrors({});
     setSubmitAttempted(false);
   }
 
   async function handleSubmit() {
     setSubmitAttempted(true);
     setError("");
-    setFieldErrors({}); // Reseteamos los errores de campo en cada intento
+    setFieldErrors({});
 
     if (!activeContractId) {
       setError("Por favor, selecciona un contrato.");
@@ -225,9 +233,8 @@ export default function PaymentForm({
       if (!res.ok) {
         const data = await res.json();
         
-        // 2. DETECCIÓN INTELIGENTE DE ERRORES DE CAMPOS (ZOD)
         if (data.fieldErrors) {
-          setFieldErrors(data.fieldErrors); // Guardamos la lista de culpables
+          setFieldErrors(data.fieldErrors);
           setError("Revisa los campos marcados en rojo, los datos enviados no son válidos.");
         } else {
           setError(typeof data.error === "string" ? data.error : "Error al registrar el pago.");
@@ -245,57 +252,58 @@ export default function PaymentForm({
   }
 
   return (
-    <div className="mb-6">
-      {!show && (
-        <button
-          onClick={openForm}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
-        >
-          <Plus size={16} />
-          Registrar Pago
-        </button>
-      )}
+    <>
+      {/* Botón renderizado de forma transparente para adaptarse a PageHeader o vistas hijas */}
+      <button
+        onClick={openForm}
+        className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black shrink-0"
+      >
+        <Plus size={18} />
+        Registrar Pago
+      </button>
 
+      {/* Modal Flotante Responsivo */}
       {show && (
-        <div className="mt-4 bg-gray-50/50 p-1 md:p-4 rounded-2xl border border-gray-100 flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 ease-out">
-          
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-600 font-semibold animate-in slide-in-from-top-2">
-              <AlertCircle size={16} /> {error}
-            </div>
-          )}
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white p-5 md:p-8 rounded-2xl shadow-xl w-full max-w-2xl my-8 flex flex-col gap-5 animate-in zoom-in-95 duration-200 border border-gray-100 relative">
+            
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-600 font-semibold">
+                <AlertCircle size={16} /> {error}
+              </div>
+            )}
 
-          {/* Si el error general de Zod dice algo de "items", lo pintamos arriba del desglose */}
-          {fieldErrors.items && (
-            <div className="p-2.5 bg-red-50 border border-red-100 text-xs text-red-600 font-bold rounded-lg flex items-center gap-1.5 animate-pulse">
-              <AlertCircle size={14} /> El desglose de montos tiene inconsistencias: {fieldErrors.items.join(", ")}
-            </div>
-          )}
+            {fieldErrors.items && (
+              <div className="p-3 bg-red-50 border border-red-200 text-sm text-red-600 font-bold rounded-lg flex items-center gap-2">
+                <AlertCircle size={16} /> El desglose de montos tiene inconsistencias: {fieldErrors.items.join(", ")}
+              </div>
+            )}
 
-          {contractItems.length > 0 && (
-            <PaymentAllocationCard
-              items={contractItems}
-              formItems={form.items}
+            {contractItems.length > 0 && (
+              <PaymentAllocationCard
+                items={contractItems}
+                formItems={form.items}
+                setForm={setForm}
+              />
+            )}
+            
+            <CreateForm
+              title="Detalles del Pago"
+              fields={fields}
+              form={form}
               setForm={setForm}
+              onSubmit={handleSubmit}
+              onCancel={closeForm}
             />
-          )}
-          
-          <CreateForm
-            title="Detalles del Pago"
-            fields={fields}
-            form={form}
-            setForm={setForm}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-          />
-        </div>
-      )}
 
-      {error && errorCode && Object.keys(fieldErrors).length === 0 && (
-        <div className="mt-4">
-          <ErrorBox message={error} code={errorCode} />
+            {error && errorCode && Object.keys(fieldErrors).length === 0 && (
+              <div className="mt-2">
+                <ErrorBox message={error} code={errorCode} />
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

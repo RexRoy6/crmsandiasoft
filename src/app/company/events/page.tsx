@@ -12,7 +12,8 @@ import EventCard from "@/app/components/crm/events/EventCard";
 
 import { useEventForm } from "@/app/hooks/events/useEventForm";
 import { useEvents } from "@/app/hooks/events/useEvents";
-import { getEventFields } from "@/app/components/crm/events/getEventFields";
+import { getEventFields } from "@/app/components/crm/events/getEventFields"; 
+import PageHeader from "@/app/components/crm/PageHeader";
 
 export default function EventsPage() {
   const router = useRouter();
@@ -67,22 +68,15 @@ export default function EventsPage() {
     <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto pb-10">
       
       {/* ===================== HEADER & BÚSQUEDA ===================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight m-0">
-          Eventos Globales
-        </h1>
-        
-        <button
+        <PageHeader 
+          title="Eventos Globales" 
+          icon={CalendarDays}
+          buttonLabel="+ Nuevo Evento"
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black shrink-0"
-        >
-          <Plus size={18} />
-          Nuevo Evento
-        </button>
-      </div>
+        />
 
       <div className="w-full max-w-md">
         <SearchBar
