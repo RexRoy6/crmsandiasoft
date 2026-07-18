@@ -1,30 +1,23 @@
 "use client";
 
 import { ReactNode } from "react";
+import { X } from "lucide-react"; // Importamos la X
 
 export type Field = {
   name: string;
   label: string;
-  type?:
-    | "text"
-    | "number"
-    | "select"
-    | "date"
-    | "time"
-    | "datetime-local"
-    | "textarea";
+  type?: "text" | "number" | "select" | "date" | "time" | "datetime-local" | "textarea";
   options?: { value: string; label: string }[];
   onChange?: (value: string) => void;
   readOnly?: boolean;
   hideInput?: boolean;
   required?: boolean;
   after?: ReactNode;
-  // Propiedad nueva para control manual del ancho en la cuadrícula
   fullWidth?: boolean; 
 };
 
 type Props = {
-  title: string;
+  title?: string;
   fields: Field[];
   form: any;
   setForm: (value: any) => void;
@@ -33,6 +26,10 @@ type Props = {
   clearError?: () => void;
   submitLabel?: string;
   loading?: boolean;
+  
+  // NUEVAS PROPIEDADES MÁGICAS
+  mode?: "card" | "transparent"; 
+  onCloseIcon?: () => void; // Acción para la crucecita superior
 };
 
 export default function CreateForm({
@@ -45,44 +42,63 @@ export default function CreateForm({
   clearError,
   submitLabel = "Guardar",
   loading = false,
+  mode = "card", // Por defecto se comporta como una tarjeta/modal independiente
+  onCloseIcon,
 }: Props) {
   function handleFieldChange(field: Field, value: string) {
     clearError?.();
-
     if (field.onChange) {
       field.onChange(value);
       return;
     }
-
     setForm((prev: any) => ({
       ...prev,
       [field.name]: field.type === "number" ? Number(value) : String(value),
     }));
   }
 
-  return (
-    <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 mb-8 w-full shadow-sm">
-      <h3 className="text-lg font-bold text-gray-900 tracking-tight">
-        {title}
-      </h3>
+  const baseInputStyles = "w-full px-3.5 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 transition-all shadow-sm";
+  const activeInputStyles = "bg-white border-gray-300 text-gray-900 focus:ring-gray-200 focus:border-black";
+  const disabledInputStyles = "bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed";
 
-      {/* CUADRÍCULA INTELIGENTE: 1 columna en móvil, 2 en escritorio */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mt-6">
+  return (
+    <div className={`w-full flex flex-col ${
+      mode === "card" ? "bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden" : ""
+    }`}>
+      
+      {/* HEADER TIPO MODAL */}
+      {title && (
+        <div className={`flex items-center justify-between border-b border-gray-100 ${
+          mode === "card" ? "px-5 sm:px-6 py-4 bg-gray-50/50" : "pb-4 mb-4"
+        }`}>
+          <h3 className="text-lg font-bold text-gray-900 tracking-tight">{title}</h3>
+          {onCloseIcon && (
+            <button 
+              type="button" 
+              onClick={onCloseIcon} 
+              className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full transition-colors focus:outline-none"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* BODY (CUADRÍCULA) */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 sm:gap-y-5 ${
+        mode === "card" ? "p-5 sm:p-6" : ""
+      }`}>
         {fields.map((field) => {
-          // Lógica de Sizing: Textareas o fullWidth explícito ocupan 2 columnas
           const isFullWidth = field.type === "textarea" || field.fullWidth;
-          const colSpanClass = isFullWidth ? "md:col-span-2" : "col-span-1";
+          const colSpanClass = isFullWidth ? "sm:col-span-2" : "col-span-1";
 
           const Label = () => (
-            <label className="text-sm font-medium text-gray-500 mb-1.5 flex items-center tracking-tight">
+            <label className="text-xs font-medium text-gray-700 ml-1 mb-1.5 flex items-center">
               {field.label}
-              {field.required && (
-                <span className="text-red-500 ml-1.5 font-bold">*</span>
-              )}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
           );
 
-          {/* ---------- SELECT ---------- */}
           if (field.type === "select") {
             return (
               <div key={field.name} className={`flex flex-col ${colSpanClass}`}>
@@ -91,21 +107,19 @@ export default function CreateForm({
                   required={field.required}
                   value={form[field.name] ?? ""}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
-                  className="w-full px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all shadow-sm"
+                  disabled={field.readOnly}
+                  className={`${baseInputStyles} ${field.readOnly ? disabledInputStyles : activeInputStyles} cursor-pointer appearance-none`}
                 >
-                  <option value="">Seleccionar...</option>
+                  <option value="" disabled className="text-gray-400">Seleccionar...</option>
                   {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
-                {field.after && <div className="mt-1.5">{field.after}</div>}
+                {field.after && <div className="mt-1">{field.after}</div>}
               </div>
             );
           }
 
-          {/* ---------- TEXTAREA ---------- */}
           if (field.type === "textarea") {
             return (
               <div key={field.name} className={`flex flex-col ${colSpanClass}`}>
@@ -114,15 +128,15 @@ export default function CreateForm({
                   required={field.required}
                   value={form[field.name] ?? ""}
                   rows={3}
+                  readOnly={field.readOnly}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
-                  className="w-full px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all shadow-sm resize-y"
+                  className={`${baseInputStyles} ${field.readOnly ? disabledInputStyles : activeInputStyles} resize-y min-h-[80px]`}
                 />
-                {field.after && <div className="mt-1.5">{field.after}</div>}
+                {field.after && <div className="mt-1">{field.after}</div>}
               </div>
             );
           }
 
-          {/* ---------- INPUT DEFAULT ---------- */}
           return (
             <div key={field.name} className={`flex flex-col ${colSpanClass}`}>
               <Label />
@@ -133,44 +147,35 @@ export default function CreateForm({
                   value={form[field.name] ?? ""}
                   readOnly={field.readOnly}
                   onChange={(e) => handleFieldChange(field, e.target.value)}
-                  className={`
-                    w-full px-4 py-2 text-sm rounded-lg border focus:outline-none focus:ring-1 transition-all shadow-sm
-                    ${
-                      field.readOnly
-                        ? "bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed"
-                        : "bg-white border-gray-300 text-gray-900 focus:ring-black focus:border-black"
-                    }
-                  `}
+                  className={`${baseInputStyles} ${field.readOnly ? disabledInputStyles : activeInputStyles}`}
                 />
               )}
-              {field.after && <div className="mt-1.5">{field.after}</div>}
+              {field.after && <div className="mt-1">{field.after}</div>}
             </div>
           );
         })}
       </div>
 
-      {/* ---------- ACTIONS (Footer con línea divisoria) ---------- */}
-      <div className="flex flex-wrap items-center gap-3 mt-6 pt-5 border-t border-gray-100">
+      {/* FOOTER TIPO MODAL */}
+      <div className={`flex flex-col-reverse sm:flex-row items-center justify-end gap-3 border-t border-gray-100 ${
+        mode === "card" ? "px-5 sm:px-6 py-4 bg-gray-50" : "pt-4 mt-6"
+      }`}>
         <button
-          onClick={onSubmit}
-          disabled={loading}
-          className={`
-            px-6 py-2 rounded-lg font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black
-            ${
-              loading
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-                : "bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
-            }
-          `}
-        >
-          {loading ? "Guardando..." : submitLabel}
-        </button>
-
-        <button
+          type="button"
           onClick={onCancel}
-          className="px-6 py-2 rounded-lg font-medium text-sm border border-gray-200 bg-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
+          className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-gray-700 bg-white sm:bg-transparent border border-gray-300 sm:border-transparent hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
         >
           Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={loading}
+          className={`w-full sm:w-auto px-6 py-2.5 text-sm font-medium rounded-lg transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black flex items-center justify-center ${
+            loading ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-white bg-gray-900 hover:bg-gray-800"
+          }`}
+        >
+          {loading ? "Guardando..." : submitLabel}
         </button>
       </div>
     </div>
