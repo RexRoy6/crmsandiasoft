@@ -5,7 +5,6 @@ import CreateForm, { Field } from "@/app/components/crm/CreateForm";
 
 type Props = {
     onSubmit: (form: any) => Promise<boolean | void>;
-    // Le quitamos el "?" para que TypeScript sepa que siempre recibirá una función
     onCancel: () => void;
 };
 
@@ -18,24 +17,10 @@ export default function ServiceCreateForm({ onSubmit, onCancel }: Props) {
     });
 
     const fields: Field[] = [
-        {
-            name: "name",
-            label: "Nombre del Servicio",
-        },
-        {
-            name: "description",
-            label: "Descripción",
-        },
-        {
-            name: "stockTotal",
-            label: "Inventario (Stock)",
-            type: "number",
-        },
-        {
-            name: "priceBase",
-            label: "Precio Base",
-            type: "number",
-        },
+        { name: "name", label: "Nombre del Servicio", fullWidth: true},
+        { name: "description", label: "Descripción", type: "textarea" },
+        { name: "stockTotal", label: "Inventario (Stock)", type: "number" },
+        { name: "priceBase", label: "Precio Base", type: "number" },
     ];
 
     async function handleSubmit() {
@@ -46,15 +31,9 @@ export default function ServiceCreateForm({ onSubmit, onCancel }: Props) {
         };
 
         const result = await onSubmit(payload);
-
         if (result === false) return;
 
-        setForm({
-            name: "",
-            description: "",
-            stockTotal: 1,
-            priceBase: "",
-        });
+        setForm({ name: "", description: "", stockTotal: 1, priceBase: "" });
     }
 
     return (
@@ -65,6 +44,8 @@ export default function ServiceCreateForm({ onSubmit, onCancel }: Props) {
             setForm={setForm}
             onSubmit={handleSubmit}
             onCancel={onCancel}
+            onCloseIcon={onCancel} 
+            mode="card" 
         />
     );
 }
