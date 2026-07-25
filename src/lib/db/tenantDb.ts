@@ -1,9 +1,9 @@
 import { and, eq, isNull } from "drizzle-orm"
 import { db } from "@/db"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 export async function tenantDb() {
-  const { companyId, role } = await getAuthContext()
+  const { companyId, role } = await requireAuth()
 
   const isGlobalAdmin = role === "admin" && companyId === null
 

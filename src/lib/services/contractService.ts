@@ -1,6 +1,6 @@
 import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { requireAuth } from "@/lib/auth/requireAuth"
 import { contracts, events, clients, payments, ContractStatus } from "@/db/schema"
 import { sql } from "drizzle-orm"
 
@@ -80,7 +80,7 @@ export async function getCompanyContracts({
   status?: ContractStatus
 }) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   const offset = (page - 1) * limit
 
@@ -225,7 +225,7 @@ export async function getCompanyContracts({
 
 export async function getContract(id: number) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   const rows = await db
     .select({

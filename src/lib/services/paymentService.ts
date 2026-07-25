@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { requireAuth } from "@/lib/auth/requireAuth"
 import { tenantDb } from "@/lib/db/tenantDb"
 import {
   payments,
@@ -375,7 +375,7 @@ export async function getCompanyPayments({
   limit?: number
 }) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   const offset = (page - 1) * limit
 

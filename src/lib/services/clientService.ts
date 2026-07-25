@@ -2,7 +2,7 @@ import { tenantDb } from "@/lib/db/tenantDb"
 import { clients } from "@/db/schema"
 import { eq, and, or, like, desc, isNull } from "drizzle-orm"
 import type { UpdateClientInput } from "@/lib/validations/clientValidation"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { requireAuth } from "@/lib/auth/requireAuth"
 import { db } from "@/db"
 
 
@@ -39,7 +39,7 @@ export async function getClients({
   limit?: number
 }) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   const offset = (page - 1) * limit
 

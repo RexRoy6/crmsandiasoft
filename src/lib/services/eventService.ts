@@ -2,7 +2,7 @@ import { db } from "@/db"
 import { tenantDb } from "@/lib/db/tenantDb"
 import { events, clients, contracts } from "@/db/schema"
 import { activeContracts } from "@/db/filters"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { requireAuth } from "@/lib/auth/requireAuth"
 import { and, eq, isNotNull, isNull, or, like, desc } from "drizzle-orm"
 import { CreateEventInput, UpdateEventInput } from "@/lib/validations/eventValidation"
 /* ---------- CREATE ---------- */
@@ -46,7 +46,7 @@ export async function getEvents({
   limit?: number
 }) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   const offset = (page - 1) * limit
   const safeCompanyId = companyId ?? undefined
@@ -141,7 +141,7 @@ export async function getEvents({
 
 export async function getEventById(id: number) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   const safeCompanyId = companyId ?? undefined
 
@@ -193,7 +193,7 @@ export async function getEventById(id: number) {
 
 export async function getEventsByClient(clientId: number) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   return db
     .select({

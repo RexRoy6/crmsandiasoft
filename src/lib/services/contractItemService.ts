@@ -16,7 +16,7 @@ import type {
 } from "@/lib/validations/contractItemValidation"
 
 import { db } from "@/db"
-import { getAuthContext } from "@/lib/auth/getAuthContext"
+import { requireAuth } from "@/lib/auth/requireAuth"
 
 
 /* ---------- ADD SERVICE TO CONTRACT ---------- */
@@ -202,7 +202,7 @@ export async function addServiceToContract(
 
 export async function getContractServices(contractId: number) {
 
-  const { companyId } = await getAuthContext()
+  const { companyId } = await requireAuth()
 
   /* ---------- 1. CONTRACT ITEMS ---------- */
 
