@@ -1,5 +1,7 @@
 import { getAuthContext } from "@/lib/auth/getAuthContext";
 import CompanyShell from "./CompanyShell";
+import { redirect } from "next/navigation"
+
 
 export default async function CompanyLayout({
   children,
@@ -8,6 +10,11 @@ export default async function CompanyLayout({
 }) {
 
   const auth = await getAuthContext();
+
+  if (!auth) {
+    redirect("/")
+  }
+
 
   return (
     <CompanyShell

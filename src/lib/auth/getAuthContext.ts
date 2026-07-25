@@ -11,13 +11,14 @@ export type AuthContext = {
   role: UserRole
 }
 
-export async function getAuthContext(): Promise<AuthContext> {
+export async function getAuthContext(): Promise<AuthContext| null> {
   /* ---------- leer token desde cookie ---------- */
   const cookieStore = await cookies()
   const token = cookieStore.get("auth_token")?.value
 
   if (!token) {
-    throw new Error("Unauthorized: no token")
+    //throw new Error("Unauthorized: no token")
+    return null
   }
 
   try {
