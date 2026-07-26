@@ -98,11 +98,11 @@ export default function ContractItemCard({
     endError = "Por favor, ingresa la hora de fin.";
   }
 
-  if (form.operationStart && form.operationEnd) {
-    if (new Date(form.operationEnd) <= new Date(form.operationStart)) {
-      endError = "La hora de fin debe ser posterior al inicio.";
-    }
-  }
+  // if (form.operationStart && form.operationEnd) {
+  //   if (new Date(form.operationEnd) <= new Date(form.operationStart)) {
+  //     endError = "La hora de fin debe ser posterior al inicio.";
+  //   }
+  // }
 
   const isInvalid = !!error || !form.quantity || !form.operationStart || !form.operationEnd;
 

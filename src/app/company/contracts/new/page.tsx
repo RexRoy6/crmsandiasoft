@@ -129,14 +129,14 @@ export default function NewContractPage() {
       eventErrors.eventEnd = "La hora de finalización es obligatoria.";
 
     // Validación de horario cruzado
-    if (form.eventStart && form.eventEnd) {
-      const dateStr = form.eventDate || "2000-01-01";
-      const start = new Date(`${dateStr}T${form.eventStart}`);
-      const end = new Date(`${dateStr}T${form.eventEnd}`);
-      if (end <= start) {
-        eventErrors.eventEnd = "La hora de fin debe ser posterior al inicio.";
-      }
-    }
+    // if (form.eventStart && form.eventEnd) {
+    //   const dateStr = form.eventDate || "2000-01-01";
+    //   const start = new Date(`${dateStr}T${form.eventStart}`);
+    //   const end = new Date(`${dateStr}T${form.eventEnd}`);
+    //   if (end <= start) {
+    //     eventErrors.eventEnd = "La hora de fin debe ser posterior al inicio.";
+    //   }
+    // }
   }
 
   // Pasamos los errores a nuestra configuración de campos
@@ -166,12 +166,12 @@ export default function NewContractPage() {
       return;
     }
 
-    const start = new Date(`${form.eventDate}T${form.eventStart}`);
-    const end = new Date(`${form.eventDate}T${form.eventEnd}`);
-    if (end <= start) {
-      setError("Corrige las horas: el fin debe ser posterior al inicio.");
-      return;
-    }
+    // const start = new Date(`${form.eventDate}T${form.eventStart}`);
+    // const end = new Date(`${form.eventDate}T${form.eventEnd}`);
+    // if (end <= start) {
+    //   setError("Corrige las horas: el fin debe ser posterior al inicio.");
+    //   return;
+    // }
 
     // Flujo normal si todo está correcto
     if (contractId && contract?.event?.id) {
