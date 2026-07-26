@@ -84,15 +84,15 @@ export default function ContractServiceForm({
     endError = "Hora de fin requerida.";
   }
 
-  if (form.operationStart && form.operationEnd) {
-    const eventDate = contract?.event?.eventDate?.split("T")[0] || "2000-01-01";
-    const start = new Date(`${eventDate}T${form.operationStart}`);
-    const end = new Date(`${eventDate}T${form.operationEnd}`);
+  // if (form.operationStart && form.operationEnd) {
+  //   const eventDate = contract?.event?.eventDate?.split("T")[0] || "2000-01-01";
+  //   const start = new Date(`${eventDate}T${form.operationStart}`);
+  //   const end = new Date(`${eventDate}T${form.operationEnd}`);
     
-    if (end <= start) {
-      endError = "El fin debe ser posterior al inicio.";
-    }
-  }
+  //   if (end <= start) {
+  //     endError = "El fin debe ser posterior al inicio.";
+  //   }
+  // }
 
   const subtotal = Number(form.quantity || 0) * Number(form.unitPrice || 0);
   
