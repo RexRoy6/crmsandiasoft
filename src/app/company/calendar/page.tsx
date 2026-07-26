@@ -121,37 +121,43 @@ export default function GoogleLikeCalendar() {
 
       {/* ===================== HEADER & NAVEGACIÓN ===================== */}
       <PageHeader
-        title={`${capitalizedMonth} ${year}`}
-        icon={CalendarDays}
-        badge={
-          <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden ml-1 sm:ml-2">
-            <button
-              onClick={prevMonth}
-              className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
-              title="Mes anterior"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="w-px h-5 bg-gray-200"></div>
-            <button
-              onClick={nextMonth}
-              className="p-1.5 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
-              title="Mes siguiente"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+        title={
+          <span className="inline-block min-w-[170px] sm:min-w-[250px] capitalize">
+            {capitalizedMonth} {year}
+          </span>
         }
+        icon={CalendarDays}
         action={
           <div className="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
             {loading && (
-              <span className="text-sm font-medium text-gray-400 animate-pulse hidden sm:inline-block">
+              <span className="text-sm font-medium text-gray-400 animate-pulse hidden sm:inline-block mr-1">
                 Sincronizando...
               </span>
             )}
+            
+            {/* Contenedor de botones Atrás / Adelante */}
+            <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden shrink-0">
+              <button
+                onClick={prevMonth}
+                className="px-3 py-2 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
+                title="Mes anterior"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="w-px h-5 bg-gray-200"></div>
+              <button
+                onClick={nextMonth}
+                className="px-3 py-2 sm:p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors focus:outline-none"
+                title="Mes siguiente"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
+            {/* Botón Ir a Hoy (Toma el resto del espacio en móvil con flex-1) */}
             <button
               onClick={goToToday}
-              className="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 shadow-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 shadow-sm"
             >
               Ir a Hoy
             </button>
@@ -177,15 +183,15 @@ export default function GoogleLikeCalendar() {
             <div
               key={i}
               className={`min-h-[120px] bg-white p-2 transition-colors ${day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
-                  ? "bg-blue-50/30"
-                  : ""
+                ? "bg-blue-50/30"
+                : ""
                 }`}
             >
               {day && (
                 <div className="flex flex-col h-full">
                   <span className={`text-sm font-medium mb-1.5 ${day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()
-                      ? "bg-gray-900 text-white w-6 h-6 flex items-center justify-center rounded-full"
-                      : "text-gray-500 pl-1"
+                    ? "bg-gray-900 text-white w-6 h-6 flex items-center justify-center rounded-full"
+                    : "text-gray-500 pl-1"
                     }`}>
                     {day}
                   </span>

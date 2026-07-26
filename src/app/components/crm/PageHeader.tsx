@@ -3,7 +3,7 @@
 import React from "react";
 
 type Props = {
-  title: string;
+  title: React.ReactNode
   icon?: React.ElementType; 
   buttonLabel?: string;
   onClick?: () => void;
