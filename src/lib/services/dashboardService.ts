@@ -7,7 +7,7 @@ import {
   payments
 } from "@/db/schema"
 
-import { eq, sql } from "drizzle-orm"
+import { eq, sql, count, sum } from "drizzle-orm"
 
 
 
@@ -17,61 +17,47 @@ export async function getCompanyDashboard() {
 
   /* ---------- CLIENT COUNT ---------- */
 
-  const clientsResult = await tdb.findMany(clients)
+  const [clientsResult] = await tdb.count(clients)
 
-  const clientsCount = clientsResult.length
+  const clientsCount = clientsResult.count
+
 
 
   /* ---------- EVENTS COUNT ---------- */
 
-  const eventsResult = await tdb.findMany(events)
+  const [eventsResult] = await tdb.count(events)
 
-  const eventsCount = eventsResult.length
-
+  const eventsCount = eventsResult.count
 
   /* ---------- ACTIVE CONTRACTS ---------- */
 
-  const contractsResult = await tdb.findMany(
+  const [contractsResult] = await tdb.count(
     contracts,
     eq(contracts.status, "active")
   )
 
-  const activeContracts = contractsResult.length
-
-
+  const activeContracts = contractsResult.count
   /* ---------- REVENUE THIS MONTH ---------- */
 
-  const paymentsResult = await tdb.findManyRaw(payments)
 
-  const now = new Date()
+  const [paymentsTotalResult] = await tdb.sum(
+    payments,
+    payments.amount
+  )
+  const revenueThisMonth = 0
 
-  const revenueThisMonth = paymentsResult
-    .filter(p => {
-
-      const created = new Date(p.createdAt)
-
-      return (
-        created.getMonth() === now.getMonth() &&
-        created.getFullYear() === now.getFullYear()
-      )
-
-    })
-    .reduce((sum, p) => sum + Number(p.amount), 0)
-
+  const totalPaid =
+    Number(paymentsTotalResult.total ?? 0)
 
   /* ---------- PENDING PAYMENTS ---------- */
 
-  const contractsAll = await tdb.findMany(contracts)
-
-  const totalContracts = contractsAll.reduce(
-    (sum, c) => sum + Number(c.totalAmount),
-    0
+  const [contractsTotalResult] = await tdb.sum(
+    contracts,
+    contracts.totalAmount
   )
 
-  const totalPaid = paymentsResult.reduce(
-    (sum, p) => sum + Number(p.amount),
-    0
-  )
+  const totalContracts =
+    Number(contractsTotalResult.total ?? 0)
 
   const pendingPayments = totalContracts - totalPaid
 

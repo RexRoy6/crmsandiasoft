@@ -102,7 +102,7 @@ export default function CompanyDashboard() {
               href="/company/payments"
             />
             <DashboardCard 
-              title="Pagos Pendientes" 
+              title="Saldos Pendientes" 
               value={formatCurrency(stats.pendingPayments || 0)} 
               href="/company/payments"
             />
