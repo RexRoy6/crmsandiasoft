@@ -7,60 +7,40 @@ import {
   payments
 } from "@/db/schema"
 
-import { eq, sql, count, sum } from "drizzle-orm"
-
-
+import { eq } from "drizzle-orm"
 
 export async function getCompanyDashboard() {
 
   const tdb = await tenantDb()
 
   /* ---------- CLIENT COUNT ---------- */
+  //forma vieja de contar
+  // const [clientsResult] = await tdb.count(clients)
 
-  const [clientsResult] = await tdb.count(clients)
-
-  const clientsCount = clientsResult.count
-
-
+  // const clientsCount = clientsResult.count
+  const clientsCount = await tdb.count(clients)
 
   /* ---------- EVENTS COUNT ---------- */
-
-  const [eventsResult] = await tdb.count(events)
-
-  const eventsCount = eventsResult.count
+  const eventsCount = await tdb.count(events)
 
   /* ---------- ACTIVE CONTRACTS ---------- */
 
-  const [contractsResult] = await tdb.count(
-    contracts,
-    eq(contracts.status, "active")
-  )
-
-  const activeContracts = contractsResult.count
+  const activeContracts = await tdb.count(contracts,
+    eq(contracts.status, "active"))
   /* ---------- REVENUE THIS MONTH ---------- */
 
+  const revenueThisMonth = 0
 
-  const [paymentsTotalResult] = await tdb.sum(
+  const totalPaid = await tdb.sum(
     payments,
     payments.amount
   )
-  const revenueThisMonth = 0
-
-  const totalPaid =
-    Number(paymentsTotalResult.total ?? 0)
 
   /* ---------- PENDING PAYMENTS ---------- */
 
-  const [contractsTotalResult] = await tdb.sum(
-    contracts,
-    contracts.totalAmount
-  )
-
-  const totalContracts =
-    Number(contractsTotalResult.total ?? 0)
+  const totalContracts = await tdb.sum(contracts, contracts.totalAmount)
 
   const pendingPayments = totalContracts - totalPaid
-
 
   return {
     clients: clientsCount,
