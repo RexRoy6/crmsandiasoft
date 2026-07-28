@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm"
+import { and, eq, isNull, count, sum } from "drizzle-orm"
 import { db } from "@/db"
 import { requireAuth } from "@/lib/auth/requireAuth"
 
@@ -30,6 +30,107 @@ export async function tenantDb() {
   }
 
   return {
+    // count chido\
+
+    //    count(table: any, extraWhere?: any) {
+    //   const baseWhere = isNull(table.deletedAt)
+
+    //   return db
+    //     .select({
+    //       count: count()
+    //     })
+    //     .from(table)
+    //     .where(
+    //       buildWhere(
+    //         table,
+    //         extraWhere
+    //           ? and(baseWhere, extraWhere)
+    //           : baseWhere
+    //       )
+    //     )
+    // },
+
+    async count(table: any, extraWhere?: any) {
+
+      const baseWhere = isNull(table.deletedAt)
+
+      const [result] = await db
+        .select({
+          count: count()
+        })
+        .from(table)
+        .where(
+          buildWhere(
+            table,
+            extraWhere
+              ? and(baseWhere, extraWhere)
+              : baseWhere
+          )
+        )
+
+      return Number(result.count ?? 0)
+    },
+    ////sum viejito
+    // sum(table: any, column: any, extraWhere?: any) {
+
+    //   const baseWhere = isNull(table.deletedAt)
+
+    //   return db
+    //     .select({
+    //       total: sum(column)
+    //     })
+    //     .from(table)
+    //     .where(
+    //       buildWhere(
+    //         table,
+    //         extraWhere
+    //           ? and(baseWhere, extraWhere)
+    //           : baseWhere
+    //       )
+    //     )
+    // },
+
+    async sum(table: any, column: any, extraWhere?: any) {
+
+  const baseWhere = isNull(table.deletedAt)
+
+  const [result] = await db
+    .select({
+      total: sum(column)
+    })
+    .from(table)
+    .where(
+      buildWhere(
+        table,
+        extraWhere
+          ? and(baseWhere, extraWhere)
+          : baseWhere
+      )
+    )
+
+  return Number(result.total ?? 0)
+},
+
+    exists(table: any, extraWhere?: any) {
+
+      const baseWhere = isNull(table.deletedAt)
+
+      return db
+        .select({
+          exists: count()
+        })
+        .from(table)
+        .where(
+          buildWhere(
+            table,
+            extraWhere
+              ? and(baseWhere, extraWhere)
+              : baseWhere
+          )
+        )
+        .limit(1)
+    },
+
     /* ---------- SELECT ---------- */
     findMany(table: any, extraWhere?: any) {
       const baseWhere = isNull(table.deletedAt)
