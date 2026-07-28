@@ -7,6 +7,13 @@ import {
   payments
 } from "@/db/schema"
 
+import {
+  today,
+  nextDays,
+  thisMonth,
+  lastMonth
+} from "@/lib/db/filters/dateFilters"
+
 import { eq } from "drizzle-orm"
 
 export async function getCompanyDashboard() {
@@ -23,13 +30,63 @@ export async function getCompanyDashboard() {
   /* ---------- EVENTS COUNT ---------- */
   const eventsCount = await tdb.count(events)
 
+
+  /* ---------- EVENTS TODAY ---------- */
+
+  const eventsToday = await tdb.count(
+    events,
+    today(events.eventDate)
+  )
+  /* ---------- EVENTS NEXT 7 DAYS ---------- */
+
+  const eventsNext7Days = await tdb.count(
+    events,
+    nextDays(events.eventDate, 7)
+  )
+  /* ---------- EVENTS THIS MONTH ---------- */
+
+  const eventsThisMonth = await tdb.count(
+    events,
+    thisMonth(events.eventDate)
+  )
+  /* ---------- NEW CLIENTS THIS MONTH ---------- */
+
+  const newClientsThisMonth = await tdb.count(
+    clients,
+    thisMonth(clients.createdAt)
+  )
+  /* ---------- NEW CONTRACTS THIS MONTH ---------- */
+
+  const newContractsThisMonth = await tdb.count(
+    contracts,
+    thisMonth(contracts.createdAt)
+  )
+
+
   /* ---------- ACTIVE CONTRACTS ---------- */
 
   const activeContracts = await tdb.count(contracts,
     eq(contracts.status, "active"))
   /* ---------- REVENUE THIS MONTH ---------- */
+  const revenueThisMonth = await tdb.sum(
+    payments,
+    payments.amount,
+    thisMonth(payments.paidAt)
+  )
+  const revenueLastMonth = await tdb.sum(
+    payments,
+    payments.amount,
+    lastMonth(payments.paidAt)
+  )
 
-  const revenueThisMonth = 0
+  const revenueGrowth =
+    revenueLastMonth === 0
+      ? 100
+      : (
+        (revenueThisMonth - revenueLastMonth)
+        / revenueLastMonth
+      ) * 100
+
 
   const totalPaid = await tdb.sum(
     payments,
@@ -38,16 +95,57 @@ export async function getCompanyDashboard() {
 
   /* ---------- PENDING PAYMENTS ---------- */
 
-  const totalContracts = await tdb.sum(contracts, contracts.totalAmount)
+  const totalSold = await tdb.sum(contracts, contracts.totalAmount)
 
-  const pendingPayments = totalContracts - totalPaid
+  const pendingPayments = totalSold - totalPaid
 
+  // return {
+  //   clients: clientsCount,
+  //   events: eventsCount,
+  //   contractsActive: activeContracts,
+  //   revenueThisMonth,
+  //   pendingPayments
+  // }
   return {
-    clients: clientsCount,
-    events: eventsCount,
-    contractsActive: activeContracts,
-    revenueThisMonth,
-    pendingPayments
+
+    overview: {
+
+      clients: clientsCount,
+
+      events: eventsCount,
+
+      activeContracts,
+
+      totalSold,
+
+      totalPaid,
+
+      pendingPayments
+
+    },
+
+    monthly: {
+
+      revenueThisMonth,
+
+      revenueLastMonth,
+
+      newClients: newClientsThisMonth,
+
+      newContracts: newContractsThisMonth,
+
+      events: eventsThisMonth
+
+    },
+
+    upcoming: {
+
+      today: eventsToday,
+
+      next7Days: eventsNext7Days
+
+    }
+
   }
 
 }
