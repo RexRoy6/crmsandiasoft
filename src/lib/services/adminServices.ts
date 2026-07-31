@@ -1,5 +1,6 @@
 import { requireAuth } from "@/lib/auth/requireAuth"
-import { db } from "@/lib/db" // <-- tu conexión principal
+//import { db } from "@/lib/db" // <-- tu conexión principal
+import { db } from "@/db"
 import {
   clients,
   contracts,
@@ -19,12 +20,12 @@ export async function getCompanyOverview(companyId: number) {
       const auth = await requireAuth()
   /* ---------- CLIENTS ---------- */
 
-  const clientsTotal = await db.count(
+  const clientsTotal = await db.$count(
     clients,
     eq(clients.companyId, companyId)
   )
 
-  const newClientsThisMonth = await db.count(
+  const newClientsThisMonth = await db.$count(
     clients,
     and(
       eq(clients.companyId, companyId),
@@ -34,12 +35,12 @@ export async function getCompanyOverview(companyId: number) {
 
   /* ---------- CONTRACTS ---------- */
 
-  const contractsTotal = await db.count(
+  const contractsTotal = await db.$count(
     contracts,
     eq(contracts.companyId, companyId)
   )
 
-  const contractsThisMonth = await db.count(
+  const contractsThisMonth = await db.$count(
     contracts,
     and(
       eq(contracts.companyId, companyId),
@@ -49,12 +50,12 @@ export async function getCompanyOverview(companyId: number) {
 
   /* ---------- EVENTS ---------- */
 
-  const eventsTotal = await db.count(
+  const eventsTotal = await db.$count(
     events,
     eq(events.companyId, companyId)
   )
 
-  const eventsThisMonth = await db.count(
+  const eventsThisMonth = await db.$count(
     events,
     and(
       eq(events.companyId, companyId),
@@ -64,7 +65,7 @@ export async function getCompanyOverview(companyId: number) {
 
   /* ---------- PAYMENTS ---------- */
 
-  const paymentsTotal = await db.count(
+  const paymentsTotal = await db.$count(
     payments,
     inArray(
       payments.contractId,
@@ -77,7 +78,7 @@ export async function getCompanyOverview(companyId: number) {
 
   /* ---------- USERS ---------- */
 
-  const employees = await db.count(
+  const employees = await db.$count(
     users,
     eq(users.companyId, companyId)
   )
