@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Company, User, Contract } from "../types/admin";
-import { fetchContracts } from "../services/adminService";
+import { Company, User, CompanyDashboard } from "../types/admin";
+import { fetchCompanyDashboard } from "../services/adminService";
 
 export function useAdminCompany(companyId: string) {
   const router = useRouter();
@@ -14,7 +14,7 @@ export function useAdminCompany(companyId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suspendConfirm, setSuspendConfirm] = useState(false);
-  const [contracts, setContracts] = useState<Contract[]>([]);
+const [dashboard, setDashboard] = useState<CompanyDashboard | null>(null);
 
 
   //error estates
@@ -68,19 +68,19 @@ export function useAdminCompany(companyId: string) {
 
     setSuspendConfirm(false);
   };
-  const loadContracts = async () => {
-    try {
-      const result = await fetchContracts();
+const loadDashboard = async () => {
+  try {
+    const result = await fetchCompanyDashboard(companyId);
 
-      setContracts(result.data || []); // ✅ FIX
-    } catch {
-      setError("Error al cargar eventos");
-    }
-  };
+    setDashboard(result);
+  } catch {
+    setError("Error al cargar dashboard");
+  }
+};
 
   useEffect(() => {
     if (activeTab === "events") {
-      loadContracts();
+      loadDashboard();
     }
   }, [activeTab]);
 
@@ -170,7 +170,7 @@ export function useAdminCompany(companyId: string) {
   return {
     company,
     users,
-    contracts,
+    dashboard,
     activeTab,
     setActiveTab,
     loading,

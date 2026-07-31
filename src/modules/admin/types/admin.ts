@@ -41,3 +41,18 @@ export interface services {
   updated_at: Date;
   deleted_at: Date;
 }
+
+export interface DashboardActivity {
+  clients: number;
+  newClientsThisMonth: number;
+  contractsTotal: number;
+  contractsThisMonth: number;
+  eventsTotal: number;
+  eventsThisMonth: number;
+  paymentsTotal: number;
+  employees: number;
+}
+
+export interface CompanyDashboard {
+  activity: DashboardActivity;
+}
