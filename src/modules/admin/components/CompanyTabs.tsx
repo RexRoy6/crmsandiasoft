@@ -1,32 +1,32 @@
-import { Contract, User } from "../types/admin";
+import { CompanyDashboard, User } from "../types/admin";
 import { companyStyles } from "@/styles/companyAdmin.styles";
 import CompanyTeamTab from "./CompanyTeamTab";
 
 interface Props {
   users: User[];
-  contracts: Contract[];
+  dashboard: CompanyDashboard | null;
   activeTab: "team" | "events" | "services";
   setActiveTab: (v: "team" | "events" | "services") => void;
   // onCreateOwner: (email: string, password: string) => void;
   onCreateOwner: (
-  email: string,
-  password: string,
-  role: "owner" | "employee"
-) => void;
+    email: string,
+    password: string,
+    role: "owner" | "employee"
+  ) => void;
   onDeactivateUser: (userId: number) => void;
-   onReactivateUser: (userId: number) => void;
+  onReactivateUser: (userId: number) => void;
 }
 
 export default function CompanyTabs({
   users,
-  contracts,
+  dashboard,
   activeTab,
   setActiveTab,
   onCreateOwner,
   onDeactivateUser,
   onReactivateUser
 }: Props) {
-  console.log(1, contracts);
+  console.log(1, dashboard);
   return (
     <div style={companyStyles.container}>
       <div style={companyStyles.card}>
@@ -48,7 +48,7 @@ export default function CompanyTabs({
             }
             onClick={() => setActiveTab("events")}
           >
-            Events
+            Info de cada compania
           </span>
 
           <span
@@ -63,80 +63,41 @@ export default function CompanyTabs({
           </span>
         </div>
 
-        {activeTab === "team" && <CompanyTeamTab 
-        users={users} 
-        onCreateOwner={onCreateOwner}
-        onDeactivateUser={onDeactivateUser}
-        onReactivateUser={onReactivateUser}
-          />}
+        {activeTab === "team" && <CompanyTeamTab
+          users={users}
+          onCreateOwner={onCreateOwner}
+          onDeactivateUser={onDeactivateUser}
+          onReactivateUser={onReactivateUser}
+        />}
 
-        {activeTab === "events" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {contracts.length === 0 ? (
-              <p>No hay eventos</p>
-            ) : (
-              contracts.map((contract) => (
-                <div
-                  key={contract.id}
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 10,
-                    padding: 14,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    background: "#fff",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  {/* Información principal */}
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
-                  >
-                    <strong style={{ fontSize: 15 }}>
-                      {/* {contract.event?.name} */}
-                    </strong>
+        {activeTab === "events" && dashboard && (
+          <div>
+            <p>Clientes: {dashboard.activity.clients}</p>
 
-                    <span style={{ fontSize: 13, color: "#6b7280" }}>
-                      {/* Cliente: {contract.client?.name} */}
-                    </span>
-                  </div>
+            <p>
+              Nuevos clientes:
+              {dashboard.activity.newClientsThisMonth}
+            </p>
 
-                  {/* Etiquetas */}
-                  <div
-                    style={{ display: "flex", gap: 10, alignItems: "center" }}
-                  >
-                    <span
-                      style={{
-                        background: "#f3f4f6",
-                        padding: "4px 10px",
-                        borderRadius: 20,
-                        fontSize: 12,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {/* ${contract.totalAmount} */}
-                    </span>
+            <p>
+              Contratos:
+              {dashboard.activity.contractsTotal}
+            </p>
 
-                    <span
-                      style={{
-                        background:
-                          contract.status === "active" ? "#dcfce7" : "#fee2e2",
-                        color:
-                          contract.status === "active" ? "#166534" : "#991b1b",
-                        padding: "4px 10px",
-                        borderRadius: 20,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textTransform: "capitalize",
-                      }}
-                    >
-                      {contract.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+            <p>
+              Eventos:
+              {dashboard.activity.eventsTotal}
+            </p>
+
+            <p>
+              Pagos:
+              {dashboard.activity.paymentsTotal}
+            </p>
+
+            <p>
+              Empleados:
+              {dashboard.activity.employees}
+            </p>
           </div>
         )}
 

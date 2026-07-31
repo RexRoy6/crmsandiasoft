@@ -14,7 +14,7 @@ export default function AdminCompanyPage() {
   const {
     company,
     users,
-    contracts,
+    dashboard,
     loading,
     actionError,
     clearActionError,
@@ -47,7 +47,7 @@ export default function AdminCompanyPage() {
 
       <CompanyTabs
         users={users}
-        contracts={contracts}
+        dashboard={dashboard}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onCreateOwner={createOwner}

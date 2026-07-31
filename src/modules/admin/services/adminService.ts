@@ -1,4 +1,4 @@
-import { Company, Contract, User } from "../types/admin";
+import { Company, CompanyDashboard, User } from "../types/admin";
 
 export async function fetchMe(): Promise<User | null> {
   const res = await fetch("/api/admin/me", {
@@ -44,27 +44,21 @@ export async function createCompany(name: string) {
   return res.json();
 }
 
-
-type ContractsResponse = {
-  data: Contract[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-};
-
-export async function fetchContracts(): Promise<ContractsResponse> {
-  const res = await fetch("/api/company/contracts", {
-    method: "GET",
-    credentials: "include",
-  });
+export async function fetchCompanyDashboard(
+  companyId: string
+): Promise<CompanyDashboard> {
+  const res = await fetch(
+    `/api/admin/companies/${companyId}/dashboard`,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error("Error al cargar eventos");
+    throw new Error("Error al cargar dashboard");
   }
 
   return data;
