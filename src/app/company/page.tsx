@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import DashboardCard from "@/app/components/DashboardCard";
 import Toast from "@/app/components/Toast";
 import PageHeader from "@/app/components/crm/PageHeader";
-import { Home } from "lucide-react";
+import { BarChart3, CalendarDays, CalendarClock, Home } from "lucide-react";
 
 const formatNumber = (num: number) => {
   return new Intl.NumberFormat("es-MX").format(num);
@@ -101,8 +101,9 @@ export default function CompanyDashboard() {
 
           <section>
 
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              📊 Resumen General
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2.5">
+              <BarChart3 className="text-gray-400" size={22} />
+              Resumen General
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -153,8 +154,9 @@ export default function CompanyDashboard() {
 
           <section>
 
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              📅 Este Mes
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2.5">
+              <CalendarDays className="text-gray-400" size={22} />
+              Este Mes
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -199,8 +201,9 @@ export default function CompanyDashboard() {
 
           <section>
 
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              🗓 Próximos Eventos
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2.5">
+              <CalendarClock className="text-gray-400" size={22} />
+              Próximos Eventos
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
