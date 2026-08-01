@@ -28,6 +28,7 @@ export default function ContractServiceForm({
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState("");
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedService = useMemo(() => {
     return companyServices.find((s) => String(s.id) === form.serviceId);
@@ -104,19 +105,29 @@ export default function ContractServiceForm({
   };
 
   async function handleSubmit() {
+    if (isSubmitting) return; 
     setSubmitAttempted(true); 
 
-    if (!form.serviceId || !form.operationStart || !form.operationEnd || startError || endError || error || !form.quantity) {
+    const hasMissingDates = !form.operationStart || !form.operationEnd;
+    const isQuantityInvalid = Number(form.quantity) < 1 || Number(form.quantity) > maxStock;
+
+    if (!form.serviceId || hasMissingDates || isQuantityInvalid || error || !form.quantity) {
       return; 
     }
 
-    const success = await onSubmit(form);
-    if (!success) return;
-    
-    setShowForm(false);
-    setForm(initialForm);
-    setError("");
-    setSubmitAttempted(false);
+    setIsSubmitting(true);
+
+    try {
+      const success = await onSubmit(form);
+      if (!success) return;
+      
+      setShowForm(false);
+      setForm(initialForm);
+      setError("");
+      setSubmitAttempted(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleCancel() {
@@ -279,15 +290,21 @@ export default function ContractServiceForm({
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6 pt-5 border-t border-gray-100">
             <button
               onClick={handleCancel}
-              className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+              disabled={isSubmitting} 
+              className={`w-full sm:w-auto px-5 py-2.5 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 ${
+                isSubmitting ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-transparent" : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+              }`}
             >
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
-              className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+              disabled={isSubmitting} 
+              className={`w-full sm:w-auto px-6 py-2.5 text-sm font-medium rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black flex items-center justify-center ${
+                isSubmitting ? "text-gray-500 bg-gray-300 cursor-not-allowed" : "text-white bg-gray-900 hover:bg-gray-800"
+              }`}
             >
-              Agregar al Contrato
+              {isSubmitting ? "Agregando..." : "Agregar al Contrato"}
             </button>
           </div>
 
