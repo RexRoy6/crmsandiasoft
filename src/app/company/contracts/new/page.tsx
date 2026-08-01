@@ -33,6 +33,7 @@ export default function NewContractPage() {
   const [errorCode, setErrorCode] = useState<number | undefined>();
   const [eventSubmitAttempted, setEventSubmitAttempted] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const parseError = (error: any, fallback = "Error inesperado") => {
     if (!error) return fallback;
@@ -147,8 +148,8 @@ export default function NewContractPage() {
     onOpenClientModal: () => setIsClientModalOpen(true), // <-- Conecta el botón al estado
   });
 
-  // --- 2. INTERCEPTOR DEL SUBMIT BLINDADO ---
   const handleEventSubmit = async () => {
+    if (isSubmitting) return; // <-- Evita doble clic instantáneo
     setEventSubmitAttempted(true);
 
     // Verificación final antes de ejecutar la petición
@@ -166,6 +167,7 @@ export default function NewContractPage() {
       return;
     }
 
+    setIsSubmitting(true); 
     // const start = new Date(`${form.eventDate}T${form.eventStart}`);
     // const end = new Date(`${form.eventDate}T${form.eventEnd}`);
     // if (end <= start) {
@@ -173,9 +175,8 @@ export default function NewContractPage() {
     //   return;
     // }
 
-    // Flujo normal si todo está correcto
-    if (contractId && contract?.event?.id) {
-      try {
+    try {
+      if (contractId && contract?.event?.id) {
         const eventPayload = {
           name: form.name,
           eventDate: form.eventDate,
@@ -211,11 +212,13 @@ export default function NewContractPage() {
 
         setError("");
         setStep("services");
-      } catch (err) {
-        setError("Error de conexión al intentar actualizar el evento.");
+      } else {
+        await createEvent(); 
       }
-    } else {
-      createEvent();
+    } catch (err) {
+      setError("Error de conexión al intentar actualizar el evento.");
+    } finally {
+      setIsSubmitting(false); 
     }
   };
 
@@ -262,6 +265,9 @@ export default function NewContractPage() {
   };
 
   const continueExistingEvent = async (event: any) => {
+    if (isSubmitting) return; 
+    setIsSubmitting(true);
+    
     try {
       const result = await resumeContractDraft(event.id);
       setContractId(result.contract.id);
@@ -270,6 +276,8 @@ export default function NewContractPage() {
       setStep("services");
     } catch (e: any) {
       setError(e.message || "Error de conexión");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -320,13 +328,7 @@ export default function NewContractPage() {
 
   // Función para reiniciar todo el orquestador sin recargar la página
   const handleResetFlow = () => {
-    // 1. Limpiamos datos del contrato
     setContract(undefined);
-    // Si manejas el ID del contrato en la URL (ej. router.push), asegúrate de limpiar la URL aquí también,
-    // o simplemente limpia el estado local:
-    // setContractId(""); // Descomenta si contractId es un estado y no viene de params
-
-    // 2. Limpiamos el formulario del Paso 1
     setForm({
       clientId: "",
       name: "",
@@ -336,11 +338,8 @@ export default function NewContractPage() {
       location: "",
       notes: "",
     });
-
-    // 3. APAGAMOS LAS VALIDACIONES (¡La cura del bug!)
     setEventSubmitAttempted(false);
-
-    // 4. Regresamos a la casilla de salida
+    setError(""); 
     setStep("event");
   };
 
@@ -443,6 +442,7 @@ export default function NewContractPage() {
             submitLabel={
               contractId ? "Actualizar y Continuar" : "Guardar y Continuar"
             }
+            loading={isSubmitting} 
           />
 
           {!contractId && (
