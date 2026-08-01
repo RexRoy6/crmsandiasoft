@@ -254,24 +254,30 @@ export default function ContractsPage() {
                   className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col justify-between group"
                 >
                   {/* Cabecera Tarjeta */}
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex flex-col">
-                      <h3 className="font-bold text-gray-900 text-lg">
+                  <div className="flex justify-between items-start mb-4 gap-3">
+                    <div className="flex flex-col min-w-0">
+                      <h3 className="font-bold text-gray-900 text-lg line-clamp-2 break-words">
                         Contrato #{contract.id}
                       </h3>
-                      <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5 truncate" title={contract.event?.name}>
-                        <Calendar size={14} className="text-gray-400" />
-                        {contract.event?.name || "Sin evento vinculado"}
-                      </p>
+                      
+                      <div className="text-sm text-gray-500 flex items-start gap-1.5 mt-0.5">
+                        <Calendar size={14} className="text-gray-400 shrink-0 mt-0.5" />
+                        <span className="line-clamp-2 break-words" title={contract.event?.name}>
+                          {contract.event?.name || "Sin evento vinculado"}
+                        </span>
+                      </div>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${statusConfig.bg} ${statusConfig.text}`}>
+                    
+                    <span className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${statusConfig.bg} ${statusConfig.text}`}>
                       {statusConfig.label}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 mb-5 text-sm font-medium text-gray-700">
-                    <User size={15} className="text-gray-400" />
-                    {contract.client?.name || "Sin cliente"}
+                  <div className="flex items-start gap-1.5 mb-5 text-sm font-medium text-gray-700">
+                    <User size={15} className="text-gray-400 shrink-0 mt-0.5" />
+                    <span className="line-clamp-2 break-words" title={contract.client?.name}>
+                      {contract.client?.name || "Sin cliente"}
+                    </span>
                   </div>
 
                   {/* Resumen Financiero */}
