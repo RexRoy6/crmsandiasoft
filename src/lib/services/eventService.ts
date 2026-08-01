@@ -37,11 +37,13 @@ export async function createEvent(data: CreateEventInput) {
 export async function getEvents({
   clientId,
   search,
+  status,
   page = 1,
   limit = 10
 }: {
   clientId?: number
   search?: string
+  status?: "draft" | "active" | "completed" | "cancelled" 
   page?: number
   limit?: number
 }) {
@@ -61,7 +63,7 @@ export async function getEvents({
     filters.push(eq(events.clientId, clientId))
   }
 
-  /* 🔥 SEARCH */
+  /*  SEARCH */
   if (search) {
     const term = `%${search}%`
 
@@ -70,9 +72,11 @@ export async function getEvents({
         like(events.name, term),       // event name
         like(events.location, term),   // location
         like(clients.name, term)       // client name
-        // 👉 eventDate lo vemos abajo 👇
       )!
     )
+  }
+  if (status) {
+    filters.push(eq(contracts.status, status))
   }
 
   /* ---------- DATA ---------- */
@@ -122,6 +126,13 @@ export async function getEvents({
     .select({ id: events.id })
     .from(events)
     .leftJoin(clients, eq(events.clientId, clients.id))
+    .leftJoin(
+      contracts,
+      and(
+        eq(contracts.eventId, events.id),
+        activeContracts(safeCompanyId)
+      )
+    )
     .where(and(...filters))
 
   const total = totalResult.length

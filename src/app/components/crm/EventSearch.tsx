@@ -3,17 +3,20 @@
 import { useEffect, useState, useRef } from "react";
 import { Search, User, MapPin } from "lucide-react";
 
-export default function EventSearch({ onSelect }: { onSelect: (event: any) => void }) {
+export default function EventSearch({
+  onSelect,
+  statusFilter
+}: {
+  onSelect: (event: any) => void;
+  statusFilter?: "draft" | "active" | "completed" | "cancelled"; 
+}) {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // ------------------------------------------------------------------
-  // 🚀 MAGIA UX: Cierre del menú al hacer clic fuera del componente
-  // ------------------------------------------------------------------
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -35,10 +38,11 @@ export default function EventSearch({ onSelect }: { onSelect: (event: any) => vo
 
       setIsSearching(true);
       try {
-        const res = await fetch(
-          `/api/company/events?search=${search}&limit=5`,
-          { credentials: "include" }
-        );
+        let fetchUrl = `/api/company/events?search=${search}&limit=5`;
+        if (statusFilter) {
+          fetchUrl += `&status=${statusFilter}`; // <-- INYECTAMOS EL FILTRO
+        }
+        const res = await fetch(fetchUrl, { credentials: "include" });
 
         if (!res.ok) throw new Error("Error fetching");
 
@@ -53,7 +57,7 @@ export default function EventSearch({ onSelect }: { onSelect: (event: any) => vo
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [search]);
+  }, [search, statusFilter]);
 
   return (
     <div ref={wrapperRef} className="relative w-full">
@@ -102,7 +106,7 @@ export default function EventSearch({ onSelect }: { onSelect: (event: any) => vo
                   <span className="text-sm font-bold text-gray-900 truncate">
                     {event.name}
                   </span>
-                  
+
                   <div className="flex items-center gap-3 mt-1 text-[11px] font-medium text-gray-500">
                     <span className="flex items-center gap-1.5 truncate">
                       <User size={12} className="shrink-0 text-gray-400" />

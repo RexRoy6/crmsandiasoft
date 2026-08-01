@@ -50,12 +50,14 @@ export async function GET(req: Request) {
 
     const clientId = searchParams.get("clientId")
     const search = searchParams.get("search") || undefined
+    const status = (searchParams.get("status") as "draft" | "active" | "completed" | "cancelled") || undefined
     const page = Number(searchParams.get("page") || 1)
     const limit = Number(searchParams.get("limit") || 10)
 
     const result = await getEvents({
       clientId: clientId ? Number(clientId) : undefined,
       search,
+      status, 
       page,
       limit
     })

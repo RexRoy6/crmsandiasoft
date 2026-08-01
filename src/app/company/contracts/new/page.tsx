@@ -5,7 +5,7 @@ import CreateForm from "@/app/components/crm/CreateForm";
 import Toast from "@/app/components/Toast";
 import PaymentList from "@/app/components/crm/payments/PaymentList";
 import PaymentForm from "@/app/components/crm/payments/PaymentForm";
-import EventSearch from "@/app/components/crm/events/EventSearch";
+import EventSearch from "@/app/components/crm/EventSearch";
 import ContractServiceForm from "@/app/components/crm/contracts/ContractServiceForm";
 import ContractServicesList from "@/app/components/crm/contracts/ContractServicesList";
 import ContractSummaryCard from "@/app/components/crm/contracts/ContractSummaryCard";
@@ -455,7 +455,11 @@ export default function NewContractPage() {
                 <p className="text-sm text-gray-500 mb-6">
                   Busca un evento en borrador para continuar con su flujo.
                 </p>
-                <EventSearch onSelect={continueExistingEvent} />
+                {/* Le pasamos statusFilter="draft" */}
+                <EventSearch 
+                  onSelect={continueExistingEvent} 
+                  statusFilter="draft" 
+                />
               </div>
             </>
           )}
