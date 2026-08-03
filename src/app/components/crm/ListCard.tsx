@@ -8,8 +8,8 @@ type Action = { label: string; onClick?: () => void; color?: string };
 type MetaItem = { icon?: React.ReactNode; label: string };
 
 type ListCardProps = {
-  title?: string;
-  subtitle?: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
   content?: React.ReactNode;
   meta?: MetaItem[];
   badge?: Badge;
