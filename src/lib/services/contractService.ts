@@ -101,16 +101,26 @@ export async function getCompanyContracts({
   }
 
   if (search) {
-    const term = `%${search}%`
+    const term = `%${search}%`;
+    const lowerSearch = search.toLowerCase();
 
-    conditions.push(
-      or(
-        like(contracts.status, term),
-        like(clients.name, term),
-        like(events.name, term),
-        like(events.location, term)
-      )!
-    )
+    const statusMatches: ContractStatus[] = [];
+    if ("borrador".includes(lowerSearch)) statusMatches.push("draft");
+    if ("activo".includes(lowerSearch)) statusMatches.push("active");
+    if ("cancelado".includes(lowerSearch)) statusMatches.push("cancelled");
+    if ("completado".includes(lowerSearch)) statusMatches.push("completed");
+
+    const searchConditions = [
+      like(clients.name, term),
+      like(events.name, term),
+      like(events.location, term), 
+    ];
+
+    statusMatches.forEach(status => {
+      searchConditions.push(eq(contracts.status, status));
+    });
+
+    conditions.push(or(...searchConditions)!);
   }
 
   const whereClause = and(...conditions)
