@@ -73,6 +73,15 @@ export default function NewContractPage() {
       setContract(contract);
       setContractId(contract.id);
       setEventDateTime(event.eventDate);
+
+      // Recordar el borrador activo en este navegador
+      if (contract.status === "draft") {
+        localStorage.setItem(
+          "activeContractDraft",
+          String(contract.id)
+        );
+      }
+
       setStep("services");
     },
   });
@@ -294,6 +303,7 @@ export default function NewContractPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("activeContractDraft");
+
     if (!saved) return;
 
     const restore = async () => {
@@ -301,32 +311,48 @@ export default function NewContractPage() {
         const res = await fetch(`/api/company/contracts/${saved}`, {
           credentials: "include",
         });
+
+        // El contrato ya no existe
+        if (res.status === 404) {
+          localStorage.removeItem("activeContractDraft");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("No se pudo recuperar el borrador");
+        }
+
         const data = await res.json();
+
+        // Ya no es un draft
         if (data.status !== "draft") {
           localStorage.removeItem("activeContractDraft");
           return;
         }
+
         setContractId(data.id);
         setContract(data);
         setEventDateTime(data.event?.eventDate || null);
+
+        // El useEffect de abajo se encargará de sincronizar
+        // los datos del evento con el formulario.
         setStep("services");
         setError("");
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error("Error restaurando draft:", error);
       }
     };
+
     restore();
   }, []);
 
   // Función para reiniciar todo el orquestador sin recargar la página
   const handleResetFlow = () => {
-    // 1. Limpiamos datos del contrato
-    setContract(undefined);
-    // Si manejas el ID del contrato en la URL (ej. router.push), asegúrate de limpiar la URL aquí también,
-    // o simplemente limpia el estado local:
-    // setContractId(""); // Descomenta si contractId es un estado y no viene de params
+    localStorage.removeItem("activeContractDraft");
 
-    // 2. Limpiamos el formulario del Paso 1
+    setContract(null);
+    setContractId(null);
+
     setForm({
       clientId: "",
       name: "",
@@ -337,10 +363,7 @@ export default function NewContractPage() {
       notes: "",
     });
 
-    // 3. APAGAMOS LAS VALIDACIONES (¡La cura del bug!)
     setEventSubmitAttempted(false);
-
-    // 4. Regresamos a la casilla de salida
     setStep("event");
   };
 
@@ -374,8 +397,8 @@ export default function NewContractPage() {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <PageHeader 
-          title="Registro Rápido" 
+        <PageHeader
+          title="Registro Rápido"
           icon={Zap}
           badge={
             (step === "services" || step === "payments") && (
@@ -490,13 +513,13 @@ export default function NewContractPage() {
                         contract?.event?.eventDate?.split("T")[0];
                       const operationStart = data.operationStart
                         ? new Date(
-                            `${eventDate}T${data.operationStart}`,
-                          ).toISOString()
+                          `${eventDate}T${data.operationStart}`,
+                        ).toISOString()
                         : undefined;
                       const operationEnd = data.operationEnd
                         ? new Date(
-                            `${eventDate}T${data.operationEnd}`,
-                          ).toISOString()
+                          `${eventDate}T${data.operationEnd}`,
+                        ).toISOString()
                         : undefined;
 
                       const payload = {
