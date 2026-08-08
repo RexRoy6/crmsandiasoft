@@ -20,6 +20,7 @@ export async function getCompanyDashboard() {
 
   const tdb = await tenantDb()
 
+  // console.log("tenant db dasboaard", tdb)
   /* ---------- CLIENT COUNT ---------- */
   //forma vieja de contar
   // const [clientsResult] = await tdb.count(clients)
@@ -87,7 +88,7 @@ export async function getCompanyDashboard() {
         / revenueLastMonth
       ) * 100
 
-
+//bug aqui
   const totalPaid = await tdb.sum(
     payments,
     payments.amount
