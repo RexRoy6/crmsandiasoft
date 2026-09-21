@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Company } from "../types/admin";
 import { companyStyles } from "@/styles/companyAdmin.styles";
 
@@ -17,32 +16,50 @@ export default function CompanyHeaderCard({
   onEdit,
   onSuspend,
 }: Props) {
+  const isSuspended = !!company.deletedAt;
+
   return (
     <div style={companyStyles.container}>
       <div style={companyStyles.companyCard}>
         <div style={companyStyles.companyInfo}>
           <div style={companyStyles.companyLogo}>
-            {/* {company.logo ? (
-            <Image
-              src={company.logo}
-              alt="Company logo"
-              width={60}
-              height={60}
-              style={{ borderRadius: 12 }}
-            />
-          ) : ( */}
             <div style={companyStyles.placeholderLogo}>
-              {company.name.charAt(0)}
+              {company.name.charAt(0).toUpperCase()}
             </div>
-            {/* )} */}
           </div>
 
           <div>
-            <h3 style={companyStyles.companyName}>{company.name}</h3>
-            <p style={companyStyles.companyMeta}>
-              {/* {company.email} · {company.phone} */}
-            </p>
-            {/* <p style={companyStyles.companyMeta}>{company.address}</p> */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <h3 style={companyStyles.companyName}>
+                {company.name}
+              </h3>
+
+              <span
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  backgroundColor: isSuspended ? "#fee2e2" : "#dcfce7",
+                  color: isSuspended ? "#b91c1c" : "#15803d",
+                }}
+              >
+                {isSuspended ? "Suspendida" : "Activa"}
+              </span>
+            </div>
+
+            {isSuspended && company.deletedAt && (
+              <p style={companyStyles.companyMeta}>
+                Suspendida el{" "}
+                {new Date(company.deletedAt).toLocaleDateString()}
+              </p>
+            )}
           </div>
         </div>
 
@@ -51,11 +68,27 @@ export default function CompanyHeaderCard({
             Edit
           </button>
 
-          {suspendConfirm ? (
+          {isSuspended ? (
+            <span
+              style={{
+                padding: "8px 14px",
+                borderRadius: "6px",
+                backgroundColor: "#f3f4f6",
+                color: "#6b7280",
+                fontSize: "14px",
+                fontWeight: 600,
+              }}
+            >
+              Empresa suspendida
+            </span>
+          ) : suspendConfirm ? (
             <div style={companyStyles.confirmBox}>
               <span>¿Seguro?</span>
 
-              <button onClick={onSuspend} style={companyStyles.confirmYes}>
+              <button
+                onClick={onSuspend}
+                style={companyStyles.confirmYes}
+              >
                 Sí
               </button>
 
@@ -67,7 +100,10 @@ export default function CompanyHeaderCard({
               </button>
             </div>
           ) : (
-            <button onClick={onSuspend} style={companyStyles.suspendBtn}>
+            <button
+              onClick={onSuspend}
+              style={companyStyles.suspendBtn}
+            >
               Suspend
             </button>
           )}
