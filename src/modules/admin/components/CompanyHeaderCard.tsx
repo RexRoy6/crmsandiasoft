@@ -3,30 +3,36 @@ import { companyStyles } from "@/styles/companyAdmin.styles";
 
 interface Props {
   company: Company;
+
   suspendConfirm: boolean;
   setSuspendConfirm: (v: boolean) => void;
-  onEdit: () => void;
+
+  reactivateConfirm: boolean;
+  setReactivateConfirm: (v: boolean) => void;
+
   onSuspend: () => void;
+  onReactivate: () => void;
 }
 
 export default function CompanyHeaderCard({
   company,
   suspendConfirm,
   setSuspendConfirm,
-  onEdit,
+  reactivateConfirm,
+  setReactivateConfirm,
   onSuspend,
+  onReactivate,
 }: Props) {
   const isSuspended = !!company.deletedAt;
 
   return (
     <div style={companyStyles.container}>
       <div style={companyStyles.companyCard}>
+
+        {/* COMPANY INFO */}
         <div style={companyStyles.companyInfo}>
-          <div style={companyStyles.companyLogo}>
-            <div style={companyStyles.placeholderLogo}>
-              {company.name.charAt(0).toUpperCase()}
-            </div>
-          </div>
+
+          
 
           <div>
             <div
@@ -46,8 +52,12 @@ export default function CompanyHeaderCard({
                   borderRadius: "999px",
                   fontSize: "12px",
                   fontWeight: 600,
-                  backgroundColor: isSuspended ? "#fee2e2" : "#dcfce7",
-                  color: isSuspended ? "#b91c1c" : "#15803d",
+                  backgroundColor: isSuspended
+                    ? "#fee2e2"
+                    : "#dcfce7",
+                  color: isSuspended
+                    ? "#b91c1c"
+                    : "#15803d",
                 }}
               >
                 {isSuspended ? "Suspendida" : "Activa"}
@@ -63,50 +73,77 @@ export default function CompanyHeaderCard({
           </div>
         </div>
 
+        {/* ACTIONS */}
         <div style={companyStyles.actions}>
-          <button onClick={onEdit} style={companyStyles.editBtn}>
-            Edit
-          </button>
 
           {isSuspended ? (
-            <span
-              style={{
-                padding: "8px 14px",
-                borderRadius: "6px",
-                backgroundColor: "#f3f4f6",
-                color: "#6b7280",
-                fontSize: "14px",
-                fontWeight: 600,
-              }}
-            >
-              Empresa suspendida
-            </span>
-          ) : suspendConfirm ? (
-            <div style={companyStyles.confirmBox}>
-              <span>¿Seguro?</span>
 
+            /* ---------- REACTIVATE ---------- */
+            reactivateConfirm ? (
+              <div style={companyStyles.confirmBox}>
+                <span>
+                  ¿Seguro que quieres reactivar esta empresa?
+                </span>
+
+                <button
+                  onClick={onReactivate}
+                  style={companyStyles.confirmYes}
+                >
+                  Sí
+                </button>
+
+                <button
+                  onClick={() => setReactivateConfirm(false)}
+                  style={companyStyles.confirmNo}
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onReactivate}
+                style={{
+                  ...companyStyles.suspendBtn,
+                  backgroundColor: "#16a34a",
+                }}
+              >
+                Reactivar
+              </button>
+            )
+
+          ) : (
+
+            /* ---------- SUSPEND ---------- */
+            suspendConfirm ? (
+              <div style={companyStyles.confirmBox}>
+                <span>
+                  ¿Seguro que quieres suspender esta empresa?
+                </span>
+
+                <button
+                  onClick={onSuspend}
+                  style={companyStyles.confirmYes}
+                >
+                  Sí
+                </button>
+
+                <button
+                  onClick={() => setSuspendConfirm(false)}
+                  style={companyStyles.confirmNo}
+                >
+                  No
+                </button>
+              </div>
+            ) : (
               <button
                 onClick={onSuspend}
-                style={companyStyles.confirmYes}
+                style={companyStyles.suspendBtn}
               >
-                Sí
+                Suspender
               </button>
-
-              <button
-                onClick={() => setSuspendConfirm(false)}
-                style={companyStyles.confirmNo}
-              >
-                No
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onSuspend}
-              style={companyStyles.suspendBtn}
-            >
-              Suspend
-            </button>
+            )
           )}
+
         </div>
       </div>
     </div>

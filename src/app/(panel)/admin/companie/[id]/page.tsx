@@ -23,14 +23,16 @@ export default function AdminCompanyPage() {
     setActiveTab,
     suspendConfirm,
     setSuspendConfirm,
-    handleEdit,
+    reactivateConfirm,
+    setReactivateConfirm,
     handleSuspend,
+    handleReactivate,
     createOwner,
     deactivateUser,
     reactivateUser,
   } = useAdminCompany(companyId);
 
- if (loading) return <p>Cargando...</p>;
+  if (loading) return <p>Cargando...</p>;
   if (loadError || !company) return <p>Error al cargar empresa</p>;
 
   return (
@@ -41,8 +43,10 @@ export default function AdminCompanyPage() {
         company={company}
         suspendConfirm={suspendConfirm}
         setSuspendConfirm={setSuspendConfirm}
-        onEdit={handleEdit}
+        reactivateConfirm={reactivateConfirm}
+        setReactivateConfirm={setReactivateConfirm}
         onSuspend={handleSuspend}
+        onReactivate={handleReactivate}
       />
 
       <CompanyTabs
