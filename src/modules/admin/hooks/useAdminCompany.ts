@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Company, User, CompanyDashboard } from "../types/admin";
 import { fetchCompanyDashboard } from "../services/adminService";
 
 export function useAdminCompany(companyId: string) {
-  const router = useRouter();
 
   const [company, setCompany] = useState<Company | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -14,6 +12,7 @@ export function useAdminCompany(companyId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suspendConfirm, setSuspendConfirm] = useState(false);
+  const [reactivateConfirm, setReactivateConfirm] = useState(false);
   const [dashboard, setDashboard] = useState<CompanyDashboard | null>(null);
 
 
@@ -51,9 +50,6 @@ export function useAdminCompany(companyId: string) {
     fetchData();
   }, [companyId]);
 
-  const handleEdit = () => {
-    router.push(`/admin/companies/${companyId}/edit`);
-  };
 
   const handleSuspend = async () => {
     if (!suspendConfirm) {
@@ -80,6 +76,45 @@ export function useAdminCompany(companyId: string) {
       setSuspendConfirm(false);
     }
   };
+
+  const handleReactivate = async () => {
+    if (!reactivateConfirm) {
+      setReactivateConfirm(true);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/admin/companies/${companyId}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      if (res.status === 409) {
+        setActionError("La empresa ya está activa");
+        setReactivateConfirm(false);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Error reactivando la empresa");
+      }
+
+      const updatedCompany = await res.json();
+
+      setCompany(updatedCompany);
+      setReactivateConfirm(false);
+
+    } catch (err: any) {
+      setActionError(
+        err.message || "Error reactivando la empresa"
+      );
+      setReactivateConfirm(false);
+    }
+  };
+
   const loadDashboard = async () => {
     try {
       const result = await fetchCompanyDashboard(companyId);
@@ -189,10 +224,17 @@ export function useAdminCompany(companyId: string) {
     loadError,
     actionError,
     clearActionError,
+
     suspendConfirm,
     setSuspendConfirm,
-    handleEdit,
+
+    reactivateConfirm,
+    setReactivateConfirm,
+
+
     handleSuspend,
+    handleReactivate,
+
     createOwner,
     deactivateUser,
     reactivateUser,
