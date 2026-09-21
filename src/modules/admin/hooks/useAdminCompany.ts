@@ -14,7 +14,7 @@ export function useAdminCompany(companyId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suspendConfirm, setSuspendConfirm] = useState(false);
-const [dashboard, setDashboard] = useState<CompanyDashboard | null>(null);
+  const [dashboard, setDashboard] = useState<CompanyDashboard | null>(null);
 
 
   //error estates
@@ -61,22 +61,34 @@ const [dashboard, setDashboard] = useState<CompanyDashboard | null>(null);
       return;
     }
 
-    await fetch(`/api/admin/companies/${companyId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(`/api/admin/companies/${companyId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    setSuspendConfirm(false);
+      if (!res.ok) {
+        throw new Error("Error suspendiendo la empresa");
+      }
+
+      const updatedCompany = await res.json();
+
+      setCompany(updatedCompany);
+      setSuspendConfirm(false);
+    } catch (err: any) {
+      setActionError(err.message || "Error suspendiendo la empresa");
+      setSuspendConfirm(false);
+    }
   };
-const loadDashboard = async () => {
-  try {
-    const result = await fetchCompanyDashboard(companyId);
+  const loadDashboard = async () => {
+    try {
+      const result = await fetchCompanyDashboard(companyId);
 
-    setDashboard(result);
-  } catch {
-    setError("Error al cargar dashboard");
-  }
-};
+      setDashboard(result);
+    } catch {
+      setError("Error al cargar dashboard");
+    }
+  };
 
   useEffect(() => {
     if (activeTab === "events") {
@@ -98,7 +110,7 @@ const loadDashboard = async () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password,role }),
+        body: JSON.stringify({ email, password, role }),
       });
 
       if (!res.ok) throw new Error("Error creando usuario");
